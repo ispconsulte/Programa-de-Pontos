@@ -577,6 +577,18 @@
   0%   { transform: rotate(0deg) translateX(var(--orbit-r)) rotate(0deg); }
   100% { transform: rotate(360deg) translateX(var(--orbit-r)) rotate(-360deg); }
 }
+@keyframes ring3dSpin {
+  from { transform: rotateX(65deg) rotateZ(0deg); }
+  to   { transform: rotateX(65deg) rotateZ(360deg); }
+}
+@keyframes ring3dSpinReverse {
+  from { transform: rotateX(65deg) rotateY(30deg) rotateZ(360deg); }
+  to   { transform: rotateX(65deg) rotateY(30deg) rotateZ(0deg); }
+}
+@keyframes ring3dSpinY {
+  from { transform: rotateY(65deg) rotateZ(0deg); }
+  to   { transform: rotateY(65deg) rotateZ(360deg); }
+}
 @keyframes bgDrift {
   0%, 100% { transform: translate(0, 0) scale(1); }
   33%      { transform: translate(30px, -20px) scale(1.05); }
