@@ -20,14 +20,14 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
   const orbitTokens = compact
     ? []
     : [
-        { icon: Coins, angle: 0, radius: 0.58, color: 'hsl(var(--primary))', dur: 30, label: '' },
-        { icon: Gift, angle: 120, radius: 0.58, color: 'hsl(48 96% 58%)', dur: 30, label: '' },
-        { icon: Sparkles, angle: 240, radius: 0.58, color: 'hsl(160 70% 48%)', dur: 30, label: '' },
+        { icon: Coins, angle: 0, radius: 0.72, color: 'hsl(var(--primary))', dur: 34, label: '' },
+        { icon: Gift, angle: 120, radius: 0.72, color: 'hsl(48 96% 58%)', dur: 34, label: '' },
+        { icon: Sparkles, angle: 240, radius: 0.72, color: 'hsl(160 70% 48%)', dur: 34, label: '' },
       ]
 
   /* ── Orbit geometry ── */
-  const orbitRadius = size * 0.58
-  const arcRadius = size * 0.35
+  const orbitRadius = size * 0.72
+  const arcRadius = size * 0.45
   const arcCircumference = 2 * Math.PI * arcRadius
 
   return (
@@ -192,8 +192,8 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
       <div
         className="relative z-30 flex items-center justify-center transition-all duration-700"
         style={{
-          width: compact ? size * 0.52 : size * 0.44,
-          height: compact ? size * 0.52 : size * 0.44,
+          width: compact ? size * 0.52 : size * 0.55,
+          height: compact ? size * 0.52 : size * 0.55,
           opacity: loaded ? 1 : 0,
           transform: loaded ? 'scale(1) translateY(0)' : 'scale(0.8) translateY(12px)',
           animation: loaded ? 'rewardCoreFloat 5s ease-in-out infinite' : 'none',
@@ -204,8 +204,8 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
           alt={alt}
           className="object-contain"
           style={{
-            width: compact ? size * 0.38 : size * 0.32,
-            height: compact ? size * 0.38 : size * 0.32,
+            width: compact ? size * 0.38 : size * 0.44,
+            height: compact ? size * 0.38 : size * 0.44,
             filter: loaded
               ? 'drop-shadow(0 0 20px hsl(var(--primary) / 0.25)) drop-shadow(0 0 40px hsl(48 96% 58% / 0.12))'
               : 'none',
