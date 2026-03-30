@@ -325,20 +325,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             {!sidebarCollapsed && <span>Sair</span>}
           </button>
 
-          {/* Collapse toggle - desktop only */}
-          <button
-            onClick={toggleCollapse}
-            className="hidden lg:flex w-full items-center justify-center rounded-xl p-2 mt-2 text-muted-foreground/50 transition-colors hover:bg-[hsl(var(--surface-2))] hover:text-foreground"
-            title={sidebarCollapsed ? 'Expandir menu' : 'Recolher menu'}
-          >
-            {sidebarCollapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
-          </button>
         </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <header className="flex h-[52px] flex-shrink-0 items-center border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 lg:px-5">
           <div className="flex items-center gap-3">
+            <button onClick={toggleCollapse} className="hidden lg:flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-[hsl(var(--muted))] hover:text-foreground" title={sidebarCollapsed ? 'Expandir menu' : 'Recolher menu'}>
+              {sidebarCollapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
+            </button>
             <button onClick={() => setSidebarOpen(true)} className="rounded-md p-1.5 text-muted-foreground hover:text-foreground lg:hidden">
               <Menu className="h-5 w-5" />
             </button>
