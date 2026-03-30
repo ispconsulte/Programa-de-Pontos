@@ -192,6 +192,8 @@ export default function ReceivablesPage() {
     }
   }, [page, limit, appliedFilters])
 
+  const [throttledFetch, refreshBusy] = useThrottledAction(fetchReceivables)
+
   useEffect(() => {
     void fetchReceivables()
   }, [fetchReceivables])
