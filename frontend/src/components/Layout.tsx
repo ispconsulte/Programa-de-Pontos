@@ -262,7 +262,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex h-full flex-col justify-between">
             {/* Primary nav */}
             <div className="space-y-0.5">
-              {(filteredSections[0]?.items ?? []).map(item => (
+              {(navSections[0]?.items ?? []).map(item => (
                 <SidebarItem key={item.href} item={item} pathname={pathname} onNav={closeSidebar} />
               ))}
             </div>
