@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react'
 import Layout from '@/components/Layout'
 import PageHeader from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
@@ -12,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import EmptyState from '@/components/EmptyState'
 import { useClienteEmDia } from '@/hooks/useClienteEmDia'
+import { supabase } from '@/lib/supabase-client'
 import { Clock3, RefreshCw, Settings, ShieldCheck, Wifi } from 'lucide-react'
 
 const logStyles: Record<string, string> = {
@@ -22,8 +24,29 @@ const logStyles: Record<string, string> = {
   pendente: 'border-white/[0.08] bg-white/[0.03] text-slate-200',
 }
 
+function formatDateInput(value: Date) {
+  return value.toISOString().slice(0, 10)
+}
+
 export default function ClienteEmDiaConfiguracoesPage() {
-  const { loading, error, settings } = useClienteEmDia()
+  const { loading, error, settings, reload } = useClienteEmDia()
+  const defaultDateRange = useMemo(() => {
+    const today = new Date()
+    const start = new Date(today)
+    start.setDate(today.getDate() - 2)
+    return {
+      from: formatDateInput(start),
+      to: formatDateInput(today),
+    }
+  }, [])
+  const [dateFrom, setDateFrom] = useState(defaultDateRange.from)
+  const [dateTo, setDateTo] = useState(defaultDateRange.to)
+  const [syncing, setSyncing] = useState(false)
+  const [syncFeedback, setSyncFeedback] = useState<{
+    type: 'success' | 'error'
+    message: string
+    details?: string
+  } | null>(null)
   const scoreRules = [
     { trigger: 'Pagamento ate 3 dias antes do vencimento', points: '5 pontos' },
     { trigger: 'Pagamento no dia do vencimento', points: '4 pontos' },
@@ -40,6 +63,57 @@ export default function ClienteEmDiaConfiguracoesPage() {
     'Ultimo resgate (data)',
   ]
 
+  async function handleSyncNow() {
+    setSyncing(true)
+    setSyncFeedback(null)
+
+    try {
+      const activeConnectionId = settings?.activeIxcConnection?.id
+
+      const { data: contractsData, error: contractsError } = await supabase.functions.invoke('sync-ixc-contratos', {
+        body: {
+          pageSize: 25,
+          maxPages: 1,
+          maxCustomers: 25,
+          ixcConnectionId: activeConnectionId,
+        },
+      })
+
+      if (contractsError) throw contractsError
+
+      const { data: paymentsData, error: paymentsError } = await supabase.functions.invoke('sync-ixc-pagamentos', {
+        body: {
+          dateFrom,
+          dateTo,
+          pageSize: 25,
+          maxPages: 2,
+          ixcConnectionId: activeConnectionId,
+        },
+      })
+
+      if (paymentsError) throw paymentsError
+
+      await reload()
+
+      const contractsSummary = `${Number(contractsData?.customersFetched ?? 0)} clientes e ${Number(contractsData?.contractsFetched ?? 0)} contratos`
+      const paymentsSummary = `${Number(paymentsData?.processed ?? 0)} faturas processadas e ${Number(paymentsData?.pointsGranted ?? 0)} pontos`
+
+      setSyncFeedback({
+        type: 'success',
+        message: 'Sincronização manual concluída com janela curta para validação inicial.',
+        details: `${contractsSummary}. ${paymentsSummary}.`,
+      })
+    } catch (syncError) {
+      setSyncFeedback({
+        type: 'error',
+        message: 'Não foi possível concluir a sincronização manual agora.',
+        details: syncError instanceof Error ? syncError.message : String(syncError),
+      })
+    } finally {
+      setSyncing(false)
+    }
+  }
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -48,9 +122,9 @@ export default function ClienteEmDiaConfiguracoesPage() {
           title="Configurações da Campanha"
           subtitle="Ajuste calendário, conexão IXC e rotinas de sincronização do módulo Cliente em Dia em uma única visão administrativa."
           actions={
-            <Button className="bg-emerald-600 text-white hover:bg-emerald-500">
+            <Button onClick={handleSyncNow} disabled={syncing} className="bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-70">
               <RefreshCw className="h-3.5 w-3.5" />
-              Sync now
+              {syncing ? 'Sincronizando...' : 'Sync now'}
             </Button>
           }
         />
@@ -160,6 +234,19 @@ export default function ClienteEmDiaConfiguracoesPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
+                  <Label htmlFor="sync-date-from" className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                    Janela inicial de teste
+                  </Label>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <Input id="sync-date-from" type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} className="[color-scheme:dark]" />
+                    <Input id="sync-date-to" type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} className="[color-scheme:dark]" />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    A execução manual usa uma janela curta para validar a precisão antes de ampliar o período.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="sync-interval" className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
                     Sync interval
                   </Label>
@@ -175,10 +262,25 @@ export default function ClienteEmDiaConfiguracoesPage() {
                   </select>
                 </div>
 
+                {syncFeedback && (
+                  <div
+                    className={
+                      syncFeedback.type === 'success'
+                        ? 'rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] px-4 py-3 text-sm text-emerald-100'
+                        : 'rounded-xl border border-red-500/20 bg-red-500/[0.06] px-4 py-3 text-sm text-red-100'
+                    }
+                  >
+                    <p className="font-medium">{syncFeedback.message}</p>
+                    {syncFeedback.details && (
+                      <p className="mt-1 text-xs leading-relaxed text-current/80">{syncFeedback.details}</p>
+                    )}
+                  </div>
+                )}
+
                 <div className="flex justify-end">
-                  <Button className="bg-emerald-600 text-white hover:bg-emerald-500">
+                  <Button onClick={handleSyncNow} disabled={syncing} className="bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-70">
                     <RefreshCw className="h-3.5 w-3.5" />
-                    Sync now
+                    {syncing ? 'Sincronizando...' : 'Sync now'}
                   </Button>
                 </div>
               </CardContent>
