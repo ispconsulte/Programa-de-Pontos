@@ -61,7 +61,7 @@
 
     /* ── Layout ── */
     --page-max-width: 90rem;
-    --page-padding-inline: 1rem;
+    --page-padding-inline: max(1rem, env(safe-area-inset-left));
     --page-padding-block: 1.5rem;
     --section-gap: clamp(1.25rem, 1rem + 1vw, 2rem);
     --card-gap: clamp(0.875rem, 0.75rem + 0.5vw, 1.25rem);
