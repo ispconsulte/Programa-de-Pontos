@@ -745,6 +745,13 @@
   50%      { transform: translateY(-3px); }
 }
 
+/* ── Hero keyframes (still used by LoginHero) ── */
+@keyframes heroGlowDrift {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
+  33%      { transform: translate(25px, -18px) scale(1.06); opacity: 0.6; }
+  66%      { transform: translate(-18px, 12px) scale(0.97); opacity: 0.45; }
+}
+
 /* ── Reduced motion ── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
