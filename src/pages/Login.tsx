@@ -1,6 +1,6 @@
 import { useState, FormEvent, useEffect } from 'react'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
-import { Eye, EyeOff, AlertCircle, CheckCircle, ArrowRight, Gift, Star, TrendingUp, Award, Zap } from 'lucide-react'
+import { Eye, EyeOff, AlertCircle, CheckCircle, ArrowRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase-client'
 import Spinner from '@/components/Spinner'
 import LogoAnimated from '@/components/LogoAnimated'
@@ -77,12 +77,6 @@ export default function LoginPage() {
     }
   }
 
-  const features = [
-    { icon: Gift, label: 'Gestão completa de bônus', desc: 'Controle total sobre campanhas e resgates' },
-    { icon: Award, label: 'Programa de pontos inteligente', desc: 'Pontuação automatizada por performance' },
-    { icon: TrendingUp, label: 'Métricas em tempo real', desc: 'Acompanhe resultados e ROI de cada campanha' },
-    { icon: Zap, label: 'Fidelização que converte', desc: 'Engajamento contínuo com seus clientes' },
-  ]
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -150,26 +144,6 @@ export default function LoginPage() {
             Acompanhe pontuações, gerencie recompensas e fidelize seus clientes com uma plataforma pensada para resultados.
           </p>
 
-          <div className="mt-8 w-full space-y-2.5">
-            {features.map((feature, i) => {
-              const Icon = feature.icon
-              return (
-                <div
-                  key={feature.label}
-                  className="group flex items-center gap-4 rounded-xl border border-border/50 bg-gradient-to-r from-muted/40 to-transparent px-5 py-3.5 transition-all duration-300 hover:border-primary/25 hover:from-primary/[0.08] hover:to-primary/[0.02] animate-build-in"
-                  style={{ animationDelay: `${500 + i * 200}ms` }}
-                >
-                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20 transition-all duration-300 group-hover:bg-primary/[0.18] group-hover:ring-primary/30">
-                    <Icon className="h-[18px] w-[18px] text-primary" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[13px] font-semibold text-foreground">{feature.label}</p>
-                    <p className="mt-0.5 text-[11.5px] text-muted-foreground">{feature.desc}</p>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
         </div>
       </div>
 
