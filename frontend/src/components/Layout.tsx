@@ -163,7 +163,6 @@ function SidebarItem({
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     if (typeof window === 'undefined') return 'dark'
     return window.localStorage.getItem('bonifica-theme') === 'light' ? 'light' : 'dark'
