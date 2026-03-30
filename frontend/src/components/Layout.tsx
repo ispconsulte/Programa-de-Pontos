@@ -24,6 +24,7 @@ import { logout } from '@/lib/auth-client'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase-client'
 
+/* ─── Nav data ─── */
 interface NavItem {
   href: string
   label: string
@@ -79,7 +80,18 @@ function getPageTitle(pathname: string): string {
   return 'Painel'
 }
 
-function SidebarItem({ item, pathname, onNav, collapsed }: { item: NavItem; pathname: string; onNav: () => void; collapsed?: boolean }) {
+/* ─── Sidebar item ─── */
+function SidebarItem({
+  item,
+  pathname,
+  onNav,
+  collapsed,
+}: {
+  item: NavItem
+  pathname: string
+  onNav: () => void
+  collapsed?: boolean
+}) {
   const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
   const hasChildren = !!item.children?.length
   const isChildActive = hasChildren && item.children!.some((c) => pathname === c.href || pathname.startsWith(c.href + '/'))
@@ -92,47 +104,52 @@ function SidebarItem({ item, pathname, onNav, collapsed }: { item: NavItem; path
   const Icon = item.icon
   const active = isActive || isChildActive
 
+  /* Collapsed with children → single icon link */
+  if (hasChildren && collapsed) {
+    return (
+      <Link
+        to={item.href}
+        onClick={onNav}
+        title={item.label}
+        className={cn(
+          'group flex items-center justify-center rounded-xl p-2.5 transition-all duration-200',
+          active
+            ? 'bg-primary/10 text-primary'
+            : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+        )}
+      >
+        <Icon className="h-[18px] w-[18px] flex-shrink-0" />
+      </Link>
+    )
+  }
+
+  /* Expanded with children → accordion */
   if (hasChildren) {
-    if (collapsed) {
-      // In collapsed mode, just show the icon linking to the main href
-      return (
-        <Link
-          to={item.href}
-          onClick={onNav}
-          title={item.label}
-          className={cn(
-            'group flex items-center justify-center rounded-xl p-2.5 transition-all duration-150',
-            active
-              ? 'bg-[hsl(var(--sidebar-active))] text-foreground ring-1 ring-primary/10 shadow-sm'
-              : 'text-muted-foreground hover:bg-[hsl(var(--surface-2))] hover:text-foreground'
-          )}
-        >
-          <Icon className={cn('h-[18px] w-[18px] flex-shrink-0', active ? 'text-primary' : 'text-muted-foreground/70')} />
-        </Link>
-      )
-    }
     return (
       <div>
         <button
           onClick={() => setOpen(!open)}
           className={cn(
-            'group flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left transition-all duration-150',
+            'group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all duration-200',
             active
-              ? 'bg-[hsl(var(--sidebar-active))] text-foreground ring-1 ring-primary/10 shadow-sm'
-              : 'text-muted-foreground hover:bg-[hsl(var(--surface-2))] hover:text-foreground'
+              ? 'bg-primary/10 text-primary'
+              : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
           )}
         >
-          <Icon className={cn('h-[18px] w-[18px] flex-shrink-0', active ? 'text-primary' : 'text-muted-foreground/70')} />
-          <span className="flex-1 text-[13.5px] font-medium">{item.label}</span>
-          <div className={cn('transition-transform duration-200', open && 'rotate-180')}>
-            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/60" />
-          </div>
+          <Icon className="h-[18px] w-[18px] flex-shrink-0" />
+          <span className="flex-1 text-[13px] font-medium">{item.label}</span>
+          <ChevronDown
+            className={cn(
+              'h-3.5 w-3.5 text-muted-foreground/50 transition-transform duration-200',
+              open && 'rotate-180'
+            )}
+          />
         </button>
 
         <div
           className={cn(
-            'ml-[18px] mt-1 space-y-1 border-l border-[hsl(var(--border))] pl-4 transition-all duration-200',
-            open ? 'max-h-40 opacity-100' : 'max-h-0 overflow-hidden opacity-0'
+            'ml-[18px] mt-0.5 space-y-0.5 border-l border-border/50 pl-3.5 transition-all duration-200 overflow-hidden',
+            open ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
           )}
         >
           {item.children!.map((child) => {
@@ -143,10 +160,10 @@ function SidebarItem({ item, pathname, onNav, collapsed }: { item: NavItem; path
                 to={child.href}
                 onClick={onNav}
                 className={cn(
-                  'block rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150',
+                  'block rounded-lg px-3 py-2 text-[12.5px] font-medium transition-all duration-150',
                   childActive
-                    ? 'bg-[hsl(var(--surface-2))] text-primary'
-                    : 'text-muted-foreground hover:bg-[hsl(var(--surface-2))] hover:text-foreground'
+                    ? 'text-primary bg-primary/5'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
                 )}
               >
                 {child.label}
@@ -158,54 +175,66 @@ function SidebarItem({ item, pathname, onNav, collapsed }: { item: NavItem; path
     )
   }
 
+  /* Simple item */
   return (
     <Link
       to={item.href}
       onClick={onNav}
       title={collapsed ? item.label : undefined}
       className={cn(
-        'group flex items-center rounded-xl transition-all duration-150',
-        collapsed ? 'justify-center p-2.5' : 'gap-3 px-3.5 py-2.5',
+        'group flex items-center rounded-xl transition-all duration-200',
+        collapsed ? 'justify-center p-2.5' : 'gap-3 px-3 py-2.5',
         isActive
-          ? 'bg-[hsl(var(--sidebar-active))] text-foreground ring-1 ring-primary/10 shadow-sm'
-          : 'text-muted-foreground hover:bg-[hsl(var(--surface-2))] hover:text-foreground'
+          ? 'bg-primary/10 text-primary'
+          : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
       )}
     >
-      <Icon className={cn('h-[18px] w-[18px] flex-shrink-0', isActive ? 'text-primary' : 'text-muted-foreground/70')} />
-      {!collapsed && <span className="text-[13.5px] font-medium">{item.label}</span>}
+      <Icon className="h-[18px] w-[18px] flex-shrink-0" />
+      {!collapsed && <span className="text-[13px] font-medium">{item.label}</span>}
     </Link>
   )
 }
 
+/* ─── Main Layout ─── */
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+
+  /* Sidebar state */
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(() => {
     if (typeof window === 'undefined') return false
     return window.localStorage.getItem('bonifica-sidebar-collapsed') === 'true'
   })
-  const [userMenuOpen, setUserMenuOpen] = useState(false)
-  const userMenuRef = useRef<HTMLDivElement | null>(null)
+
+  /* Theme */
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     if (typeof window === 'undefined') return 'dark'
     return window.localStorage.getItem('bonifica-theme') === 'light' ? 'light' : 'dark'
   })
+
+  /* User menu */
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement | null>(null)
+
+  /* Avatar */
   const [avatarUrl, setAvatarUrl] = useState<string | null>(() => {
     if (typeof window === 'undefined') return null
     return window.localStorage.getItem('bonifica-avatar')
   })
-  const [profile, setProfile] = useState({ name: 'Usuário', email: 'Sem e-mail' })
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-  const closeSidebar = () => setSidebarOpen(false)
+  /* Profile */
+  const [profile, setProfile] = useState({ name: 'Usuário', email: 'Sem e-mail' })
+
   const toggleCollapse = () => {
-    setSidebarCollapsed((prev) => {
+    setCollapsed((prev) => {
       const next = !prev
       window.localStorage.setItem('bonifica-sidebar-collapsed', String(next))
       return next
     })
   }
 
+  /* Theme sync */
   useEffect(() => {
     const root = document.documentElement
     root.classList.toggle('light', theme === 'light')
@@ -213,6 +242,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     window.localStorage.setItem('bonifica-theme', theme)
   }, [theme])
 
+  /* Profile from auth */
   useEffect(() => {
     let mounted = true
     const apply = async () => {
@@ -240,6 +270,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  /* Close user menu on outside click */
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
@@ -264,47 +295,91 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const initial = profile.name.trim().charAt(0).toUpperCase() || 'U'
 
+  /* ─── Sidebar widths ─── */
+  const SIDEBAR_W = 'w-64'       // 16rem expanded
+  const SIDEBAR_COLLAPSED_W = 'w-16' // 4rem collapsed
+  const SIDEBAR_MOBILE_W = 'w-72' // 18rem mobile drawer
+
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">
-      {sidebarOpen && <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden" onClick={closeSidebar} />}
+      {/* ── Mobile overlay ── */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition-opacity lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
 
+      {/* ── Sidebar ── */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex flex-col border-r border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar))] shadow-xl shadow-black/5 transition-all duration-300 ease-out lg:relative lg:z-auto lg:translate-x-0 lg:shadow-none',
-          sidebarCollapsed ? 'lg:w-[68px]' : 'lg:w-[248px]',
-          sidebarOpen ? 'translate-x-0 w-[248px]' : '-translate-x-full w-[248px]'
+          'fixed inset-y-0 left-0 z-50 flex flex-col border-r border-sidebar-border bg-sidebar transition-all duration-300 ease-out',
+          // Desktop
+          'lg:relative lg:z-auto lg:translate-x-0',
+          collapsed ? `lg:${SIDEBAR_COLLAPSED_W}` : `lg:${SIDEBAR_W}`,
+          // Mobile drawer
+          mobileOpen
+            ? `translate-x-0 ${SIDEBAR_MOBILE_W} shadow-2xl shadow-black/30`
+            : `-translate-x-full ${SIDEBAR_MOBILE_W}`
         )}
+        style={{
+          // Inline for precise transition
+          width: undefined,
+        }}
       >
-        <div className={cn('flex h-[92px] flex-shrink-0 items-center justify-center', sidebarCollapsed ? 'px-2' : 'px-5')}>
+        {/* Logo area */}
+        <div className={cn(
+          'flex h-16 flex-shrink-0 items-center border-b border-sidebar-border transition-all duration-300',
+          collapsed ? 'justify-center px-2' : 'px-5'
+        )}>
           <img
             src={logoBonifica}
             alt="Bonifica"
             className={cn(
-              'w-auto flex-shrink-0 transition-all duration-300',
-              sidebarCollapsed ? 'h-8 max-w-[2.5rem]' : 'h-[4.5rem] max-w-[4.5rem]'
+              'flex-shrink-0 transition-all duration-300 object-contain',
+              collapsed
+                ? 'h-8 w-8'
+                : 'h-10'
             )}
-            style={{ objectFit: 'contain', filter: 'drop-shadow(0 0 12px hsl(var(--primary) / 0.35))' }}
+            style={{ filter: 'drop-shadow(0 0 8px hsl(var(--primary) / 0.25))' }}
           />
-          <button onClick={closeSidebar} className="absolute right-3 rounded-md p-1 text-muted-foreground hover:text-foreground lg:hidden">
+
+          {/* Mobile close */}
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="ml-auto rounded-lg p-1.5 text-muted-foreground hover:text-foreground lg:hidden"
+          >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <nav className={cn('flex-1 overflow-y-auto scrollable-content pt-2 pb-4', sidebarCollapsed ? 'px-2' : 'px-4')}>
+        {/* Nav */}
+        <nav className={cn(
+          'flex-1 overflow-y-auto scrollable-content py-4',
+          collapsed ? 'px-2' : 'px-3'
+        )}>
           <div className="space-y-6">
             {navSections.map((section, si) => (
               <div key={section.label || si}>
-                {section.label && !sidebarCollapsed && (
-                  <p className="mb-2 px-3 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/70">
+                {/* Section label */}
+                {section.label && !collapsed && (
+                  <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/60">
                     {section.label}
                   </p>
                 )}
-                {section.label && sidebarCollapsed && (
-                  <div className="mb-2 mx-auto h-px w-6 bg-[hsl(var(--border))]" />
+                {section.label && collapsed && (
+                  <div className="mb-2 mx-auto h-px w-5 bg-border/40" />
                 )}
-                <div className="space-y-1">
+
+                <div className="space-y-0.5">
                   {section.items.map((item) => (
-                    <SidebarItem key={item.href} item={item} pathname={pathname} onNav={closeSidebar} collapsed={sidebarCollapsed} />
+                    <SidebarItem
+                      key={item.href}
+                      item={item}
+                      pathname={pathname}
+                      onNav={() => setMobileOpen(false)}
+                      collapsed={collapsed}
+                    />
                   ))}
                 </div>
               </div>
@@ -312,68 +387,97 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </nav>
 
-        <div className={cn('flex-shrink-0 pb-4', sidebarCollapsed ? 'px-2' : 'px-4')}>
+        {/* Footer: logout */}
+        <div className={cn('flex-shrink-0 border-t border-sidebar-border py-3', collapsed ? 'px-2' : 'px-3')}>
           <button
             onClick={() => logout()}
-            title={sidebarCollapsed ? 'Sair' : undefined}
+            title={collapsed ? 'Sair' : undefined}
             className={cn(
-              'group flex w-full items-center rounded-xl text-[13.5px] font-medium text-muted-foreground transition-all duration-150 hover:bg-destructive/[0.06] hover:text-destructive',
-              sidebarCollapsed ? 'justify-center p-2.5' : 'gap-3 px-3.5 py-2.5'
+              'group flex w-full items-center rounded-xl text-[13px] font-medium text-muted-foreground transition-all duration-200 hover:bg-destructive/[0.08] hover:text-destructive',
+              collapsed ? 'justify-center p-2.5' : 'gap-3 px-3 py-2.5'
             )}
           >
-            <LogOut className="h-[18px] w-[18px] transition-colors group-hover:text-destructive" />
-            {!sidebarCollapsed && <span>Sair</span>}
+            <LogOut className="h-[18px] w-[18px]" />
+            {!collapsed && <span>Sair</span>}
           </button>
-
         </div>
       </aside>
 
+      {/* ── Main area ── */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="flex h-[52px] flex-shrink-0 items-center border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 lg:px-5">
-          <div className="flex items-center gap-3">
-            <button onClick={toggleCollapse} className="hidden lg:flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-[hsl(var(--muted))] hover:text-foreground" title={sidebarCollapsed ? 'Expandir menu' : 'Recolher menu'}>
-              {sidebarCollapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
+        {/* Header */}
+        <header className="sticky top-0 z-30 flex h-16 flex-shrink-0 items-center gap-3 border-b border-border bg-surface-1/80 backdrop-blur-xl px-4 lg:px-5">
+          {/* Left: toggle + title */}
+          <div className="flex items-center gap-2">
+            {/* Desktop collapse toggle */}
+            <button
+              onClick={toggleCollapse}
+              className="hidden lg:flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+              title={collapsed ? 'Expandir menu' : 'Recolher menu'}
+            >
+              {collapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
             </button>
-            <button onClick={() => setSidebarOpen(true)} className="rounded-md p-1.5 text-muted-foreground hover:text-foreground lg:hidden">
+
+            {/* Mobile hamburger */}
+            <button
+              onClick={() => setMobileOpen(true)}
+              className="rounded-lg p-1.5 text-muted-foreground hover:text-foreground lg:hidden"
+            >
               <Menu className="h-5 w-5" />
             </button>
-            <div className="hidden items-center gap-2 lg:flex">
+
+            {/* Desktop: user/org name */}
+            <div className="hidden lg:flex items-center gap-2">
               <User className="h-4 w-4 text-muted-foreground/50" />
               <span className="text-[13px] font-medium text-foreground/90">{profile.name}</span>
             </div>
-            <div className="flex items-center gap-2 lg:hidden">
-              <span className="text-[13px] font-semibold text-foreground">{getPageTitle(pathname)}</span>
-            </div>
+
+            {/* Mobile: page title */}
+            <span className="text-[13px] font-semibold text-foreground lg:hidden">
+              {getPageTitle(pathname)}
+            </span>
           </div>
 
-          <div className="mx-auto hidden max-w-[400px] flex-1 px-8 lg:block">
-            <label className="flex items-center gap-2.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-[7px] transition-colors focus-within:border-primary/30 focus-within:bg-[hsl(var(--surface-3))]">
+          {/* Center: search bar */}
+          <div className="mx-auto hidden max-w-sm flex-1 px-4 lg:block">
+            <label className="flex items-center gap-2.5 rounded-lg border border-border bg-surface-2 px-3 py-[7px] transition-colors focus-within:border-primary/30 focus-within:bg-surface-3">
               <Search className="h-3.5 w-3.5 text-muted-foreground/40" />
               <input
                 placeholder="Buscar páginas, clientes..."
-                className="w-full bg-transparent text-[12.5px] text-foreground outline-none placeholder:text-muted-foreground/55"
+                className="w-full bg-transparent text-[12.5px] text-foreground outline-none placeholder:text-muted-foreground/50"
               />
             </label>
           </div>
 
-          <div className="flex items-center gap-1">
-            <button className="relative flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-[hsl(var(--muted))] hover:text-foreground">
-              <Bell className="h-4 w-4" />
-              <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">4</span>
+          {/* Right: actions */}
+          <div className="ml-auto flex items-center gap-1">
+            {/* Mobile search */}
+            <button className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground lg:hidden">
+              <Search className="h-4 w-4" />
             </button>
 
+            {/* Notifications */}
+            <button className="relative flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground">
+              <Bell className="h-4 w-4" />
+              <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
+                4
+              </span>
+            </button>
+
+            {/* Theme toggle */}
             <button
               onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-[hsl(var(--muted))] hover:text-foreground"
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
               title={theme === 'dark' ? 'Tema claro' : 'Tema escuro'}
             >
               {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
 
+            {/* Avatar / user menu */}
             <div className="relative ml-1" ref={userMenuRef}>
               <button
                 onClick={() => setUserMenuOpen((o) => !o)}
-                className="flex h-8 w-8 items-center justify-center rounded-full transition-all hover:opacity-80"
+                className="flex h-9 w-9 items-center justify-center rounded-full transition-all hover:ring-2 hover:ring-primary/20"
               >
                 {avatarUrl ? (
                   <img src={avatarUrl} alt={profile.name} className="h-8 w-8 rounded-full object-cover" />
@@ -385,8 +489,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </button>
 
               {userMenuOpen && (
-                <div className="absolute right-0 top-[calc(100%+6px)] z-50 w-56 overflow-hidden rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-xl shadow-black/20">
-                  <div className="border-b border-[hsl(var(--border))] px-4 py-3">
+                <div className="absolute right-0 top-[calc(100%+6px)] z-50 w-56 overflow-hidden rounded-xl border border-border bg-surface-1 shadow-xl shadow-black/20 animate-scale-in">
+                  <div className="border-b border-border px-4 py-3">
                     <p className="truncate text-[13px] font-medium text-foreground">{profile.name}</p>
                     <p className="truncate text-[11.5px] text-muted-foreground">{profile.email}</p>
                   </div>
@@ -396,7 +500,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         fileInputRef.current?.click()
                         setUserMenuOpen(false)
                       }}
-                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-[hsl(var(--muted))] hover:text-foreground"
+                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
                     >
                       <Camera className="h-4 w-4" />
                       Alterar foto
@@ -404,19 +508,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     <Link
                       to="/settings"
                       onClick={() => setUserMenuOpen(false)}
-                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-[hsl(var(--muted))] hover:text-foreground"
+                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
                     >
                       <Settings className="h-4 w-4" />
                       Configurações
                     </Link>
                   </div>
-                  <div className="border-t border-[hsl(var(--border))] p-1.5">
+                  <div className="border-t border-border p-1.5">
                     <button
                       onClick={() => {
                         logout()
                         setUserMenuOpen(false)
                       }}
-                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-destructive/[0.06] hover:text-destructive"
+                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-destructive/[0.08] hover:text-destructive"
                     >
                       <LogOut className="h-4 w-4" />
                       Sair
@@ -425,10 +529,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </div>
               )}
             </div>
+
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
           </div>
         </header>
 
+        {/* Main content */}
         <main className="flex-1 overflow-y-auto scrollable-content bg-background">
           <div className="page-shell">{children}</div>
         </main>
