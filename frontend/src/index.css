@@ -504,6 +504,120 @@
     border: 1px solid hsla(220, 20%, 90%, 0.04);
   }
 
+  /* ── Alert / feedback surfaces ── */
+  .alert-surface {
+    border-radius: calc(var(--radius) + 0.125rem);
+    padding: var(--spacing-md);
+    font-size: clamp(0.8125rem, 0.78rem + 0.15vw, 0.875rem);
+    line-height: 1.55;
+  }
+
+  .alert-info {
+    background: hsl(var(--primary) / 0.06);
+    border: 1px solid hsl(var(--primary) / 0.12);
+    color: hsl(var(--foreground));
+  }
+
+  .alert-success {
+    background: hsl(var(--success) / 0.06);
+    border: 1px solid hsl(var(--success) / 0.12);
+    color: hsl(var(--foreground));
+  }
+
+  .alert-warning {
+    background: hsl(var(--warning) / 0.08);
+    border: 1px solid hsl(var(--warning) / 0.15);
+    color: hsl(var(--foreground));
+  }
+
+  .alert-error {
+    background: hsl(var(--destructive) / 0.06);
+    border: 1px solid hsl(var(--destructive) / 0.12);
+    color: hsl(var(--foreground));
+  }
+
+  /* ── Section title ── */
+  .section-title {
+    font-family: 'Sora', sans-serif;
+    font-size: clamp(0.9375rem, 0.9rem + 0.2vw, 1.0625rem);
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: hsl(var(--foreground));
+  }
+
+  .section-subtitle {
+    font-size: clamp(0.8125rem, 0.78rem + 0.15vw, 0.875rem);
+    color: hsl(var(--muted-foreground));
+    line-height: 1.5;
+  }
+
+  /* ── Empty state ── */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-2xl) var(--spacing-lg);
+    text-align: center;
+    border-radius: calc(var(--radius) + 0.25rem);
+    border: 1px dashed hsla(220, 20%, 90%, 0.08);
+    background: hsla(220, 20%, 90%, 0.015);
+  }
+
+  .empty-state__icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    display: grid;
+    place-items: center;
+    border-radius: 0.75rem;
+    background: hsl(var(--surface-2));
+    color: hsl(var(--muted-foreground));
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .empty-state__title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: hsl(var(--foreground));
+  }
+
+  .empty-state__description {
+    font-size: 0.8125rem;
+    color: hsl(var(--muted-foreground));
+    max-width: 32ch;
+    line-height: 1.6;
+  }
+
+  /* ── Confirm/warning modal ── */
+  .modal-confirm {
+    text-align: center;
+  }
+
+  .modal-confirm__icon {
+    width: 3rem;
+    height: 3rem;
+    margin: 0 auto var(--spacing-md);
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+  }
+
+  .modal-confirm__icon--warning {
+    background: hsl(var(--warning) / 0.1);
+    color: hsl(var(--warning));
+  }
+
+  .modal-confirm__icon--destructive {
+    background: hsl(var(--destructive) / 0.1);
+    color: hsl(var(--destructive));
+  }
+
+  .modal-confirm__icon--success {
+    background: hsl(var(--success) / 0.1);
+    color: hsl(var(--success));
+  }
+
   /* Stat card */
   .stat-card {
     position: relative;
