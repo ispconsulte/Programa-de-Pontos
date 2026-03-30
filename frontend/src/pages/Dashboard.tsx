@@ -280,7 +280,7 @@ export default function DashboardPage() {
                 <div className="hidden md:block">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-white/[0.04]">
+                      <tr className="border-b border-[hsl(var(--border))]">
                         <th className="px-5 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground lg:px-6">Cliente</th>
                         <th className="px-3 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Classificação</th>
                         <th className="px-3 py-3 text-center text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Pontos</th>
