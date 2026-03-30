@@ -221,6 +221,27 @@
   0%, 100% { transform: translateY(0); }
   50%      { transform: translateY(-3px); }
 }
+@keyframes logoFloat {
+  0%, 100% { transform: scale(1) translateY(0); }
+  50%      { transform: scale(1.03) translateY(-6px); }
+}
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50%      { opacity: 1; transform: scale(1.08); }
+}
+@keyframes sparkle {
+  0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
+  50%      { opacity: 1; transform: translate(-50%, -50%) scale(1.8); }
+}
+@keyframes orbitParticle {
+  0%   { transform: rotate(0deg) translateX(var(--orbit-r)) rotate(0deg); }
+  100% { transform: rotate(360deg) translateX(var(--orbit-r)) rotate(-360deg); }
+}
+@keyframes bgDrift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%      { transform: translate(30px, -20px) scale(1.05); }
+  66%      { transform: translate(-20px, 15px) scale(0.98); }
+}
 
 /* ── Global scrollbar styling ── */
 ::-webkit-scrollbar {
