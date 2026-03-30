@@ -52,7 +52,7 @@ export default function ClientsPage() {
   const [clients, setClients] = useState<Client[] | null>(null)
   const [searched, setSearched] = useState(false)
 
-  const runSearch = async () => {
+  const runSearch = useCallback(async () => {
     if (!query.trim()) return
     setLoading(true)
     setError('')
