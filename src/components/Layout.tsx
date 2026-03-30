@@ -206,9 +206,7 @@ export default function Layout({ children }: LayoutProps) {
       >
         {/* Logo */}
         <div className="flex h-16 flex-shrink-0 items-center gap-3 border-b border-white/[0.06] px-5">
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10">
-            <Trophy className="h-[18px] w-[18px] text-primary" />
-          </div>
+          <img src={logoBonifica} alt="Logo" className="h-9 w-9 flex-shrink-0 object-contain" />
           <div className="min-w-0">
             <p className="truncate text-sm font-bold tracking-tight text-white">Programa de Pontos</p>
             <p className="truncate text-[10px] font-medium text-muted-foreground">Gestão de bônus</p>
