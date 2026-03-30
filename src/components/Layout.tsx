@@ -52,6 +52,7 @@ const navGroups: NavGroup[] = [
         icon: LayoutDashboard,
         children: [
           { href: '/clients', label: 'Clientes', icon: Users },
+          { href: '/cliente-em-dia', label: 'Cliente em Dia', icon: Star },
         ],
       },
     ],
