@@ -1,6 +1,6 @@
 // @ts-nocheck
-import { useRef, Suspense } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
+import { useRef, Suspense, Component, type ReactNode } from 'react'
+import { Canvas, useFrame, useLoader } from '@react-three/fiber'
 import { Float, Environment } from '@react-three/drei'
 import * as THREE from 'three'
 
@@ -8,9 +8,21 @@ interface Logo3DProps {
   textureUrl: string
 }
 
+interface ErrorBoundaryState {
+  hasError: boolean
+}
+
+class Logo3DErrorBoundary extends Component<{ children: ReactNode; fallback: ReactNode }, ErrorBoundaryState> {
+  state: ErrorBoundaryState = { hasError: false }
+  static getDerivedStateFromError() { return { hasError: true } }
+  render() {
+    return this.state.hasError ? this.props.fallback : this.props.children
+  }
+}
+
 function LogoPlane({ textureUrl }: { textureUrl: string }) {
   const meshRef = useRef<THREE.Mesh>(null!)
-  const texture = new THREE.TextureLoader().load(textureUrl)
+  const texture = useLoader(THREE.TextureLoader, textureUrl)
   texture.colorSpace = THREE.SRGBColorSpace
 
   useFrame((state) => {
@@ -60,7 +72,7 @@ function GlowRing() {
   )
 }
 
-export default function Logo3DScene({ textureUrl }: Logo3DProps) {
+function Logo3DCanvas({ textureUrl }: Logo3DProps) {
   return (
     <Canvas
       camera={{ position: [0, 0, 5], fov: 45 }}
@@ -76,5 +88,17 @@ export default function Logo3DScene({ textureUrl }: Logo3DProps) {
         <Environment preset="city" />
       </Suspense>
     </Canvas>
+  )
+}
+
+export default function Logo3DScene({ textureUrl }: Logo3DProps) {
+  const fallback = (
+    <img src={textureUrl} alt="Logo" className="h-full w-full object-contain animate-float" />
+  )
+
+  return (
+    <Logo3DErrorBoundary fallback={fallback}>
+      <Logo3DCanvas textureUrl={textureUrl} />
+    </Logo3DErrorBoundary>
   )
 }
