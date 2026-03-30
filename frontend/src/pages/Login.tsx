@@ -166,11 +166,6 @@ export default function LoginPage() {
             </form>
 
             {/* Subtle footer */}
-            <p className="mt-7 text-center text-[11px] text-muted-foreground/30">
-              Precisa de acesso?{' '}
-              <Link to="/register" className="text-muted-foreground/45 underline underline-offset-2 transition-colors hover:text-muted-foreground/65">
-                Fale com o administrador
-              </Link>
             </p>
           </div>
 
