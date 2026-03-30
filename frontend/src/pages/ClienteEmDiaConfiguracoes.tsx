@@ -42,6 +42,8 @@ export default function ClienteEmDiaConfiguracoesPage() {
   const [dateFrom, setDateFrom] = useState(defaultDateRange.from)
   const [dateTo, setDateTo] = useState(defaultDateRange.to)
   const [syncing, setSyncing] = useState(false)
+  const [syncCooldown, setSyncCooldown] = useState(false)
+  const syncDisabled = syncing || syncCooldown
   const [syncFeedback, setSyncFeedback] = useState<{
     type: 'success' | 'error'
     message: string
