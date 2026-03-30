@@ -25,7 +25,7 @@ export default function AlertBanner({ variant = 'error', message, actionLabel, o
 
   return (
     <div className={cn(config.className, 'flex items-start gap-3', className)}>
-      <Icon className="mt-0.5 h-4 w-4 flex-shrink-0" />
+      <Icon className="alert-icon mt-0.5 h-4 w-4 flex-shrink-0" />
       <div className="min-w-0 flex-1">
         <p className="text-sm leading-relaxed">{message}</p>
         {actionLabel && onAction && (
