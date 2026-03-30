@@ -11,7 +11,7 @@ export default function Spinner({ size = 'md' }: SpinnerProps) {
 
   return (
     <div
-      className={`${sizeClasses[size]} rounded-full border-white/[0.06] border-t-primary animate-spin`}
+      className={`${sizeClasses[size]} rounded-full border-[hsl(var(--border))] border-t-primary animate-spin`}
     />
   )
 }

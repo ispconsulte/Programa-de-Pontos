@@ -13,9 +13,9 @@ const buttonVariants = cva(
         destructive: "bg-destructive text-destructive-foreground shadow-sm shadow-destructive/20 hover:bg-destructive/85 hover:shadow-md hover:shadow-destructive/25",
         success: "bg-[hsl(var(--success))] text-[hsl(var(--success-foreground))] shadow-sm shadow-emerald-500/20 hover:bg-[hsl(var(--success))]/85 hover:shadow-md hover:shadow-emerald-500/25",
         warning: "bg-[hsl(var(--warning))] text-[hsl(var(--warning-foreground))] shadow-sm shadow-amber-500/20 hover:bg-[hsl(var(--warning))]/85 hover:shadow-md hover:shadow-amber-500/25",
-        outline: "border border-white/[0.08] bg-transparent text-foreground hover:bg-white/[0.05] hover:border-white/[0.12]",
+        outline: "border border-[hsl(var(--border))] bg-transparent text-foreground hover:bg-[hsl(var(--muted))] hover:border-[hsl(var(--border))]",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "text-muted-foreground hover:bg-white/[0.05] hover:text-foreground",
+        ghost: "text-muted-foreground hover:bg-[hsl(var(--muted))] hover:text-foreground",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
