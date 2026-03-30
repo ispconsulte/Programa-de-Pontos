@@ -25,7 +25,8 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
         { icon: Sparkles, angle: 240, radius: 0.48, color: 'hsl(160 70% 48%)', dur: 26, label: '' },
       ]
 
-  /* ── Progress arc segments ── */
+  /* ── Orbit geometry ── */
+  const orbitRadius = size * 0.48
   const arcRadius = size * 0.35
   const arcCircumference = 2 * Math.PI * arcRadius
 
