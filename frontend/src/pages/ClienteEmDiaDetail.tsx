@@ -55,7 +55,7 @@ export default function ClienteEmDiaDetailPage() {
                 </div>
               </div>
 
-              <div className="min-w-[250px] rounded-2xl border border-emerald-500/15 bg-black/10 p-5 text-right backdrop-blur-sm">
+              <div className="min-w-[250px] rounded-2xl border border-emerald-500/15 bg-[hsl(var(--surface-2))] p-5 text-right">
                 <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                   Pontos disponiveis
                 </p>
