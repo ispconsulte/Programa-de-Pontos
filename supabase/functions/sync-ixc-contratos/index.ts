@@ -1,4 +1,6 @@
-import { createClient } from 'npm:@supabase/supabase-js@2'
+// deno-lint-ignore-file no-explicit-any
+import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2'
+type AnySupabase = SupabaseClient<any, any, any>
 
 type Json =
   | string

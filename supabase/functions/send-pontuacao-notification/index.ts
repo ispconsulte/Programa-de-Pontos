@@ -255,7 +255,7 @@ Deno.serve(async (request) => {
     return json(405, { error: 'Method not allowed' })
   }
 
-  const supabase = createClient(getEnv('SUPABASE_URL'), getEnv('SUPABASE_SERVICE_ROLE_KEY'))
+  const supabase: AnySupabase = createClient(getEnv('SUPABASE_URL'), getEnv('SUPABASE_SERVICE_ROLE_KEY'))
 
   try {
     const payload = (await request.json()) as NotificationPayload
