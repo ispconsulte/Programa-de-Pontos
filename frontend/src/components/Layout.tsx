@@ -79,7 +79,7 @@ function getPageTitle(pathname: string): string {
   return 'Painel'
 }
 
-function SidebarItem({ item, pathname, onNav }: { item: NavItem; pathname: string; onNav: () => void }) {
+function SidebarItem({ item, pathname, onNav, collapsed }: { item: NavItem; pathname: string; onNav: () => void; collapsed?: boolean }) {
   const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
   const hasChildren = !!item.children?.length
   const isChildActive = hasChildren && item.children!.some((c) => pathname === c.href || pathname.startsWith(c.href + '/'))
