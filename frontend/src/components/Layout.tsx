@@ -389,7 +389,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     </Link>
                   </div>
                   {/* Logout */}
-                  <div className="border-t border-white/[0.05] p-1.5">
+                  <div className="border-t border-[hsl(var(--border))] p-1.5">
                     <button
                       onClick={() => { logout(); setUserMenuOpen(false) }}
                       className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-destructive/[0.06] hover:text-destructive"
