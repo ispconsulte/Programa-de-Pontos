@@ -23,6 +23,7 @@ declare module 'fastify' {
   interface FastifyRequest {
     userId: string
     tenantId: string
+    userRole: string
     ixcConnectionId?: string
   }
 }
@@ -41,7 +42,7 @@ export async function authenticate(request: FastifyRequest, _reply: FastifyReply
 
   const { data: userRow, error: userRowError } = await supabaseAdmin
     .from('users')
-    .select('id, tenant_id')
+    .select('id, tenant_id, role')
     .eq('id', supabaseUser.id)
     .maybeSingle()
 
@@ -54,6 +55,13 @@ export async function authenticate(request: FastifyRequest, _reply: FastifyReply
 
   request.userId = userRow.id
   request.tenantId = userRow.tenant_id
+  request.userRole = userRow.role
+}
+
+export async function requireAdmin(request: FastifyRequest, _reply: FastifyReply): Promise<void> {
+  if (request.userRole !== 'admin') {
+    throw new AppError(403, 'Forbidden')
+  }
 }
 
 export async function loadTenantCredentials(tenantId: string): Promise<TenantCredentialsRow> {

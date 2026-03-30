@@ -5,7 +5,7 @@ import { encrypt } from '../../lib/crypto.js'
 import { activateTenantIxcConnection, listTenantIxcConnections, loadTenantIxcConnection } from '../../lib/ixc-connections.js'
 import { assertSafeUrl } from '../../lib/ssrf-guard.js'
 import { supabaseAdmin, toByteaHex } from '../../lib/supabase-admin.js'
-import { authenticate } from '../../middleware/auth.js'
+import { authenticate, requireAdmin } from '../../middleware/auth.js'
 
 const updateSchema = z.object({
   tenantName: z.string().min(1).optional(),
@@ -34,6 +34,7 @@ const connectionUpdateSchema = z.object({
 
 export async function settingsRoutes(app: FastifyInstance) {
   app.addHook('onRequest', authenticate)
+  app.addHook('preHandler', requireAdmin)
 
   app.get('/', {
     schema: {

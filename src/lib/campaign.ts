@@ -66,6 +66,16 @@ export interface RecordRewardRedemptionInput {
   createdBy?: string | null
 }
 
+export interface CampaignReward {
+  id: string
+  tenant_id: string
+  reward_code: string
+  name: string
+  points_required: number
+  active: boolean
+  metadata?: Record<string, unknown>
+}
+
 export interface CampaignLedgerSummary {
   earnedPoints: number
   spentPoints: number
@@ -742,6 +752,27 @@ export async function recordRewardRedemption(input: RecordRewardRedemptionInput)
   return existing.rows[0]
 }
 
+export async function getCampaignRewardByCode(tenantId: string, rewardCode: string): Promise<CampaignReward | null> {
+  const { rows } = await pool.query(
+    `
+      SELECT
+        id,
+        tenant_id,
+        reward_code,
+        name,
+        points_required,
+        active,
+        metadata
+      FROM campaign_rewards
+      WHERE tenant_id = $1 AND reward_code = $2 AND active = true
+      LIMIT 1
+    `,
+    [tenantId, rewardCode]
+  )
+
+  return (rows[0] as CampaignReward | undefined) ?? null
+}
+
 export async function listCampaignEvents(tenantId: string, options?: {
   customerId?: string
   customerProfileId?: string
@@ -1126,6 +1157,11 @@ export async function redeemCampaignReward(
     referenceDate?: string | Date
   }
 ) {
+  const reward = await getCampaignRewardByCode(input.tenantId, input.rewardCode)
+  if (!reward) {
+    throw new AppError(404, 'Reward not found')
+  }
+
   const summaryBefore = await getCustomerCampaignSummary(input.tenantId, {
     customerId: input.customerId,
     customerProfileId: input.customerProfileId ?? null,
@@ -1133,11 +1169,18 @@ export async function redeemCampaignReward(
     referenceDate: input.referenceDate,
   })
 
-  if (summaryBefore.availablePoints < input.pointsSpent) {
+  const pointsSpent = reward.points_required
+
+  if (summaryBefore.availablePoints < pointsSpent) {
     throw new AppError(409, 'Insufficient points for redemption')
   }
 
-  const redemption = await recordRewardRedemption(input)
+  const redemption = await recordRewardRedemption({
+    ...input,
+    pointsSpent,
+    status: input.status ?? 'requested',
+    description: input.description ?? describeRewardRedemption(reward.name, pointsSpent),
+  })
   const summaryAfter = await getCustomerCampaignSummary(input.tenantId, {
     customerId: input.customerId,
     customerProfileId: input.customerProfileId ?? null,
@@ -1149,8 +1192,8 @@ export async function redeemCampaignReward(
     redemption,
     summary: summaryAfter,
     observationEntry: buildRedemptionObservationEntry({
-      rewardCode: input.rewardCode,
-      pointsSpent: input.pointsSpent,
+      rewardCode: reward.reward_code,
+      pointsSpent,
       createdAt: redemption?.created_at,
       balanceAfter: summaryAfter.availablePoints,
     }),

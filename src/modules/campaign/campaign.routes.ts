@@ -18,7 +18,7 @@ import {
 import { ixcGet, type ClienteContratoItem, type ClienteItem, type FnAreceberItem } from '../../lib/ixc-proxy.js'
 import { resolveContractId } from '../../lib/business-rules.js'
 import { AppError } from '../../lib/app-error.js'
-import { authenticate, loadTenantCredentialsForRequest } from '../../middleware/auth.js'
+import { authenticate, loadTenantCredentialsForRequest, requireAdmin } from '../../middleware/auth.js'
 import { resolveRequestedIxcConnectionId } from '../../middleware/auth.js'
 
 type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue }
@@ -92,7 +92,6 @@ const redemptionCreateSchema = z.object({
   customerId: z.string().min(1),
   customerProfileId: z.string().uuid().optional(),
   rewardCode: z.string().min(1).max(120),
-  pointsSpent: z.coerce.number().int().positive(),
   idempotencyKey: z.string().min(1).max(128),
   status: z.string().min(1).optional(),
   description: z.string().optional(),
@@ -105,6 +104,7 @@ const paymentProcessSchema = z.object({
 
 export async function campaignRoutes(app: FastifyInstance) {
   app.addHook('onRequest', authenticate)
+  app.addHook('preHandler', requireAdmin)
 
   app.get('/customers', {
     schema: {
@@ -381,7 +381,7 @@ export async function campaignRoutes(app: FastifyInstance) {
       customerId: body.customerId,
       customerProfileId: body.customerProfileId,
       rewardCode: body.rewardCode,
-      pointsSpent: body.pointsSpent,
+      pointsSpent: 0,
       idempotencyKey: body.idempotencyKey,
       status: 'requested',
       payload: body.payload,

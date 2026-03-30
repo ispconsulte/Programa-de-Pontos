@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { authenticate, loadTenantCredentialsForRequest } from '../../middleware/auth.js'
+import { authenticate, loadTenantCredentialsForRequest, requireAdmin } from '../../middleware/auth.js'
 import { ixcList, ixcFindOneByField, type ClienteItem, type ClienteContratoItem } from '../../lib/ixc-proxy.js'
 import { AppError } from '../../lib/app-error.js'
 
@@ -104,6 +104,7 @@ async function searchClientsByName(
 
 export async function clientsRoutes(app: FastifyInstance) {
   app.addHook('onRequest', authenticate)
+  app.addHook('preHandler', requireAdmin)
 
   app.get('/', {
     schema: {

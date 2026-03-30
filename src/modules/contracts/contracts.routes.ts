@@ -1,10 +1,11 @@
 import type { FastifyInstance } from 'fastify'
-import { authenticate, loadTenantCredentialsForRequest } from '../../middleware/auth.js'
+import { authenticate, loadTenantCredentialsForRequest, requireAdmin } from '../../middleware/auth.js'
 import { ixcFindOneByField, type ClienteContratoItem } from '../../lib/ixc-proxy.js'
 import { AppError } from '../../lib/app-error.js'
 
 export async function contractsRoutes(app: FastifyInstance) {
   app.addHook('onRequest', authenticate)
+  app.addHook('preHandler', requireAdmin)
 
   app.get('/:id', {
     schema: {

@@ -27,8 +27,13 @@ function versionManifestPlugin() {
 }
 
 export default defineConfig(({ mode }) => ({
+  appType: "spa",
   server: {
-    host: "::",
+    host: "0.0.0.0",
+    port: 8080,
+  },
+  preview: {
+    host: "0.0.0.0",
     port: 8080,
   },
   plugins: [react(), versionManifestPlugin()],

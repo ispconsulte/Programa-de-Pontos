@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { authenticate, loadTenantCredentialsForRequest } from '../../middleware/auth.js'
+import { authenticate, loadTenantCredentialsForRequest, requireAdmin } from '../../middleware/auth.js'
 import { ixcList, ixcFindOneByField, type FnAreceberItem, type ClienteContratoItem, type ClienteItem } from '../../lib/ixc-proxy.js'
 import { getPaymentCategory, resolveContractId } from '../../lib/business-rules.js'
 import { AppError } from '../../lib/app-error.js'
@@ -193,6 +193,7 @@ async function loadReceivableById(
 
 export async function receivablesRoutes(app: FastifyInstance) {
   app.addHook('onRequest', authenticate)
+  app.addHook('preHandler', requireAdmin)
 
   app.get('/', {
     schema: {
