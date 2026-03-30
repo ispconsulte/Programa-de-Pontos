@@ -10,6 +10,7 @@ import {
   Menu,
   Search,
   Settings,
+  Star,
   Users,
   Wrench,
   X,
@@ -51,6 +52,7 @@ const navGroups: NavGroup[] = [
         icon: LayoutDashboard,
         children: [
           { href: '/clients', label: 'Clientes', icon: Users },
+          { href: '/cliente-em-dia', label: 'Cliente em Dia', icon: Star },
         ],
       },
     ],
@@ -86,6 +88,7 @@ const navGroups: NavGroup[] = [
 const pageTitles: Record<string, string> = {
   '/dashboard': 'Página Inicial',
   '/clients': 'Clientes',
+  '/cliente-em-dia': 'Cliente em Dia',
   '/receivables': 'Pontuação',
   '/settings': 'Ajustes',
 }
