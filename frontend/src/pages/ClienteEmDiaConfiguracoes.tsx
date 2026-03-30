@@ -283,9 +283,9 @@ export default function ClienteEmDiaConfiguracoesPage() {
                 )}
 
                 <div className="flex justify-end">
-                  <Button onClick={handleSyncNow} disabled={syncing} className="bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-70">
-                    <RefreshCw className="h-3.5 w-3.5" />
-                    {syncing ? 'Sincronizando...' : 'Sync now'}
+                  <Button onClick={handleSyncNow} disabled={syncDisabled} className="bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-70">
+                    <RefreshCw className={`h-3.5 w-3.5 transition-transform ${syncing ? 'animate-spin' : ''}`} />
+                    {syncing ? 'Sincronizando…' : 'Sync now'}
                   </Button>
                 </div>
               </CardContent>
