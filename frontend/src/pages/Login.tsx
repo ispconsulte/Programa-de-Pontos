@@ -54,11 +54,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="min-h-screen bg-background lg:grid lg:grid-cols-2">
       <LoginHero />
 
       {/* ── Right: Form panel ── */}
-      <div className="relative flex w-full flex-col items-center justify-center px-6 py-12 lg:w-[45%] lg:px-12 xl:px-16">
+      <div className="relative flex w-full flex-col items-center justify-center px-6 py-12 lg:min-h-screen lg:px-12 xl:px-16">
         {/* Subtle ambient wash */}
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_30%,hsl(217_91%_60%_/_0.025),transparent_70%)]" />
         {/* Left edge accent (desktop) */}

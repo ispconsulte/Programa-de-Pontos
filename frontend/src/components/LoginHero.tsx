@@ -16,7 +16,7 @@ export default function LoginHero() {
   const d = (ms: number) => ({ transitionDelay: `${ms}ms` })
 
   return (
-    <div className="relative hidden w-[55%] overflow-hidden lg:flex lg:flex-col lg:items-center lg:justify-center">
+    <div className="relative hidden min-h-screen overflow-hidden lg:flex lg:flex-col lg:items-center lg:justify-center">
       {/* ── Background ── */}
       <div className="absolute inset-0 bg-[linear-gradient(155deg,hsl(225,40%,3%)_0%,hsl(225,30%,5%)_45%,hsl(220,25%,7%)_100%)]" />
 
