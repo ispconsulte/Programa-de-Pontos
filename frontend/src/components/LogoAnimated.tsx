@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Coins, Gift, Sparkles } from 'lucide-react'
 
 interface LogoAnimatedProps {
   src: string
@@ -15,15 +14,6 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
     const t = setTimeout(() => setLoaded(true), 120)
     return () => clearTimeout(t)
   }, [])
-
-  /* ── Orbiting reward tokens ── */
-  const orbitTokens = compact
-    ? []
-    : [
-        { icon: Coins, angle: 0, radius: 0.72, color: 'hsl(var(--primary))', dur: 34, label: '' },
-        { icon: Gift, angle: 120, radius: 0.72, color: 'hsl(48 96% 58%)', dur: 34, label: '' },
-        { icon: Sparkles, angle: 240, radius: 0.72, color: 'hsl(160 70% 48%)', dur: 34, label: '' },
-      ]
 
   /* ── Orbit geometry ── */
   const orbitRadius = size * 0.72
@@ -67,7 +57,6 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
             </linearGradient>
           </defs>
 
-          {/* Outer orbit ring (where tokens travel) */}
           <circle
             cx={size / 2}
             cy={size / 2}
@@ -77,7 +66,6 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
             strokeWidth={1}
           />
 
-          {/* Inner progress track */}
           <circle
             cx={size / 2}
             cy={size / 2}
@@ -87,7 +75,6 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
             strokeWidth={2.5}
           />
 
-          {/* Animated progress arc */}
           <circle
             cx={size / 2}
             cy={size / 2}
@@ -106,46 +93,6 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
           />
         </svg>
       )}
-
-      {/* ── Orbiting reward tokens ── */}
-      {orbitTokens.map((token, i) => {
-        const Icon = token.icon
-        const tokenSize = size * 0.14
-        return (
-          <div
-            key={`orbit-${i}`}
-            className="absolute z-20 transition-all duration-1000"
-            style={{
-              width: size * token.radius * 2,
-              height: size * token.radius * 2,
-              opacity: loaded ? 1 : 0,
-              animation: loaded
-                ? `rewardOrbit ${token.dur}s linear ${i * 0.3}s infinite`
-                : 'none',
-              transform: loaded ? `rotate(${token.angle}deg)` : `rotate(${token.angle}deg) scale(0.5)`,
-            }}
-          >
-            {/* Token sits at top of the orbit circle */}
-            <div
-              className="absolute left-1/2 top-0 flex items-center justify-center rounded-xl border border-white/15 backdrop-blur-sm"
-              style={{
-                width: tokenSize,
-                height: tokenSize,
-                marginLeft: -tokenSize / 2,
-                marginTop: -tokenSize / 2,
-                background: `linear-gradient(135deg, ${token.color.replace(')', ' / 0.2)')}, hsl(var(--surface-1)))`,
-                boxShadow: `0 0 20px ${token.color.replace(')', ' / 0.15)')}, 0 8px 24px rgba(0,0,0,0.2)`,
-                animation: loaded ? `rewardOrbitCounter ${token.dur}s linear ${i * 0.3}s infinite` : 'none',
-              }}
-            >
-              <Icon
-                className="text-foreground/90"
-                style={{ width: tokenSize * 0.45, height: tokenSize * 0.45 }}
-              />
-            </div>
-          </div>
-        )
-      })}
 
       {/* ── Sparkle particles ── */}
       {!compact && [0, 1, 2, 3, 4].map((i) => {
@@ -168,7 +115,7 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
                   ? 'hsl(48 96% 58%)'
                   : 'hsl(160 70% 48%)',
               opacity: loaded ? 0.6 : 0,
-              boxShadow: `0 0 8px currentColor`,
+              boxShadow: '0 0 8px currentColor',
               animation: loaded
                 ? `rewardSparkle ${2.5 + i * 0.4}s ease-in-out ${i * 0.3}s infinite`
                 : 'none',
