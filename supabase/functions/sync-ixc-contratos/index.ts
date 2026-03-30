@@ -309,7 +309,7 @@ async function fetchIxcRecord<T>(
   return await response.json()
 }
 
-async function getAuthenticatedUser(supabase: ReturnType<typeof createClient>, request: Request): Promise<UserRow> {
+async function getAuthenticatedUser(supabase: AnySupabase, request: Request): Promise<UserRow> {
   const cronSecret = request.headers.get('x-cron-secret')
   const expectedCronSecret = Deno.env.get('CRON_SHARED_SECRET')
   if (cronSecret && expectedCronSecret && cronSecret === expectedCronSecret) {
@@ -346,7 +346,7 @@ async function getAuthenticatedUser(supabase: ReturnType<typeof createClient>, r
 }
 
 async function loadIxcConnection(
-  supabase: ReturnType<typeof createClient>,
+  supabase: AnySupabase,
   tenantId: string,
   requestedConnectionId?: string,
 ): Promise<IxcConnectionRow> {
@@ -369,7 +369,7 @@ async function loadIxcConnection(
 }
 
 async function ensureCustomerProfile(
-  supabase: ReturnType<typeof createClient>,
+  supabase: AnySupabase,
   tenantId: string,
   connectionId: string,
   customer: ClienteItem,

@@ -375,7 +375,7 @@ async function fetchIxcRecord<T>(
   return await response.json()
 }
 
-async function getAuthenticatedUser(supabase: ReturnType<typeof createClient>, request: Request): Promise<UserRow> {
+async function getAuthenticatedUser(supabase: AnySupabase, request: Request): Promise<UserRow> {
   const cronSecret = request.headers.get('x-cron-secret')
   const expectedCronSecret = Deno.env.get('CRON_SHARED_SECRET')
   if (cronSecret && expectedCronSecret && cronSecret === expectedCronSecret) {
@@ -416,7 +416,7 @@ async function getAuthenticatedUser(supabase: ReturnType<typeof createClient>, r
 }
 
 async function loadIxcConnection(
-  supabase: ReturnType<typeof createClient>,
+  supabase: AnySupabase,
   tenantId: string,
   requestedConnectionId?: string,
 ): Promise<IxcConnectionRow> {
@@ -439,7 +439,7 @@ async function loadIxcConnection(
 }
 
 async function upsertCampaignCustomer(
-  supabase: ReturnType<typeof createClient>,
+  supabase: AnySupabase,
   tenantId: string,
   customer: ClienteItem,
   contractId: string | null,
@@ -477,7 +477,7 @@ async function upsertCampaignCustomer(
 }
 
 async function acquireInvoiceLock(
-  supabase: ReturnType<typeof createClient>,
+  supabase: AnySupabase,
   tenantId: string,
   syncLogId: string,
   campaignCustomerId: string | null,
@@ -555,7 +555,7 @@ async function acquireInvoiceLock(
 }
 
 async function finalizeProcessedInvoice(
-  supabase: ReturnType<typeof createClient>,
+  supabase: AnySupabase,
   rowId: string,
   updates: Record<string, Json>,
 ) {
@@ -568,7 +568,7 @@ async function finalizeProcessedInvoice(
 }
 
 async function loadExistingCampaignCustomer(
-  supabase: ReturnType<typeof createClient>,
+  supabase: AnySupabase,
   tenantId: string,
   customerId: string,
 ): Promise<CampaignCustomerSummaryRow | null> {
@@ -584,7 +584,7 @@ async function loadExistingCampaignCustomer(
 }
 
 async function loadExistingInvoiceStatus(
-  supabase: ReturnType<typeof createClient>,
+  supabase: AnySupabase,
   tenantId: string,
   receivableId: string,
 ): Promise<'processado' | 'ignorado' | 'erro' | null> {

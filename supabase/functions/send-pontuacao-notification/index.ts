@@ -116,7 +116,7 @@ async function sha256(input: string): Promise<string> {
   return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
-async function getAuthenticatedUser(supabase: ReturnType<typeof createClient>, request: Request): Promise<UserRow> {
+async function getAuthenticatedUser(supabase: AnySupabase, request: Request): Promise<UserRow> {
   const authHeader = request.headers.get('Authorization')
   const jwt = authHeader?.startsWith('Bearer ') ? authHeader.slice('Bearer '.length).trim() : ''
   if (!jwt) throw new Error('Authorization header is required')
@@ -155,7 +155,7 @@ async function writeAuditLog(
 }
 
 async function loadCampaignCustomer(
-  supabase: ReturnType<typeof createClient>,
+  supabase: AnySupabase,
   tenantId: string,
   payload: NotificationPayload,
 ): Promise<CampaignCustomerRow | null> {
@@ -194,7 +194,7 @@ function buildContact(payload: NotificationPayload, campaignCustomer: CampaignCu
 }
 
 async function alreadySent(
-  supabase: ReturnType<typeof createClient>,
+  supabase: AnySupabase,
   tenantId: string,
   idempotencyKey: string,
 ): Promise<boolean> {
