@@ -102,40 +102,54 @@ function SidebarItem({
         <button
           onClick={() => setOpen(!open)}
           className={cn(
-            'group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-left transition-all duration-150',
+            'group relative flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left transition-all duration-200',
             active
-              ? 'bg-white/[0.06] text-foreground'
-              : 'text-muted-foreground hover:bg-white/[0.04] hover:text-foreground/90'
+              ? 'bg-primary/[0.08] text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]'
+              : 'text-muted-foreground/80 hover:bg-white/[0.05] hover:text-foreground active:scale-[0.98]'
           )}
         >
-          <Icon className={cn('h-[15px] w-[15px] flex-shrink-0', active ? 'text-primary' : 'text-muted-foreground/70 group-hover:text-muted-foreground')} />
-          <span className="flex-1 text-[13px] font-medium">{item.label}</span>
-          {open
-            ? <ChevronDown className="h-3 w-3 text-muted-foreground/50" />
-            : <ChevronRight className="h-3 w-3 text-muted-foreground/50" />}
-        </button>
-        {open && (
-          <div className="ml-[15px] mt-0.5 space-y-px border-l border-white/[0.05] pl-2.5">
-            {item.children!.map(child => {
-              const childActive = pathname === child.href || pathname.startsWith(child.href + '/')
-              return (
-                <Link
-                  key={child.href}
-                  to={child.href}
-                  onClick={onNav}
-                  className={cn(
-                    'block rounded-md px-2.5 py-[6px] text-[12.5px] font-medium transition-all duration-150',
-                    childActive
-                      ? 'bg-primary/[0.1] text-primary'
-                      : 'text-muted-foreground/70 hover:bg-white/[0.03] hover:text-foreground/80'
-                  )}
-                >
-                  {child.label}
-                </Link>
-              )
-            })}
+          {active && (
+            <div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-primary shadow-[0_0_8px_hsl(var(--primary)/0.4)]" />
+          )}
+          <div className={cn(
+            'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg transition-all duration-200',
+            active
+              ? 'bg-primary/15 text-primary'
+              : 'text-muted-foreground/60 group-hover:bg-white/[0.04] group-hover:text-muted-foreground'
+          )}>
+            <Icon className="h-[15px] w-[15px]" />
           </div>
-        )}
+          <span className={cn('flex-1 text-[13px] font-medium', active && 'text-foreground')}>{item.label}</span>
+          <div className={cn('transition-transform duration-200', open && 'rotate-180')}>
+            <ChevronDown className="h-3 w-3 text-muted-foreground/40" />
+          </div>
+        </button>
+        <div className={cn(
+          'ml-[22px] mt-1 space-y-0.5 border-l-[1.5px] border-white/[0.06] pl-3 transition-all duration-200',
+          open ? 'max-h-40 opacity-100' : 'max-h-0 overflow-hidden opacity-0'
+        )}>
+          {item.children!.map(child => {
+            const childActive = pathname === child.href || pathname.startsWith(child.href + '/')
+            return (
+              <Link
+                key={child.href}
+                to={child.href}
+                onClick={onNav}
+                className={cn(
+                  'relative block rounded-lg px-2.5 py-[6px] text-[12.5px] font-medium transition-all duration-200',
+                  childActive
+                    ? 'bg-primary/[0.08] text-primary'
+                    : 'text-muted-foreground/60 hover:bg-white/[0.04] hover:text-foreground/80 active:scale-[0.98]'
+                )}
+              >
+                {childActive && (
+                  <div className="absolute -left-[13.5px] top-1/2 h-2 w-[1.5px] -translate-y-1/2 rounded-full bg-primary" />
+                )}
+                {child.label}
+              </Link>
+            )
+          })}
+        </div>
       </div>
     )
   }
@@ -145,17 +159,24 @@ function SidebarItem({
       to={item.href}
       onClick={onNav}
       className={cn(
-        'group flex items-center gap-2.5 rounded-lg px-2.5 py-[7px] transition-all duration-150',
+        'group relative flex items-center gap-2.5 rounded-xl px-3 py-2 transition-all duration-200',
         isActive
-          ? 'bg-white/[0.06] text-foreground'
-          : 'text-muted-foreground hover:bg-white/[0.04] hover:text-foreground/90'
+          ? 'bg-primary/[0.08] text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]'
+          : 'text-muted-foreground/80 hover:bg-white/[0.05] hover:text-foreground active:scale-[0.98]'
       )}
     >
       {isActive && (
-        <div className="absolute left-0 h-4 w-[2px] rounded-r-full bg-primary" />
+        <div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-primary shadow-[0_0_8px_hsl(var(--primary)/0.4)]" />
       )}
-      <Icon className={cn('h-[15px] w-[15px] flex-shrink-0', isActive ? 'text-primary' : 'text-muted-foreground/70 group-hover:text-muted-foreground')} />
-      <span className="text-[13px] font-medium">{item.label}</span>
+      <div className={cn(
+        'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg transition-all duration-200',
+        isActive
+          ? 'bg-primary/15 text-primary'
+          : 'text-muted-foreground/60 group-hover:bg-white/[0.04] group-hover:text-muted-foreground'
+      )}>
+        <Icon className="h-[15px] w-[15px]" />
+      </div>
+      <span className={cn('text-[13px] font-medium', isActive && 'text-foreground')}>{item.label}</span>
     </Link>
   )
 }
