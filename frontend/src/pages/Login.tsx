@@ -162,18 +162,11 @@ export default function LoginPage() {
               </button>
             </form>
 
-            {/* Divider */}
-            <div className="mt-6 flex items-center gap-3">
-              <div className="h-px flex-1 bg-white/[0.06]" />
-              <span className="text-[10px] uppercase tracking-widest text-muted-foreground/40">ou</span>
-              <div className="h-px flex-1 bg-white/[0.06]" />
-            </div>
-
-            {/* Secondary action */}
-            <p className="mt-4 text-center text-[13px] text-muted-foreground/60">
-              Ainda não tem uma conta?{' '}
-              <Link to="/register" className="font-medium text-primary/80 transition-colors hover:text-primary">
-                Criar conta
+            {/* Secondary hint */}
+            <p className="mt-6 text-center text-[11px] text-muted-foreground/35">
+              Precisa de acesso?{' '}
+              <Link to="/register" className="text-muted-foreground/50 underline underline-offset-2 transition-colors hover:text-muted-foreground/70">
+                Fale com o administrador
               </Link>
             </p>
           </div>
