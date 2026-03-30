@@ -295,11 +295,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const initial = profile.name.trim().charAt(0).toUpperCase() || 'U'
 
-  /* ─── Sidebar widths ─── */
-  const SIDEBAR_W = 'w-64'       // 16rem expanded
-  const SIDEBAR_COLLAPSED_W = 'w-16' // 4rem collapsed
-  const SIDEBAR_MOBILE_W = 'w-72' // 18rem mobile drawer
-
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">
       {/* ── Mobile overlay ── */}
@@ -314,18 +309,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <aside
         className={cn(
           'fixed inset-y-0 left-0 z-50 flex flex-col border-r border-sidebar-border bg-sidebar transition-all duration-300 ease-out',
-          // Desktop
           'lg:relative lg:z-auto lg:translate-x-0',
-          collapsed ? `lg:${SIDEBAR_COLLAPSED_W}` : `lg:${SIDEBAR_W}`,
-          // Mobile drawer
           mobileOpen
-            ? `translate-x-0 ${SIDEBAR_MOBILE_W} shadow-2xl shadow-black/30`
-            : `-translate-x-full ${SIDEBAR_MOBILE_W}`
+            ? 'translate-x-0 shadow-2xl shadow-black/30'
+            : '-translate-x-full'
         )}
-        style={{
-          // Inline for precise transition
-          width: undefined,
-        }}
+        style={{ width: collapsed ? '4rem' : mobileOpen ? '18rem' : '16rem' }}
       >
         {/* Logo area */}
         <div className={cn(
