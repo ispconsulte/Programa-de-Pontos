@@ -318,8 +318,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       >
         {/* Logo area */}
         <div className={cn(
-          'flex h-16 flex-shrink-0 items-center border-b border-sidebar-border transition-all duration-300',
-          collapsed ? 'justify-center px-2' : 'px-5'
+          'flex h-20 flex-shrink-0 items-center justify-center border-b border-sidebar-border transition-all duration-300',
+          collapsed ? 'px-2' : 'px-5'
         )}>
           <img
             src={logoBonifica}
@@ -327,8 +327,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             className={cn(
               'flex-shrink-0 transition-all duration-300 object-contain',
               collapsed
-                ? 'h-10 w-10'
-                : 'h-14'
+                ? 'h-11 w-11'
+                : 'h-16'
             )}
             style={{ filter: 'drop-shadow(0 0 8px hsl(var(--primary) / 0.25))' }}
           />
