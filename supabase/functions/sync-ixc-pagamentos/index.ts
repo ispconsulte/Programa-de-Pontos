@@ -315,7 +315,7 @@ async function decryptIxcToken(encValue: string | Uint8Array | number[], ivValue
   const rawKey = Uint8Array.from(encryptionKey.match(/.{1,2}/g)!.map((pair) => Number.parseInt(pair, 16)))
   const key = await crypto.subtle.importKey('raw', rawKey, 'AES-GCM', false, ['decrypt'])
   const decrypted = await crypto.subtle.decrypt(
-    { name: 'AES-GCM', iv: parseBytea(ivValue) },
+    { name: 'AES-GCM', iv: parseBytea(ivValue) as unknown as BufferSource },
     key,
     parseBytea(encValue),
   )

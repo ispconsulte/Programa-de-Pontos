@@ -628,7 +628,7 @@ Deno.serve(async (request) => {
 
           if (updateCustomerError) throw new Error(updateCustomerError.message)
           counters.snapshotsUpdated += 1
-          if (existingCampaignCustomer.status !== derivedStatus) counters.statusUpdated += 1
+          if (existingCampaignCustomer && existingCampaignCustomer.status !== derivedStatus) counters.statusUpdated += 1
         }
 
         const profile = await ensureCustomerProfile(
