@@ -88,6 +88,7 @@ const navGroups: NavGroup[] = [
 const pageTitles: Record<string, string> = {
   '/dashboard': 'Página Inicial',
   '/clients': 'Clientes',
+  '/cliente-em-dia': 'Cliente em Dia',
   '/receivables': 'Pontuação',
   '/settings': 'Ajustes',
 }
