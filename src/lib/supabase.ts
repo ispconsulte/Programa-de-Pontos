@@ -61,7 +61,7 @@ export async function supabasePasswordSignIn(email: string, password: string): P
 
   const data = await response.json().catch(() => ({}))
   if (!response.ok || !data?.access_token) {
-    throw new AppError(401, data?.msg || data?.error_description || data?.error || 'Unauthorized')
+    throw new AppError(401, 'Unauthorized')
   }
 
   return data as SupabaseTokenResponse
@@ -80,7 +80,7 @@ export async function supabaseRefreshSession(refreshToken: string): Promise<Supa
 
   const data = await response.json().catch(() => ({}))
   if (!response.ok || !data?.access_token) {
-    throw new AppError(401, data?.msg || data?.error_description || data?.error || 'Unauthorized')
+    throw new AppError(401, 'Unauthorized')
   }
 
   return data as SupabaseTokenResponse

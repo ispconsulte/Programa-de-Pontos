@@ -23,6 +23,10 @@ function ensureKeys(): { privateKey: string; publicKey: string } {
   const pubPath = process.env.JWT_PUBLIC_KEY_PATH ?? './keys/public.pem'
 
   if (!existsSync(privPath) || !existsSync(pubPath)) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('JWT key files must be provisioned in production')
+    }
+
     mkdirSync(dirname(privPath), { recursive: true })
     mkdirSync(dirname(pubPath), { recursive: true })
 
@@ -51,6 +55,7 @@ function ensureKeys(): { privateKey: string; publicKey: string } {
 export async function buildApp(redisClient?: Redis) {
   const { privateKey, publicKey } = ensureKeys()
   const useRedisRateLimit = process.env.NODE_ENV === 'production'
+  const isProduction = process.env.NODE_ENV === 'production'
 
   const redis =
     useRedisRateLimit
@@ -82,12 +87,26 @@ export async function buildApp(redisClient?: Redis) {
     .map(s => s.trim())
     .filter(Boolean)
 
+  if (isProduction && allowedOrigins.length === 0) {
+    throw new Error('ALLOWED_ORIGINS must be configured in production')
+  }
+
   await app.register(cors, {
-    origin: process.env.NODE_ENV === 'production'
-      ? (allowedOrigins.length > 0 ? allowedOrigins : true)
-      : true,
+    origin(origin, callback) {
+      if (!isProduction) {
+        callback(null, true)
+        return
+      }
+
+      if (!origin) {
+        callback(null, true)
+        return
+      }
+
+      callback(null, allowedOrigins.includes(origin))
+    },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-IXC-Connection-Id'],
     credentials: true,
   })
 
@@ -123,7 +142,7 @@ export async function buildApp(redisClient?: Redis) {
   }
 
   await app.register(helmet, {
-    contentSecurityPolicy: false, // disabled so Swagger UI carrega os assets inline
+    contentSecurityPolicy: isProduction ? undefined : false,
     hsts: { maxAge: 31536000, includeSubDomains: true },
   })
 
@@ -180,11 +199,30 @@ export async function buildApp(redisClient?: Redis) {
       asAppErr.name === 'AppError' ||
       (typeof asAppErr.statusCode === 'number' && asAppErr.statusCode >= 400 && asAppErr.statusCode < 600)
     ) {
+      if (asAppErr.statusCode >= 500) {
+        app.log.error(error)
+        return reply.status(asAppErr.statusCode).send({ error: 'Internal Server Error' })
+      }
+
       return reply.status(asAppErr.statusCode).send({ error: asAppErr.message })
     }
+
     if (error.validation) {
-      return reply.status(400).send({ error: 'Validation error', details: error.message })
+      const details = Array.isArray(error.validation)
+        ? error.validation.map((issue) => ({
+            field:
+              typeof issue.instancePath === 'string' && issue.instancePath
+                ? issue.instancePath
+                : issue.params && typeof issue.params.missingProperty === 'string'
+                  ? issue.params.missingProperty
+                  : undefined,
+            message: typeof issue.message === 'string' ? issue.message : 'Invalid value',
+          }))
+        : undefined
+
+      return reply.status(400).send({ error: 'Validation error', details })
     }
+
     app.log.error(error)
     const message =
       process.env.NODE_ENV === 'production' ? 'Internal Server Error' : error.message

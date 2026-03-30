@@ -55,7 +55,7 @@ async function ensureTenantForSupabaseUser(userId: string, email: string, tenant
   }
 
   if ((legacy?.length ?? 0) > 0) {
-    throw new AppError(409, 'User email already exists with legacy auth id. Contact support to migrate this account.')
+    throw new AppError(409, 'User already exists')
   }
 
   const tenantName = tenantNameOverride?.trim() || (email.split('@')[1] ?? email)

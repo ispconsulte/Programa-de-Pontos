@@ -1,5 +1,6 @@
 import { supabase } from './supabase-client'
 import { getAccessToken, refreshAccessToken } from './auth-client'
+import { emitAppNavigate } from '@/components/NavigationEventBridge'
 
 const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/+$/, '')
 const inflightGetRequests = new Map<string, Promise<Response>>()
@@ -188,7 +189,7 @@ export async function apiFetch(path: string, options?: RequestInit): Promise<Res
 
     if (res.status === 401) {
       await supabase.auth.signOut()
-      window.location.href = '/login'
+      emitAppNavigate({ to: '/login', replace: true })
       throw new ApiRequestError('Sua sessao expirou. Faca login novamente.', 'auth', 401)
     }
   }

@@ -49,7 +49,7 @@ export async function settingsRoutes(app: FastifyInstance) {
       .maybeSingle()
 
     if (error) {
-      return reply.status(500).send({ error: error.message })
+      throw new AppError(500, 'Failed to load tenant settings')
     }
     if (!data) {
       return reply.status(404).send({ error: 'Tenant not found' })

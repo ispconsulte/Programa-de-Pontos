@@ -1,5 +1,6 @@
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './supabase-client'
+import { emitAppNavigate } from '@/components/NavigationEventBridge'
 
 let cachedAccessToken: string | null | undefined
 let sessionLoadPromise: Promise<string | null> | null = null
@@ -58,5 +59,5 @@ export async function isAuthenticatedAsync(): Promise<boolean> {
 export async function logout() {
   syncSessionCache(null)
   await supabase.auth.signOut()
-  window.location.replace('/login')
+  emitAppNavigate({ to: '/login', replace: true })
 }

@@ -4,13 +4,13 @@ import {
   ChevronDown,
   ChevronRight,
   Coins,
+  Gift,
   Home,
   LayoutDashboard,
   LogOut,
   Menu,
   Search,
   Settings,
-  Star,
   Users,
   Wrench,
   X,
@@ -52,7 +52,7 @@ const navGroups: NavGroup[] = [
         icon: LayoutDashboard,
         children: [
           { href: '/clients', label: 'Clientes', icon: Users },
-          { href: '/cliente-em-dia', label: 'Cliente em Dia', icon: Star },
+          { href: '/cliente-em-dia', label: 'Cliente em Dia', icon: Gift },
         ],
       },
     ],
@@ -301,7 +301,7 @@ export default function Layout({ children }: LayoutProps) {
 
         {/* Page content */}
         <main className="flex-1 overflow-y-auto scrollable-content bg-background">
-          <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+          <div className="page-shell">
             {children}
           </div>
         </main>

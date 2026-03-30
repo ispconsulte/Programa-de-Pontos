@@ -17,8 +17,22 @@ import {
 } from '../../lib/campaign.js'
 import { ixcGet, type ClienteContratoItem, type ClienteItem, type FnAreceberItem } from '../../lib/ixc-proxy.js'
 import { resolveContractId } from '../../lib/business-rules.js'
+import { AppError } from '../../lib/app-error.js'
 import { authenticate, loadTenantCredentialsForRequest } from '../../middleware/auth.js'
 import { resolveRequestedIxcConnectionId } from '../../middleware/auth.js'
+
+type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue }
+
+const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
+  z.union([
+    z.string(),
+    z.number(),
+    z.boolean(),
+    z.null(),
+    z.array(jsonValueSchema),
+    z.record(jsonValueSchema),
+  ])
+)
 
 const eventsQuerySchema = z.object({
   customerId: z.string().optional(),
@@ -42,7 +56,7 @@ const identityResolveSchema = z.object({
   documentNumber: z.string().optional(),
   email: z.string().email().optional(),
   phone: z.string().optional(),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(jsonValueSchema).optional(),
 })
 
 const rulesQuerySchema = z.object({
@@ -58,11 +72,15 @@ const eventCreateSchema = z.object({
   sourceReferenceType: z.string().optional(),
   sourceReferenceId: z.string().optional(),
   occurredAt: z.string().optional(),
-  idempotencyKey: z.string().min(1),
+  idempotencyKey: z.string().min(1).max(128),
   points: z.coerce.number().int().optional(),
   description: z.string().optional(),
   ruleCode: z.string().optional(),
-  payload: z.record(z.any()).optional(),
+  payload: z.record(jsonValueSchema).optional(),
+}).refine((data) => data.customerId ?? data.customerProfileId, {
+  message: 'customerId or customerProfileId is required',
+}).refine((data) => (!data.sourceReferenceType && !data.sourceReferenceId) || (data.sourceReferenceType && data.sourceReferenceId), {
+  message: 'sourceReferenceType and sourceReferenceId must be provided together',
 })
 
 const paymentSimulationSchema = z.object({
@@ -73,12 +91,12 @@ const paymentSimulationSchema = z.object({
 const redemptionCreateSchema = z.object({
   customerId: z.string().min(1),
   customerProfileId: z.string().uuid().optional(),
-  rewardCode: z.string().min(1),
+  rewardCode: z.string().min(1).max(120),
   pointsSpent: z.coerce.number().int().positive(),
-  idempotencyKey: z.string().min(1),
+  idempotencyKey: z.string().min(1).max(128),
   status: z.string().min(1).optional(),
   description: z.string().optional(),
-  payload: z.record(z.any()).optional(),
+  payload: z.record(jsonValueSchema).optional(),
 })
 
 const paymentProcessSchema = z.object({
@@ -253,6 +271,14 @@ export async function campaignRoutes(app: FastifyInstance) {
     },
   }, async (request, reply) => {
     const body = eventCreateSchema.parse(request.body)
+
+    if (body.eventSource !== 'manual') {
+      throw new AppError(400, 'Only manual campaign events can be created from this endpoint')
+    }
+    if (body.points !== undefined || body.ruleCode || body.description) {
+      throw new AppError(400, 'Sensitive event fields are calculated server-side')
+    }
+
     const item = await recordCampaignEvent({
       tenantId: request.tenantId,
       ixcConnectionId: resolveRequestedIxcConnectionId(request) ?? request.ixcConnectionId ?? null,
@@ -260,14 +286,11 @@ export async function campaignRoutes(app: FastifyInstance) {
       customerProfileId: body.customerProfileId,
       contractId: body.contractId,
       eventType: body.eventType,
-      eventSource: body.eventSource,
+      eventSource: 'manual',
       sourceReferenceType: body.sourceReferenceType,
       sourceReferenceId: body.sourceReferenceId,
       occurredAt: body.occurredAt,
       idempotencyKey: body.idempotencyKey,
-      points: body.points,
-      description: body.description,
-      ruleCode: body.ruleCode,
       payload: body.payload,
       createdBy: request.userId,
     })
@@ -344,6 +367,14 @@ export async function campaignRoutes(app: FastifyInstance) {
     },
   }, async (request, reply) => {
     const body = redemptionCreateSchema.parse(request.body)
+
+    if (body.status && body.status !== 'requested') {
+      throw new AppError(400, 'Redemption status is controlled server-side')
+    }
+    if (body.description) {
+      throw new AppError(400, 'Redemption description is controlled server-side')
+    }
+
     const redemption = await redeemCampaignReward({
       tenantId: request.tenantId,
       ixcConnectionId: resolveRequestedIxcConnectionId(request) ?? request.ixcConnectionId ?? null,
@@ -352,8 +383,7 @@ export async function campaignRoutes(app: FastifyInstance) {
       rewardCode: body.rewardCode,
       pointsSpent: body.pointsSpent,
       idempotencyKey: body.idempotencyKey,
-      status: body.status,
-      description: body.description,
+      status: 'requested',
       payload: body.payload,
       createdBy: request.userId,
     })
