@@ -40,12 +40,8 @@ const navSections: NavSection[] = [
     label: '',
     items: [
       { href: '/dashboard', label: 'Início', icon: Home },
-    ],
-  },
-  {
-    label: 'Gestão',
-    items: [
       { href: '/clients', label: 'Clientes', icon: Users },
+      { href: '/receivables', label: 'Pontuação', icon: Coins },
       {
         href: '/cliente-em-dia',
         label: 'Cliente em Dia',
@@ -58,13 +54,7 @@ const navSections: NavSection[] = [
     ],
   },
   {
-    label: 'Ferramentas',
-    items: [
-      { href: '/receivables', label: 'Pontuação', icon: Coins },
-    ],
-  },
-  {
-    label: 'Sistema',
+    label: '',
     items: [
       { href: '/settings', label: 'Configurações', icon: Settings },
     ],
