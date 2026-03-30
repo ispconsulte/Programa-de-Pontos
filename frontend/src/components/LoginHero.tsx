@@ -1,18 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Gift, Trophy, TrendingUp, Crown, Gem, Star } from 'lucide-react'
+import { Crown, Gem, Star } from 'lucide-react'
 import LogoAnimated from '@/components/LogoAnimated'
 import logoBonifica from '@/assets/logo-bonifica.png'
 
 const tiers = [
-  { name: 'Bronze', pts: '500', icon: Star, accent: 'hsl(30 70% 50%)' },
-  { name: 'Prata', pts: '1.500', icon: Gem, accent: 'hsl(220 20% 70%)' },
-  { name: 'Ouro', pts: '5.000', icon: Crown, accent: 'hsl(45 95% 55%)' },
-]
-
-const features = [
-  { icon: TrendingUp, label: 'Pontos automáticos' },
-  { icon: Trophy, label: 'Campanhas ativas' },
-  { icon: Gift, label: 'Catálogo de brindes' },
+  { name: 'Bronze', icon: Star, accent: 'hsl(30 70% 50%)' },
+  { name: 'Prata', icon: Gem, accent: 'hsl(220 20% 70%)' },
+  { name: 'Ouro', icon: Crown, accent: 'hsl(45 95% 55%)' },
 ]
 
 export default function LoginHero() {
@@ -69,45 +63,23 @@ export default function LoginHero() {
           Acumule pontos, suba de nível e resgate brindes exclusivos. Tudo automático, direto no seu painel.
         </p>
 
-        {/* ── Tier cards ── */}
+        {/* ── Tier indicators ── */}
         <div
-          className="mb-10 flex w-full max-w-[360px] items-end justify-center gap-2 transition-all duration-700"
-          style={{ opacity: v ? 1 : 0, transform: v ? 'translateY(0)' : 'translateY(16px)', ...d(450) }}
+          className="flex items-center justify-center gap-4 transition-all duration-700"
+          style={{ opacity: v ? 1 : 0, transform: v ? 'translateY(0)' : 'translateY(10px)', ...d(450) }}
         >
           {tiers.map((tier, i) => {
             const Icon = tier.icon
-            const h = [82, 102, 124][i]
             return (
-              <div
-                key={tier.name}
-                className="relative flex flex-1 flex-col items-center justify-end rounded-xl border border-white/[0.06] bg-white/[0.015] p-2.5 transition-colors duration-300 hover:border-white/[0.1] hover:bg-white/[0.025]"
-                style={{ height: h }}
-              >
-                <div className="absolute inset-x-0 top-0 h-px rounded-t-xl opacity-60" style={{ background: `linear-gradient(90deg, transparent 10%, ${tier.accent}, transparent 90%)` }} />
-                <div className="mb-1 flex h-6 w-6 items-center justify-center rounded-md" style={{ background: `${tier.accent}12` }}>
-                  <Icon className="h-3 w-3" style={{ color: tier.accent }} />
+              <div key={tier.name} className="flex items-center gap-3">
+                {i > 0 && <div className="h-px w-5 bg-white/[0.06]" />}
+                <div className="flex items-center gap-1.5">
+                  <Icon className="h-3 w-3" style={{ color: tier.accent, opacity: 0.8 }} />
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-foreground/50">{tier.name}</span>
                 </div>
-                <span className="text-[9px] font-bold uppercase tracking-wider text-foreground/75">{tier.name}</span>
-                <span className="mt-px text-[8px] text-muted-foreground/60">{tier.pts} pts</span>
-                {i < tiers.length - 1 && (
-                  <div className="absolute -right-[5px] top-1/2 z-20 h-px w-2.5 bg-white/[0.08]" />
-                )}
               </div>
             )
           })}
-        </div>
-
-        {/* ── Feature chips ── */}
-        <div
-          className="flex flex-wrap items-center justify-center gap-1.5 transition-all duration-700"
-          style={{ opacity: v ? 1 : 0, transform: v ? 'translateY(0)' : 'translateY(8px)', ...d(650) }}
-        >
-          {features.map(({ icon: Icon, label }) => (
-            <div key={label} className="flex items-center gap-1.5 rounded-full border border-white/[0.05] bg-white/[0.015] px-2.5 py-1 text-[10px] font-medium text-foreground/60">
-              <Icon className="h-2.5 w-2.5 text-primary/60" />
-              {label}
-            </div>
-          ))}
         </div>
       </div>
     </div>
