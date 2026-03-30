@@ -1,4 +1,5 @@
-import { useState, FormEvent } from 'react'
+import { useState, useCallback, FormEvent } from 'react'
+import { useThrottledAction } from '@/hooks/useThrottledAction'
 import { Link } from 'react-router-dom'
 import { ArrowRight, RefreshCw, Search, Users } from 'lucide-react'
 import Layout from '@/components/Layout'
@@ -51,7 +52,7 @@ export default function ClientsPage() {
   const [clients, setClients] = useState<Client[] | null>(null)
   const [searched, setSearched] = useState(false)
 
-  const runSearch = async () => {
+  const runSearch = useCallback(async () => {
     if (!query.trim()) return
     setLoading(true)
     setError('')
@@ -77,7 +78,9 @@ export default function ClientsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [query, searchType])
+
+  const [throttledSearch, refreshBusy] = useThrottledAction(runSearch)
 
   const handleSearch = async (e: FormEvent) => {
     e.preventDefault()
@@ -132,8 +135,8 @@ export default function ClientsPage() {
                     Buscar
                   </Button>
                   {searched && (
-                    <Button type="button" variant="outline" size="icon" onClick={() => void runSearch()}>
-                      <RefreshCw className="h-3.5 w-3.5" />
+                    <Button type="button" variant="outline" size="icon" disabled={refreshBusy} onClick={() => void throttledSearch()}>
+                      <RefreshCw className={`h-3.5 w-3.5 transition-transform ${refreshBusy ? 'animate-spin' : ''}`} />
                     </Button>
                   )}
                 </div>

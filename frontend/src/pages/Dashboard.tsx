@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useThrottledAction } from '@/hooks/useThrottledAction'
 import { Link } from 'react-router-dom'
 import {
   ArrowRight,
@@ -151,6 +152,8 @@ export default function DashboardPage() {
     }
   }, [])
 
+  const [throttledFetch, refreshBusy] = useThrottledAction(fetchData)
+
   useEffect(() => {
     void fetchData()
   }, [fetchData])
@@ -163,9 +166,9 @@ export default function DashboardPage() {
           title="Painel"
           subtitle="Visão geral da operação"
           actions={
-            <Button variant="outline" size="sm" onClick={() => void fetchData()}>
-              <RefreshCw className="h-3.5 w-3.5" />
-              Atualizar
+            <Button variant="outline" size="sm" disabled={refreshBusy} onClick={() => void throttledFetch()}>
+              <RefreshCw className={`h-3.5 w-3.5 transition-transform ${refreshBusy ? 'animate-spin' : ''}`} />
+              {refreshBusy ? 'Atualizando…' : 'Atualizar'}
             </Button>
           }
         />

@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
+import { useThrottledAction } from '@/hooks/useThrottledAction'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Coins, RefreshCw, Search, ShieldAlert } from 'lucide-react'
 import Layout from '@/components/Layout'
@@ -191,6 +192,8 @@ export default function ReceivablesPage() {
     }
   }, [page, limit, appliedFilters])
 
+  const [throttledFetch, refreshBusy] = useThrottledAction(fetchReceivables)
+
   useEffect(() => {
     void fetchReceivables()
   }, [fetchReceivables])
@@ -295,8 +298,8 @@ export default function ReceivablesPage() {
                     <Search className="h-3.5 w-3.5" />
                     Aplicar
                   </Button>
-                  <Button variant="outline" size="icon" className="min-h-[2.75rem] min-w-[2.75rem]" onClick={() => void fetchReceivables()}>
-                    <RefreshCw className="h-3.5 w-3.5" />
+                  <Button variant="outline" size="icon" className="min-h-[2.75rem] min-w-[2.75rem]" disabled={refreshBusy} onClick={() => void throttledFetch()}>
+                    <RefreshCw className={`h-3.5 w-3.5 transition-transform ${refreshBusy ? 'animate-spin' : ''}`} />
                   </Button>
                 </div>
               </div>

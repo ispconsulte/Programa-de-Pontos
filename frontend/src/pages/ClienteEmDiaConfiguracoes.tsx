@@ -42,6 +42,8 @@ export default function ClienteEmDiaConfiguracoesPage() {
   const [dateFrom, setDateFrom] = useState(defaultDateRange.from)
   const [dateTo, setDateTo] = useState(defaultDateRange.to)
   const [syncing, setSyncing] = useState(false)
+  const [syncCooldown, setSyncCooldown] = useState(false)
+  const syncDisabled = syncing || syncCooldown
   const [syncFeedback, setSyncFeedback] = useState<{
     type: 'success' | 'error'
     message: string
@@ -111,6 +113,9 @@ export default function ClienteEmDiaConfiguracoesPage() {
       })
     } finally {
       setSyncing(false)
+      // Cooldown to prevent spam
+      setSyncCooldown(true)
+      setTimeout(() => setSyncCooldown(false), 3000)
     }
   }
 
@@ -122,9 +127,9 @@ export default function ClienteEmDiaConfiguracoesPage() {
           title="Configurações da Campanha"
           subtitle="Ajuste calendário, conexão IXC e rotinas de sincronização do módulo Cliente em Dia em uma única visão administrativa."
           actions={
-            <Button onClick={handleSyncNow} disabled={syncing} className="bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-70">
-              <RefreshCw className="h-3.5 w-3.5" />
-              {syncing ? 'Sincronizando...' : 'Sync now'}
+            <Button onClick={handleSyncNow} disabled={syncDisabled} className="bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-70">
+              <RefreshCw className={`h-3.5 w-3.5 transition-transform ${syncing ? 'animate-spin' : ''}`} />
+              {syncing ? 'Sincronizando…' : 'Sync now'}
             </Button>
           }
         />
@@ -278,9 +283,9 @@ export default function ClienteEmDiaConfiguracoesPage() {
                 )}
 
                 <div className="flex justify-end">
-                  <Button onClick={handleSyncNow} disabled={syncing} className="bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-70">
-                    <RefreshCw className="h-3.5 w-3.5" />
-                    {syncing ? 'Sincronizando...' : 'Sync now'}
+                  <Button onClick={handleSyncNow} disabled={syncDisabled} className="bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-70">
+                    <RefreshCw className={`h-3.5 w-3.5 transition-transform ${syncing ? 'animate-spin' : ''}`} />
+                    {syncing ? 'Sincronizando…' : 'Sync now'}
                   </Button>
                 </div>
               </CardContent>
