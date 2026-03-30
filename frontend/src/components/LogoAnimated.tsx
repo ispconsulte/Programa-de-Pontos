@@ -110,7 +110,7 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
       {/* ── Orbiting reward tokens ── */}
       {orbitTokens.map((token, i) => {
         const Icon = token.icon
-        const tokenSize = size * 0.12
+        const tokenSize = size * 0.14
         return (
           <div
             key={`orbit-${i}`}
