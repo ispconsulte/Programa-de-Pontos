@@ -248,19 +248,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* ── Sidebar ── */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-[240px] flex-col border-r border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar))] transition-transform duration-300 ease-out lg:relative lg:z-auto lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 flex w-[248px] flex-col border-r border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar))] shadow-xl shadow-black/5 transition-transform duration-300 ease-out lg:relative lg:z-auto lg:translate-x-0 lg:shadow-none',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         {/* ── Brand ── */}
-        <div className="flex h-[80px] flex-shrink-0 items-center justify-center px-5">
+        <div className="flex h-[92px] flex-shrink-0 items-center justify-center px-5">
           <img
             src={logoBonifica}
             alt="Bonifica"
-            className="h-[3.5rem] w-[3.5rem] flex-shrink-0"
+            className="h-[4.5rem] w-auto max-w-[4.5rem] flex-shrink-0"
             style={{
               objectFit: 'contain',
-              filter: 'drop-shadow(0 0 10px hsl(var(--primary) / 0.35))',
+              filter: 'drop-shadow(0 0 12px hsl(var(--primary) / 0.35))',
             }}
           />
           <button onClick={closeSidebar} className="absolute right-3 rounded-md p-1 text-muted-foreground hover:text-foreground lg:hidden">
@@ -274,11 +274,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             {navSections.map((section, si) => (
               <div key={section.label || si}>
                 {section.label && (
-                  <p className="mb-2 px-3 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/30">
+                  <p className="mb-2 px-3 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/70">
                     {section.label}
                   </p>
                 )}
-                <div className="space-y-0.5">
+                <div className="space-y-1">
                   {section.items.map(item => (
                     <SidebarItem key={item.href} item={item} pathname={pathname} onNav={closeSidebar} />
                   ))}
@@ -292,10 +292,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="flex-shrink-0 px-4 pb-4">
           <button
             onClick={() => logout()}
-            className="group flex w-full items-center gap-3 rounded-lg px-3 py-[9px] text-[13.5px] font-medium text-muted-foreground/50 transition-all duration-150 hover:text-destructive"
+            className="group flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-[13.5px] font-medium text-muted-foreground transition-all duration-150 hover:bg-destructive/[0.06] hover:text-destructive"
           >
             <LogOut className="h-[18px] w-[18px] transition-colors group-hover:text-destructive" />
             <span>Sair</span>
+          </button>
           </button>
         </div>
       </aside>
