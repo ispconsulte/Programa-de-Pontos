@@ -233,10 +233,11 @@ export default function ReceivablesPage() {
 
         <div className="space-y-5">
           <Card>
-            <CardContent className="p-5">
-              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                <div className="space-y-2">
-                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Situação do pagamento</label>
+            <CardContent className="p-4 sm:p-5">
+              {/* Row 1: Main filters */}
+              <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Situação</label>
                   <Select value={category} onValueChange={setCategory}>
                     <SelectTrigger><SelectValue placeholder="Todas" /></SelectTrigger>
                     <SelectContent>
@@ -247,23 +248,26 @@ export default function ReceivablesPage() {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Vencimento de</label>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">De</label>
                   <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="[color-scheme:dark]" />
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Vencimento até</label>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Até</label>
                   <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="[color-scheme:dark]" />
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Buscar cliente</label>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Buscar</label>
                   <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Nome ou ID" />
                 </div>
+              </div>
 
-                <div className="space-y-2">
-                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Ordenar por</label>
+              {/* Row 2: Sort, page size, actions */}
+              <div className="mt-3 sm:mt-4 flex flex-wrap items-end gap-3 sm:gap-4">
+                <div className="w-full sm:w-auto sm:min-w-[200px] space-y-1.5">
+                  <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Ordenar</label>
                   <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -274,10 +278,10 @@ export default function ReceivablesPage() {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Por página</label>
+                <div className="w-20 space-y-1.5">
+                  <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Exibir</label>
                   <Select value={String(limit)} onValueChange={(value) => { setLimit(Number(value)); setPage(1) }}>
-                    <SelectTrigger className="w-full sm:w-24"><SelectValue /></SelectTrigger>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {PAGE_SIZES.map((size) => (
                         <SelectItem key={size} value={String(size)}>{size}</SelectItem>
@@ -285,16 +289,16 @@ export default function ReceivablesPage() {
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
 
-              <div className="mt-4 flex items-center gap-2">
-                <Button onClick={handleFilterApply}>
-                  <Search className="h-3.5 w-3.5" />
-                  Aplicar
-                </Button>
-                <Button variant="outline" size="icon" onClick={() => void fetchReceivables()}>
-                  <RefreshCw className="h-3.5 w-3.5" />
-                </Button>
+                <div className="flex items-center gap-2 ml-auto">
+                  <Button onClick={handleFilterApply} className="min-h-[2.75rem]">
+                    <Search className="h-3.5 w-3.5" />
+                    Aplicar
+                  </Button>
+                  <Button variant="outline" size="icon" className="min-h-[2.75rem] min-w-[2.75rem]" onClick={() => void fetchReceivables()}>
+                    <RefreshCw className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
