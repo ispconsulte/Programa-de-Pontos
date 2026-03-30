@@ -25,7 +25,8 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
         { icon: Sparkles, angle: 240, radius: 0.48, color: 'hsl(160 70% 48%)', dur: 26, label: '' },
       ]
 
-  /* ── Progress arc segments ── */
+  /* ── Orbit geometry ── */
+  const orbitRadius = size * 0.48
   const arcRadius = size * 0.35
   const arcCircumference = 2 * Math.PI * arcRadius
 
@@ -46,52 +47,54 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
         }}
       />
 
-      {/* ── Concentric orbit rings ── */}
-      {!compact && [0.48, 0.38].map((r, i) => (
-        <div
-          key={`ring-${i}`}
-          className="absolute rounded-full border transition-all duration-1000"
-          style={{
-            width: size * r * 2,
-            height: size * r * 2,
-            borderColor: i === 0 ? 'hsla(217, 91%, 60%, 0.08)' : 'hsla(217, 91%, 60%, 0.04)',
-            borderStyle: i === 0 ? 'solid' : 'dashed',
-            opacity: loaded ? 1 : 0,
-            transform: loaded ? 'scale(1)' : 'scale(0.8)',
-            transitionDelay: `${i * 150}ms`,
-          }}
-        />
-      ))}
-
-      {/* ── SVG progress arcs ── */}
+      {/* ── Unified orbit system (SVG) ── */}
       {!compact && (
         <svg
           className="absolute transition-all duration-1000"
           style={{
-            width: size * 0.84,
-            height: size * 0.84,
+            width: size,
+            height: size,
             opacity: loaded ? 1 : 0,
-            transform: loaded ? 'scale(1)' : 'scale(0.8)',
+            transform: loaded ? 'scale(1)' : 'scale(0.85)',
           }}
-          viewBox={`0 0 ${size * 0.84} ${size * 0.84}`}
+          viewBox={`0 0 ${size} ${size}`}
         >
-          {/* Background arc */}
+          <defs>
+            <linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="hsl(217 91% 60%)" />
+              <stop offset="50%" stopColor="hsl(48 96% 58%)" />
+              <stop offset="100%" stopColor="hsl(160 70% 48%)" />
+            </linearGradient>
+          </defs>
+
+          {/* Outer orbit ring (where tokens travel) */}
           <circle
-            cx={size * 0.42}
-            cy={size * 0.42}
-            r={arcRadius}
+            cx={size / 2}
+            cy={size / 2}
+            r={orbitRadius}
             fill="none"
             stroke="hsla(217, 91%, 60%, 0.06)"
-            strokeWidth={compact ? 2 : 3}
+            strokeWidth={1}
           />
+
+          {/* Inner progress track */}
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={arcRadius}
+            fill="none"
+            stroke="hsla(217, 91%, 60%, 0.05)"
+            strokeWidth={2.5}
+          />
+
           {/* Animated progress arc */}
           <circle
-            cx={size * 0.42}
-            cy={size * 0.42}
+            cx={size / 2}
+            cy={size / 2}
             r={arcRadius}
             fill="none"
             stroke="url(#progressGrad)"
-            strokeWidth={compact ? 2 : 3}
+            strokeWidth={2.5}
             strokeLinecap="round"
             strokeDasharray={arcCircumference}
             strokeDashoffset={loaded ? arcCircumference * 0.28 : arcCircumference}
@@ -101,13 +104,6 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
               transform: 'rotate(-90deg)',
             }}
           />
-          <defs>
-            <linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="hsl(217 91% 60%)" />
-              <stop offset="50%" stopColor="hsl(48 96% 58%)" />
-              <stop offset="100%" stopColor="hsl(160 70% 48%)" />
-            </linearGradient>
-          </defs>
         </svg>
       )}
 
