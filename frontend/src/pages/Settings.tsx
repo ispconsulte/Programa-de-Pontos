@@ -2,12 +2,13 @@ import { useState, useEffect, FormEvent } from 'react'
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import PageHeader from '@/components/PageHeader'
+import AlertBanner from '@/components/AlertBanner'
 import { apiFetch, getApiErrorMessage, getDisplayError } from '@/lib/api-client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Building2, CheckCircle2, Plug, Save, Settings, ShieldAlert, Wifi, WifiOff } from 'lucide-react'
+import { Building2, Plug, Save, Settings, Wifi, WifiOff } from 'lucide-react'
 import Spinner from '@/components/Spinner'
 
 interface TenantSettings {
@@ -206,19 +207,8 @@ export default function SettingsPage() {
                   </CardHeader>
                   <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-5">
-                      {error && (
-                        <div className="flex items-center gap-2.5 rounded-lg border border-destructive/20 bg-destructive/[0.06] px-4 py-3">
-                          <ShieldAlert className="h-4 w-4 flex-shrink-0 text-destructive" />
-                          <p className="text-sm text-red-300">{error}</p>
-                        </div>
-                      )}
-
-                      {success && (
-                        <div className="flex items-center gap-2.5 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.06] px-4 py-3">
-                          <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-emerald-400" />
-                          <p className="text-sm text-emerald-300">Configurações salvas.</p>
-                        </div>
-                      )}
+                      {error && <AlertBanner variant="error" message={error} />}
+                      {success && <AlertBanner variant="success" message="Configurações salvas com sucesso." />}
 
                       <div className="grid gap-5 md:grid-cols-2">
                         <div className="space-y-2">
