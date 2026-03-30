@@ -49,9 +49,9 @@ export default function LoginHero() {
           className="mb-2.5 text-center text-[22px] font-bold leading-[1.2] tracking-[-0.01em] text-foreground transition-all duration-700"
           style={{ opacity: v ? 1 : 0, transform: v ? 'translateY(0)' : 'translateY(10px)', ...d(250) }}
         >
-          Cada pagamento{' '}
+          Fidelize.{' '}
           <span className="bg-gradient-to-r from-primary via-[hsl(48,96%,62%)] to-[hsl(160,70%,52%)] bg-clip-text text-transparent">
-            vale mais aqui
+            Recompense. Cresça.
           </span>
         </h2>
 
@@ -59,7 +59,7 @@ export default function LoginHero() {
           className="mb-10 max-w-[340px] text-center text-[13px] leading-[1.7] text-muted-foreground/65 transition-all duration-700"
           style={{ opacity: v ? 1 : 0, transform: v ? 'translateY(0)' : 'translateY(8px)', ...d(400) }}
         >
-          Acumule pontos, suba de nível e resgate brindes exclusivos.
+          A plataforma completa de fidelização e pontuação para o seu negócio.
         </p>
 
         {/* ── Tier indicators ── */}
