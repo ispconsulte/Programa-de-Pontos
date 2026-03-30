@@ -13,7 +13,7 @@ interface StatCardProps {
 
 export default function StatCard({ label, value, icon: Icon, iconColor, iconBg, helper, className }: StatCardProps) {
   return (
-    <div className={cn('stat-card rounded-xl border border-white/[0.06] bg-[hsl(var(--surface-1))] p-5', className)}>
+    <div className={cn('stat-card rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-5', className)}>
       <div className="flex items-start justify-between">
         <p className="text-[11px] font-medium uppercase tracking-[0.1em] text-muted-foreground">{label}</p>
         {Icon && (
