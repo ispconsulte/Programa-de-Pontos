@@ -37,7 +37,7 @@ export default class AppErrorBoundary extends Component<AppErrorBoundaryProps, A
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
             <AlertTriangle className="h-6 w-6" />
           </div>
-          <h1 className="mt-4 text-xl font-semibold text-white">Ocorreu um erro ao carregar a tela</h1>
+          <h1 className="mt-4 text-xl font-semibold text-foreground">Ocorreu um erro ao carregar a tela</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             O aplicativo encontrou uma falha inesperada. Recarregue a página para tentar novamente.
           </p>

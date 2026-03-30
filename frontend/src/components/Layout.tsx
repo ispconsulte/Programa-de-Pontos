@@ -107,20 +107,20 @@ function SidebarItem({
         <button
           onClick={() => setOpen(!open)}
           className={cn(
-            'group flex w-full items-center gap-3 rounded-lg px-3 py-[9px] text-left transition-all duration-150',
+            'group flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left transition-all duration-150',
             active
-              ? 'text-foreground'
-              : 'text-muted-foreground hover:text-foreground/90'
+              ? 'bg-[hsl(var(--sidebar-active))] text-foreground ring-1 ring-primary/10 shadow-sm'
+              : 'text-muted-foreground hover:bg-[hsl(var(--surface-2))] hover:text-foreground'
           )}
         >
-          <Icon className={cn('h-[18px] w-[18px] flex-shrink-0', active ? 'text-primary' : 'text-muted-foreground/50')} />
+          <Icon className={cn('h-[18px] w-[18px] flex-shrink-0', active ? 'text-primary' : 'text-muted-foreground/70')} />
           <span className="flex-1 text-[13.5px] font-medium">{item.label}</span>
           <div className={cn('transition-transform duration-200', open && 'rotate-180')}>
-            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/30" />
+            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/60" />
           </div>
         </button>
         <div className={cn(
-          'ml-[18px] mt-0.5 space-y-0.5 border-l border-[hsl(var(--border))] pl-4 transition-all duration-200',
+          'ml-[18px] mt-0.5 space-y-1 border-l border-[hsl(var(--border))] pl-4 transition-all duration-200',
           open ? 'max-h-40 opacity-100' : 'max-h-0 overflow-hidden opacity-0'
         )}>
           {item.children!.map(child => {
@@ -131,10 +131,10 @@ function SidebarItem({
                 to={child.href}
                 onClick={onNav}
                 className={cn(
-                  'block rounded-md px-3 py-[7px] text-[13px] font-medium transition-all duration-150',
+                  'block rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150',
                   childActive
-                    ? 'text-primary'
-                    : 'text-muted-foreground/50 hover:text-foreground/80'
+                    ? 'bg-[hsl(var(--surface-2))] text-primary'
+                    : 'text-muted-foreground hover:bg-[hsl(var(--surface-2))] hover:text-foreground'
                 )}
               >
                 {child.label}
@@ -151,13 +151,13 @@ function SidebarItem({
       to={item.href}
       onClick={onNav}
       className={cn(
-        'group flex items-center gap-3 rounded-lg px-3 py-[9px] transition-all duration-150',
+        'group flex items-center gap-3 rounded-xl px-3.5 py-2.5 transition-all duration-150',
         isActive
-          ? 'text-foreground'
-          : 'text-muted-foreground hover:text-foreground/90'
+          ? 'bg-[hsl(var(--sidebar-active))] text-foreground ring-1 ring-primary/10 shadow-sm'
+          : 'text-muted-foreground hover:bg-[hsl(var(--surface-2))] hover:text-foreground'
       )}
     >
-      <Icon className={cn('h-[18px] w-[18px] flex-shrink-0', isActive ? 'text-primary' : 'text-muted-foreground/50')} />
+      <Icon className={cn('h-[18px] w-[18px] flex-shrink-0', isActive ? 'text-primary' : 'text-muted-foreground/70')} />
       <span className="text-[13.5px] font-medium">{item.label}</span>
     </Link>
   )
