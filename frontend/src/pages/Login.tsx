@@ -174,17 +174,6 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Trust signal + branding */}
-          <div className="mt-10 flex flex-col items-center gap-3">
-            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground/25">
-              <Shield className="h-3 w-3" />
-              <span>Conexão segura e criptografada</span>
-            </div>
-            <div className="flex items-center gap-1 text-[9px] text-muted-foreground/20">
-              <span>Powered by</span>
-              <span className="font-semibold text-muted-foreground/35">Bonifica</span>
-            </div>
-          </div>
         </div>
       </div>
     </div>
