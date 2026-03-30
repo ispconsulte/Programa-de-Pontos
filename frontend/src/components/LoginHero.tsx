@@ -23,40 +23,39 @@ export default function LoginHero() {
 
   return (
     <div className="relative hidden w-[55%] overflow-hidden lg:flex lg:flex-col lg:items-center lg:justify-center">
-      {/* ── Background layers ── */}
-      <div className="absolute inset-0 bg-[linear-gradient(160deg,hsl(225,38%,3%)_0%,hsl(225,30%,5.5%)_50%,hsl(220,26%,7%)_100%)]" />
+      {/* ── Background ── */}
+      <div className="absolute inset-0 bg-[linear-gradient(155deg,hsl(225,40%,3%)_0%,hsl(225,30%,5%)_45%,hsl(220,25%,7%)_100%)]" />
 
-      {/* Accent blobs */}
-      <div className="absolute -left-[12%] -top-[8%] h-[480px] w-[480px] rounded-full opacity-50"
-        style={{ background: 'radial-gradient(circle, hsl(217 91% 60% / 0.16) 0%, transparent 68%)', animation: 'heroGlowDrift 16s ease-in-out infinite' }} />
-      <div className="absolute -bottom-[6%] -right-[10%] h-[400px] w-[400px] rounded-full opacity-35"
-        style={{ background: 'radial-gradient(circle, hsl(45 95% 55% / 0.12) 0%, transparent 62%)', animation: 'heroGlowDrift 20s ease-in-out 4s infinite reverse' }} />
-      <div className="absolute left-[40%] top-[25%] h-[280px] w-[280px] rounded-full opacity-20"
-        style={{ background: 'radial-gradient(circle, hsl(160 70% 48% / 0.12) 0%, transparent 60%)' }} />
+      {/* Accent orbs */}
+      <div className="absolute -left-[10%] -top-[6%] h-[460px] w-[460px] rounded-full opacity-45"
+        style={{ background: 'radial-gradient(circle, hsl(217 91% 60% / 0.14) 0%, transparent 65%)', animation: 'heroGlowDrift 18s ease-in-out infinite' }} />
+      <div className="absolute -bottom-[5%] -right-[8%] h-[380px] w-[380px] rounded-full opacity-30"
+        style={{ background: 'radial-gradient(circle, hsl(45 95% 55% / 0.1) 0%, transparent 60%)', animation: 'heroGlowDrift 22s ease-in-out 5s infinite reverse' }} />
+      <div className="absolute left-[38%] top-[28%] h-[240px] w-[240px] rounded-full opacity-15"
+        style={{ background: 'radial-gradient(circle, hsl(160 70% 48% / 0.1) 0%, transparent 55%)' }} />
 
-      {/* Grid overlay */}
-      <div className="absolute inset-0 opacity-[0.02]"
-        style={{ backgroundImage: 'linear-gradient(hsl(217 91% 60% / 0.3) 1px, transparent 1px), linear-gradient(90deg, hsl(217 91% 60% / 0.3) 1px, transparent 1px)', backgroundSize: '52px 52px' }} />
+      {/* Grid */}
+      <div className="absolute inset-0 opacity-[0.018]"
+        style={{ backgroundImage: 'linear-gradient(hsl(217 91% 60% / 0.25) 1px, transparent 1px), linear-gradient(90deg, hsl(217 91% 60% / 0.25) 1px, transparent 1px)', backgroundSize: '56px 56px' }} />
 
-      {/* Top edge shine */}
-      <div className="absolute left-0 right-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
-      {/* Right edge gradient */}
-      <div className="absolute bottom-0 right-0 top-0 w-px bg-gradient-to-b from-transparent via-white/[0.06] to-transparent" />
+      {/* Edge accents */}
+      <div className="absolute left-0 right-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/15 to-transparent" />
+      <div className="absolute bottom-0 right-0 top-0 w-px bg-gradient-to-b from-transparent via-white/[0.05] to-transparent" />
 
-      {/* ── Main content ── */}
-      <div className="relative z-10 flex w-full max-w-[520px] flex-col items-center px-10">
-        {/* Centerpiece animation */}
+      {/* ── Content ── */}
+      <div className="relative z-10 flex w-full max-w-[480px] flex-col items-center px-10">
+        {/* Logo centerpiece */}
         <div
-          className="mb-8 transition-all duration-800"
-          style={{ opacity: v ? 1 : 0, transform: v ? 'translateY(0) scale(1)' : 'translateY(16px) scale(0.92)', ...d(0) }}
+          className="mb-10 transition-all duration-[900ms]"
+          style={{ opacity: v ? 1 : 0, transform: v ? 'translateY(0) scale(1)' : 'translateY(14px) scale(0.93)', ...d(0) }}
         >
-          <LogoAnimated src={logoBonifica} size={240} />
+          <LogoAnimated src={logoBonifica} size={220} />
         </div>
 
         {/* Headline */}
         <h2
-          className="mb-3 text-center font-heading text-[26px] font-bold leading-[1.15] tracking-tight text-foreground transition-all duration-700"
-          style={{ opacity: v ? 1 : 0, transform: v ? 'translateY(0)' : 'translateY(14px)', ...d(180) }}
+          className="mb-3 text-center font-heading text-[24px] font-bold leading-[1.18] tracking-tight text-foreground transition-all duration-700"
+          style={{ opacity: v ? 1 : 0, transform: v ? 'translateY(0)' : 'translateY(12px)', ...d(200) }}
         >
           Cada pagamento{' '}
           <span className="bg-gradient-to-r from-primary via-[hsl(48,96%,62%)] to-[hsl(160,70%,52%)] bg-clip-text text-transparent">
@@ -64,36 +63,34 @@ export default function LoginHero() {
           </span>
         </h2>
         <p
-          className="mb-10 max-w-[380px] text-center text-[13px] leading-relaxed text-muted-foreground transition-all duration-700"
-          style={{ opacity: v ? 1 : 0, transform: v ? 'translateY(0)' : 'translateY(10px)', ...d(300) }}
+          className="mb-12 max-w-[360px] text-center text-[13px] leading-[1.65] text-muted-foreground/80 transition-all duration-700"
+          style={{ opacity: v ? 1 : 0, transform: v ? 'translateY(0)' : 'translateY(10px)', ...d(350) }}
         >
           Acumule pontos, suba de nível e resgate brindes exclusivos. Tudo automático, direto no seu painel.
         </p>
 
-        {/* ── Tier progression ── */}
+        {/* ── Tier cards ── */}
         <div
-          className="mb-8 flex w-full max-w-[380px] items-end justify-center gap-2.5 transition-all duration-700"
-          style={{ opacity: v ? 1 : 0, transform: v ? 'translateY(0)' : 'translateY(18px)', ...d(400) }}
+          className="mb-10 flex w-full max-w-[360px] items-end justify-center gap-2 transition-all duration-700"
+          style={{ opacity: v ? 1 : 0, transform: v ? 'translateY(0)' : 'translateY(16px)', ...d(450) }}
         >
           {tiers.map((tier, i) => {
             const Icon = tier.icon
-            const h = [88, 108, 130][i]
+            const h = [82, 102, 124][i]
             return (
               <div
                 key={tier.name}
-                className="relative flex flex-1 flex-col items-center justify-end rounded-xl border border-white/[0.08] bg-white/[0.02] p-3 backdrop-blur-sm"
+                className="relative flex flex-1 flex-col items-center justify-end rounded-xl border border-white/[0.06] bg-white/[0.015] p-2.5 transition-colors duration-300 hover:border-white/[0.1] hover:bg-white/[0.025]"
                 style={{ height: h }}
               >
-                {/* Top accent bar */}
-                <div className="absolute inset-x-0 top-0 h-[2px] rounded-t-xl" style={{ background: `linear-gradient(90deg, transparent, ${tier.accent}, transparent)` }} />
-                <div className="mb-1.5 flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: `${tier.accent}15` }}>
-                  <Icon className="h-3.5 w-3.5" style={{ color: tier.accent }} />
+                <div className="absolute inset-x-0 top-0 h-px rounded-t-xl opacity-60" style={{ background: `linear-gradient(90deg, transparent 10%, ${tier.accent}, transparent 90%)` }} />
+                <div className="mb-1 flex h-6 w-6 items-center justify-center rounded-md" style={{ background: `${tier.accent}12` }}>
+                  <Icon className="h-3 w-3" style={{ color: tier.accent }} />
                 </div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/80">{tier.name}</span>
-                <span className="mt-0.5 text-[9px] text-muted-foreground">{tier.pts} pts</span>
-                {/* Connector */}
+                <span className="text-[9px] font-bold uppercase tracking-wider text-foreground/75">{tier.name}</span>
+                <span className="mt-px text-[8px] text-muted-foreground/60">{tier.pts} pts</span>
                 {i < tiers.length - 1 && (
-                  <div className="absolute -right-[7px] top-1/2 z-20 h-px w-3 bg-white/10" />
+                  <div className="absolute -right-[5px] top-1/2 z-20 h-px w-2.5 bg-white/[0.08]" />
                 )}
               </div>
             )
@@ -102,12 +99,12 @@ export default function LoginHero() {
 
         {/* ── Feature chips ── */}
         <div
-          className="flex flex-wrap items-center justify-center gap-2 transition-all duration-700"
-          style={{ opacity: v ? 1 : 0, transform: v ? 'translateY(0)' : 'translateY(8px)', ...d(600) }}
+          className="flex flex-wrap items-center justify-center gap-1.5 transition-all duration-700"
+          style={{ opacity: v ? 1 : 0, transform: v ? 'translateY(0)' : 'translateY(8px)', ...d(650) }}
         >
           {features.map(({ icon: Icon, label }) => (
-            <div key={label} className="flex items-center gap-1.5 rounded-full border border-white/[0.06] bg-white/[0.02] px-3 py-1.5 text-[10.5px] font-medium text-foreground/70">
-              <Icon className="h-3 w-3 text-primary/70" />
+            <div key={label} className="flex items-center gap-1.5 rounded-full border border-white/[0.05] bg-white/[0.015] px-2.5 py-1 text-[10px] font-medium text-foreground/60">
+              <Icon className="h-2.5 w-2.5 text-primary/60" />
               {label}
             </div>
           ))}
