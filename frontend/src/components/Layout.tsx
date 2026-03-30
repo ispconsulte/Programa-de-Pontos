@@ -248,7 +248,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* ── Sidebar ── */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-[240px] flex-col bg-[hsl(var(--sidebar))] transition-transform duration-300 ease-out lg:relative lg:z-auto lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 flex w-[240px] flex-col border-r border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar))] transition-transform duration-300 ease-out lg:relative lg:z-auto lg:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
