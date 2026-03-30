@@ -254,43 +254,43 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* ── Sidebar ── */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-[252px] flex-col bg-[hsl(var(--sidebar))] transition-transform duration-300 ease-out lg:relative lg:z-auto lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 flex w-[248px] flex-col border-r border-white/[0.04] bg-[hsl(var(--sidebar))] transition-transform duration-300 ease-out lg:relative lg:z-auto lg:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         {/* ── Brand ── */}
-        <div className="relative flex h-14 flex-shrink-0 items-center gap-3 border-b border-white/[0.05] px-4">
+        <div className="relative flex h-[56px] flex-shrink-0 items-center gap-2.5 px-5">
           <img
             src={logoBonifica}
             alt="Bonifica"
-            className="h-7 w-7 flex-shrink-0"
+            className="h-6 w-6 flex-shrink-0"
             style={{
               objectFit: 'contain',
-              background: 'transparent',
-              mixBlendMode: 'normal',
-              filter: 'drop-shadow(0 0 1px hsl(var(--primary) / 0.3))',
+              filter: 'drop-shadow(0 0 2px hsl(var(--primary) / 0.35))',
             }}
           />
-          <div className="min-w-0">
-            <p className="truncate text-[13px] font-semibold text-foreground">Bonifica</p>
-          </div>
+          <span className="text-[14px] font-semibold tracking-[-0.01em] text-foreground">Bonifica</span>
           <button onClick={closeSidebar} className="ml-auto rounded-md p-1 text-muted-foreground hover:text-foreground lg:hidden">
             <X className="h-4 w-4" />
           </button>
         </div>
 
+        {/* Subtle divider */}
+        <div className="mx-4 h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
+
         {/* ── Navigation ── */}
-        <nav className="flex-1 overflow-y-auto scrollable-content px-3 py-3">
+        <nav className="flex-1 overflow-y-auto scrollable-content px-3 pt-4 pb-2">
           <div className="flex h-full flex-col justify-between">
             {/* Primary nav */}
-            <div className="space-y-0.5">
+            <div className="space-y-1">
               {(navSections[0]?.items ?? []).map(item => (
                 <SidebarItem key={item.href} item={item} pathname={pathname} onNav={closeSidebar} />
               ))}
             </div>
 
-            {/* Secondary nav (bottom-pinned) */}
-            <div className="mt-4 space-y-0.5 border-t border-white/[0.04] pt-3">
+            {/* Secondary nav */}
+            <div className="space-y-1">
+              <div className="mx-2 mb-2 h-px bg-gradient-to-r from-transparent via-white/[0.05] to-transparent" />
               {(navSections[1]?.items ?? []).map(item => (
                 <SidebarItem key={item.href} item={item} pathname={pathname} onNav={closeSidebar} />
               ))}
@@ -299,12 +299,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </nav>
 
         {/* ── Footer ── */}
-        <div className="flex-shrink-0 border-t border-white/[0.05] p-3">
+        <div className="flex-shrink-0 px-3 pb-3 pt-1">
+          <div className="mx-1 mb-2 h-px bg-gradient-to-r from-transparent via-white/[0.05] to-transparent" />
           <button
             onClick={() => logout()}
-            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[12.5px] font-medium text-muted-foreground transition-all duration-150 hover:bg-destructive/[0.08] hover:text-destructive"
+            className="group flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[12.5px] font-medium text-muted-foreground/70 transition-all duration-200 hover:bg-destructive/[0.06] hover:text-destructive active:scale-[0.98]"
           >
-            <LogOut className="h-[15px] w-[15px]" />
+            <LogOut className="h-[14px] w-[14px] transition-colors group-hover:text-destructive" />
             <span>Sair</span>
           </button>
         </div>
