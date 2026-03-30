@@ -316,7 +316,7 @@ export default function ReceivablesPage() {
                 <div className="m-5 rounded-xl border border-destructive/20 bg-destructive/[0.06] px-4 py-3">
                   <div className="flex items-center gap-2">
                     <ShieldAlert className="h-4 w-4 flex-shrink-0 text-destructive" />
-                    <p className="text-sm text-red-300">{error}</p>
+                    <p className="text-sm text-foreground">{error}</p>
                   </div>
                   <Button variant="outline" size="sm" className="mt-3" onClick={() => void fetchReceivables()}>
                     Tentar novamente
