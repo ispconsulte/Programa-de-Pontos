@@ -153,7 +153,7 @@ export default function RegisterRedemptionDialog({
                         }}
                         className={cn(
                           'flex w-full items-center justify-between rounded-lg px-3 py-2 text-left transition-colors',
-                          isSelected ? 'bg-emerald-500/10 text-white ring-1 ring-emerald-500/20' : 'hover:bg-[hsl(var(--muted))] text-slate-200'
+                          isSelected ? 'bg-emerald-500/10 text-foreground ring-1 ring-emerald-500/20' : 'hover:bg-[hsl(var(--muted))] text-muted-foreground'
                         )}
                       >
                         <div>
@@ -276,7 +276,7 @@ export default function RegisterRedemptionDialog({
 
               <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
                 <div className="flex items-start gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[hsl(var(--surface-3))] text-slate-200 ring-1 ring-white/[0.08]">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[hsl(var(--surface-3))] text-muted-foreground ring-1 ring-[hsl(var(--border))]">
                     <UserRound className="h-4 w-4" />
                   </div>
                   <div>

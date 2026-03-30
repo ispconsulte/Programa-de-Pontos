@@ -53,7 +53,7 @@ const statusConfig: Record<
   ciclo_concluido: {
     label: 'Ciclo da campanha concluido',
     icon: CalendarCheck,
-    color: 'text-slate-300',
+    color: 'text-muted-foreground',
     bg: 'bg-[hsl(var(--surface-3))]',
     ring: 'ring-white/[0.08]',
     accent: 'border-[hsl(var(--border))]',
