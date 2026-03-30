@@ -133,8 +133,8 @@ export default function ClientsPage() {
                     Buscar
                   </Button>
                   {searched && (
-                    <Button type="button" variant="outline" size="icon" onClick={() => void runSearch()}>
-                      <RefreshCw className="h-3.5 w-3.5" />
+                    <Button type="button" variant="outline" size="icon" disabled={refreshBusy} onClick={() => void throttledSearch()}>
+                      <RefreshCw className={`h-3.5 w-3.5 transition-transform ${refreshBusy ? 'animate-spin' : ''}`} />
                     </Button>
                   )}
                 </div>

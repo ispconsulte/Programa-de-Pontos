@@ -296,8 +296,8 @@ export default function ReceivablesPage() {
                     <Search className="h-3.5 w-3.5" />
                     Aplicar
                   </Button>
-                  <Button variant="outline" size="icon" className="min-h-[2.75rem] min-w-[2.75rem]" onClick={() => void fetchReceivables()}>
-                    <RefreshCw className="h-3.5 w-3.5" />
+                  <Button variant="outline" size="icon" className="min-h-[2.75rem] min-w-[2.75rem]" disabled={refreshBusy} onClick={() => void throttledFetch()}>
+                    <RefreshCw className={`h-3.5 w-3.5 transition-transform ${refreshBusy ? 'animate-spin' : ''}`} />
                   </Button>
                 </div>
               </div>
