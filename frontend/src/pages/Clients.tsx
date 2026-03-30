@@ -1,22 +1,19 @@
 import { useState, FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, RefreshCw, Search, ShieldAlert, Users } from 'lucide-react'
+import { ArrowRight, RefreshCw, Search, Users } from 'lucide-react'
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import PageHeader from '@/components/PageHeader'
 import Spinner from '@/components/Spinner'
+import AlertBanner from '@/components/AlertBanner'
+import EmptyState from '@/components/EmptyState'
 import { statusBadge } from '@/components/Badge'
 import { apiFetch, getApiErrorMessage, getDisplayError } from '@/lib/api-client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
 
@@ -56,11 +53,9 @@ export default function ClientsPage() {
 
   const runSearch = async () => {
     if (!query.trim()) return
-
     setLoading(true)
     setError('')
     setSearched(true)
-
     try {
       const params = new URLSearchParams()
       if (searchType === 'name') params.set('name', query.trim())
@@ -73,7 +68,6 @@ export default function ClientsPage() {
         setClients(null)
         return
       }
-
       const json: ClientsResponse = await res.json()
       const list = json.data || json.clientes || (Array.isArray(json) ? json : [])
       setClients(list as Client[])
@@ -90,16 +84,17 @@ export default function ClientsPage() {
     await runSearch()
   }
 
-  const getClientName = (client: Client) => client.nome || client.razao || '-'
-  const getClientPhone = (client: Client) => client.telefone || client.celular || '-'
-  const getClientStatus = (client: Client) => client.ativo ?? client.status ?? '-'
+  const getClientName = (client: Client) => client.nome || client.razao || '—'
+  const getClientPhone = (client: Client) => client.telefone || client.celular || '—'
+  const getClientStatus = (client: Client) => client.ativo ?? client.status ?? '—'
 
   return (
     <ProtectedRoute>
       <Layout>
         <PageHeader icon={Users} title="Clientes" subtitle="Base de clientes" />
 
-        <div className="space-y-5">
+        <div className="page-stack">
+          {/* Search */}
           <Card>
             <CardContent className="p-5">
               <form onSubmit={handleSearch} className="space-y-4">
@@ -112,8 +107,8 @@ export default function ClientsPage() {
                       className={cn(
                         'rounded-lg border px-3.5 py-1.5 text-xs font-medium transition-all duration-200',
                         searchType === type.value
-                          ? 'border-primary/30 bg-primary/10 text-white'
-                          : 'border-white/[0.06] text-muted-foreground hover:border-white/[0.1] hover:text-white'
+                          ? 'border-primary/30 bg-primary/10 text-foreground'
+                          : 'border-white/[0.06] text-muted-foreground hover:border-white/[0.1] hover:text-foreground'
                       )}
                     >
                       {type.label}
@@ -146,14 +141,7 @@ export default function ClientsPage() {
             </CardContent>
           </Card>
 
-          {error && (
-            <div className="rounded-xl border border-destructive/20 bg-destructive/[0.06] px-4 py-3">
-              <div className="flex items-center gap-2">
-                <ShieldAlert className="h-4 w-4 flex-shrink-0 text-destructive" />
-                <p className="text-sm text-red-300">{error}</p>
-              </div>
-            </div>
-          )}
+          {error && <AlertBanner variant="error" message={error} />}
 
           {loading && (
             <div className="flex items-center justify-center py-16">
@@ -164,7 +152,7 @@ export default function ClientsPage() {
           {!loading && searched && clients !== null && (
             <Card>
               <div className="border-b border-white/[0.04] px-5 py-4">
-                <p className="text-sm font-medium text-white">
+                <p className="text-sm font-medium text-foreground">
                   {clients.length === 0
                     ? 'Nenhum cliente encontrado'
                     : `${clients.length} cliente${clients.length !== 1 ? 's' : ''}`}
@@ -172,12 +160,12 @@ export default function ClientsPage() {
               </div>
               <CardContent className="p-0">
                 {clients.length === 0 ? (
-                  <div className="py-16 text-center">
-                    <Users className="mx-auto h-8 w-8 text-muted-foreground/30" />
-                    <p className="mt-3 text-sm text-muted-foreground">Nenhum resultado para esta busca.</p>
+                  <div className="p-5">
+                    <EmptyState icon={<Users className="h-5 w-5" />} title="Nenhum resultado" description="Nenhum resultado para esta busca." />
                   </div>
                 ) : (
                   <>
+                    {/* Mobile */}
                     <div className="grid gap-2 p-4 md:hidden">
                       {clients.map((client) => (
                         <Link
@@ -187,7 +175,7 @@ export default function ClientsPage() {
                         >
                           <div className="flex items-start justify-between">
                             <div>
-                              <p className="text-sm font-medium text-white">{getClientName(client)}</p>
+                              <p className="text-sm font-medium text-foreground">{getClientName(client)}</p>
                               <p className="mt-0.5 text-xs text-muted-foreground">ID {client.id}</p>
                             </div>
                             <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
@@ -201,6 +189,7 @@ export default function ClientsPage() {
                       ))}
                     </div>
 
+                    {/* Desktop */}
                     <div className="hidden md:block">
                       <Table>
                         <TableHeader>
@@ -217,17 +206,14 @@ export default function ClientsPage() {
                         <TableBody>
                           {clients.map((client) => (
                             <TableRow key={client.id}>
-                              <TableCell className="font-mono text-xs text-white">{client.id}</TableCell>
-                              <TableCell className="font-medium text-white">{getClientName(client)}</TableCell>
-                              <TableCell className="font-mono text-xs text-slate-300">{client.cpf_cnpj || '-'}</TableCell>
-                              <TableCell className="text-slate-300">{client.email || '-'}</TableCell>
-                              <TableCell className="text-slate-300">{getClientPhone(client)}</TableCell>
+                              <TableCell className="font-mono text-xs text-foreground">{client.id}</TableCell>
+                              <TableCell className="font-medium text-foreground">{getClientName(client)}</TableCell>
+                              <TableCell className="font-mono text-xs text-muted-foreground">{client.cpf_cnpj || '—'}</TableCell>
+                              <TableCell className="text-muted-foreground">{client.email || '—'}</TableCell>
+                              <TableCell className="text-muted-foreground">{getClientPhone(client)}</TableCell>
                               <TableCell>{statusBadge(String(getClientStatus(client)))}</TableCell>
                               <TableCell className="text-right">
-                                <Link
-                                  to={`/clients/${client.id}`}
-                                  className="text-sm text-primary transition-colors hover:text-primary/80"
-                                >
+                                <Link to={`/clients/${client.id}`} className="text-sm text-primary transition-colors hover:text-primary/80">
                                   Ver perfil
                                 </Link>
                               </TableCell>
@@ -243,12 +229,7 @@ export default function ClientsPage() {
           )}
 
           {!loading && !searched && (
-            <Card>
-              <CardContent className="py-16 text-center">
-                <Search className="mx-auto h-8 w-8 text-muted-foreground/30" />
-                <p className="mt-3 text-sm text-muted-foreground">Use a busca acima para localizar clientes.</p>
-              </CardContent>
-            </Card>
+            <EmptyState icon={<Search className="h-5 w-5" />} title="Buscar clientes" description="Use a busca acima para localizar clientes." />
           )}
         </div>
       </Layout>
