@@ -107,6 +107,7 @@ function ChartTooltip({ active, payload, label }: any) {
 /* ── Page ── */
 
 export default function ClienteEmDiaPage() {
+  const navigate = useNavigate()
   return (
     <Layout>
       <div className="space-y-6">
