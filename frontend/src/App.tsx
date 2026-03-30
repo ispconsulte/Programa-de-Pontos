@@ -1,7 +1,7 @@
 import { BrowserRouter, HashRouter, Route, Routes } from 'react-router-dom'
 import RootPage from './pages/Index'
 import LoginPage from './pages/Login'
-import RegisterPage from './pages/Register'
+
 import DashboardPage from './pages/Dashboard'
 import ClientsPage from './pages/Clients'
 import ClientDetailPage from './pages/ClientDetail'
@@ -33,7 +33,7 @@ function App() {
         <Routes>
           <Route path="/" element={<RootPage />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          
           <Route path="/portal" element={<PortalAccessPage />} />
           <Route path="/portal/meus-pontos" element={<PortalPointsPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
