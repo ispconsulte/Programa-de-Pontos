@@ -69,8 +69,13 @@ export default function LoginPage() {
           style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(12px)' }}
         >
           {/* ── Mobile logo ── */}
-          <div className="mb-10 flex items-center justify-center lg:hidden">
-            <LogoAnimated src={logoBonifica} alt="Logo Bonifica" size={110} />
+          <div className="mb-8 flex items-center justify-center lg:hidden">
+            <img
+              src={logoBonifica}
+              alt="Logo Bonifica"
+              className="h-16 w-auto object-contain"
+              style={{ filter: 'drop-shadow(0 0 16px hsl(var(--primary) / 0.3))' }}
+            />
           </div>
 
           {/* ── Card ── */}
