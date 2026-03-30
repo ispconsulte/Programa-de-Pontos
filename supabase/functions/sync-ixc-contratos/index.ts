@@ -1,4 +1,6 @@
-import { createClient } from 'npm:@supabase/supabase-js@2'
+// deno-lint-ignore-file no-explicit-any
+import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2'
+type AnySupabase = SupabaseClient<any, any, any>
 
 type Json =
   | string
@@ -259,7 +261,7 @@ async function decryptIxcToken(encValue: string | Uint8Array | number[], ivValue
   const rawKey = Uint8Array.from(encryptionKey.match(/.{1,2}/g)!.map((pair) => Number.parseInt(pair, 16)))
   const key = await crypto.subtle.importKey('raw', rawKey, 'AES-GCM', false, ['decrypt'])
   const decrypted = await crypto.subtle.decrypt(
-    { name: 'AES-GCM', iv: parseBytea(ivValue) },
+    { name: 'AES-GCM', iv: parseBytea(ivValue) as unknown as BufferSource },
     key,
     parseBytea(encValue),
   )
@@ -307,7 +309,7 @@ async function fetchIxcRecord<T>(
   return await response.json()
 }
 
-async function getAuthenticatedUser(supabase: ReturnType<typeof createClient>, request: Request): Promise<UserRow> {
+async function getAuthenticatedUser(supabase: AnySupabase, request: Request): Promise<UserRow> {
   const cronSecret = request.headers.get('x-cron-secret')
   const expectedCronSecret = Deno.env.get('CRON_SHARED_SECRET')
   if (cronSecret && expectedCronSecret && cronSecret === expectedCronSecret) {
@@ -344,7 +346,7 @@ async function getAuthenticatedUser(supabase: ReturnType<typeof createClient>, r
 }
 
 async function loadIxcConnection(
-  supabase: ReturnType<typeof createClient>,
+  supabase: AnySupabase,
   tenantId: string,
   requestedConnectionId?: string,
 ): Promise<IxcConnectionRow> {
@@ -367,7 +369,7 @@ async function loadIxcConnection(
 }
 
 async function ensureCustomerProfile(
-  supabase: ReturnType<typeof createClient>,
+  supabase: AnySupabase,
   tenantId: string,
   connectionId: string,
   customer: ClienteItem,
@@ -468,7 +470,7 @@ Deno.serve(async (request) => {
     return json(405, { error: 'Method not allowed' })
   }
 
-  const supabase = createClient(getEnv('SUPABASE_URL'), getEnv('SUPABASE_SERVICE_ROLE_KEY'))
+  const supabase: AnySupabase = createClient(getEnv('SUPABASE_URL'), getEnv('SUPABASE_SERVICE_ROLE_KEY'))
   let syncLogId: string | null = null
 
   try {
@@ -626,7 +628,7 @@ Deno.serve(async (request) => {
 
           if (updateCustomerError) throw new Error(updateCustomerError.message)
           counters.snapshotsUpdated += 1
-          if (existingCampaignCustomer.status !== derivedStatus) counters.statusUpdated += 1
+          if (existingCampaignCustomer && existingCampaignCustomer.status !== derivedStatus) counters.statusUpdated += 1
         }
 
         const profile = await ensureCustomerProfile(
