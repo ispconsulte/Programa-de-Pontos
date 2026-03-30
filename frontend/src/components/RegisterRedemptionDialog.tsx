@@ -140,7 +140,7 @@ export default function RegisterRedemptionDialog({
                   />
                 </div>
 
-                <div className="max-h-44 space-y-2 overflow-y-auto rounded-xl border border-white/[0.06] bg-white/[0.02] p-2">
+                <div className="scrollable-content max-h-44 space-y-2 rounded-xl border border-white/[0.06] bg-white/[0.02] p-2">
                   {filteredCustomers.map((customer) => {
                     const isSelected = customer.id === selectedCustomerId
                     return (
