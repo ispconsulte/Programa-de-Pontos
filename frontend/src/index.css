@@ -291,8 +291,23 @@
 
   .scrollable-content {
     overflow-y: auto;
+    overscroll-behavior: contain;
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
+
+  .scrollable-content::-webkit-scrollbar {
+    width: var(--scrollbar-width);
+  }
+  .scrollable-content::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+  .scrollable-content::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 999px;
+  }
+  .scrollable-content::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
   }
 
   .icon {
