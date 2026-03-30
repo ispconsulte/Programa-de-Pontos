@@ -162,15 +162,17 @@ function SidebarItem({ item, pathname, onNav, collapsed }: { item: NavItem; path
     <Link
       to={item.href}
       onClick={onNav}
+      title={collapsed ? item.label : undefined}
       className={cn(
-        'group flex items-center gap-3 rounded-xl px-3.5 py-2.5 transition-all duration-150',
+        'group flex items-center rounded-xl transition-all duration-150',
+        collapsed ? 'justify-center p-2.5' : 'gap-3 px-3.5 py-2.5',
         isActive
           ? 'bg-[hsl(var(--sidebar-active))] text-foreground ring-1 ring-primary/10 shadow-sm'
           : 'text-muted-foreground hover:bg-[hsl(var(--surface-2))] hover:text-foreground'
       )}
     >
       <Icon className={cn('h-[18px] w-[18px] flex-shrink-0', isActive ? 'text-primary' : 'text-muted-foreground/70')} />
-      <span className="text-[13.5px] font-medium">{item.label}</span>
+      {!collapsed && <span className="text-[13.5px] font-medium">{item.label}</span>}
     </Link>
   )
 }
