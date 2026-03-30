@@ -175,7 +175,7 @@ export default function DashboardPage() {
 
         <div className="page-stack">
           {/* ── Top stat cards ── */}
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-3 [&>*]:h-full">
             <StatCard
               label="Recebimentos pagos"
               value={formatCount(totalReceived)}
