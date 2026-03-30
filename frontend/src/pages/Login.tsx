@@ -114,7 +114,7 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="seu@empresa.com"
                   autoComplete="email"
-                  className="h-[46px] rounded-xl border-[hsl(var(--border))] bg-white/[0.025] px-4 text-[14px] transition-all duration-200 placeholder:text-muted-foreground/25 focus-visible:border-primary/40 focus-visible:bg-[hsl(var(--surface-3))] focus-visible:shadow-[0_0_0_3px_hsl(var(--primary)_/_0.08)]"
+                  className="h-[46px] rounded-xl border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 text-[14px] transition-all duration-200 placeholder:text-muted-foreground/25 focus-visible:border-primary/40 focus-visible:bg-[hsl(var(--surface-3))] focus-visible:shadow-[0_0_0_3px_hsl(var(--primary)_/_0.08)]"
                 />
               </div>
 
@@ -131,7 +131,7 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     autoComplete="current-password"
-                    className="h-[46px] rounded-xl border-[hsl(var(--border))] bg-white/[0.025] px-4 pr-11 text-[14px] transition-all duration-200 placeholder:text-muted-foreground/25 focus-visible:border-primary/40 focus-visible:bg-[hsl(var(--surface-3))] focus-visible:shadow-[0_0_0_3px_hsl(var(--primary)_/_0.08)]"
+                    className="h-[46px] rounded-xl border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 pr-11 text-[14px] transition-all duration-200 placeholder:text-muted-foreground/25 focus-visible:border-primary/40 focus-visible:bg-[hsl(var(--surface-3))] focus-visible:shadow-[0_0_0_3px_hsl(var(--primary)_/_0.08)]"
                   />
                   <button
                     type="button"
