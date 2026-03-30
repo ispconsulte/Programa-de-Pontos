@@ -1,11 +1,13 @@
 import { useState, FormEvent, useEffect } from 'react'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
-import { Eye, EyeOff, AlertCircle, CheckCircle, ArrowRight, Gift, Star, TrendingUp, Trophy } from 'lucide-react'
+import { Eye, EyeOff, AlertCircle, CheckCircle, ArrowRight, Gift, Star, TrendingUp } from 'lucide-react'
 import { supabase } from '@/lib/supabase-client'
 import Spinner from '@/components/Spinner'
+import Logo3DScene from '@/components/Logo3DScene'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import logoBonifica from '@/assets/logo-bonifica.png'
 
 const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/+$/, '')
 
@@ -83,44 +85,42 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Left panel — Brand */}
-      <div className="relative hidden w-1/2 overflow-hidden lg:flex lg:items-center lg:justify-center">
-        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(222,47%,4%)] via-[hsl(222,42%,7%)] to-[hsl(225,40%,5%)]" />
+      {/* Left panel — Brand + 3D */}
+      <div className="relative hidden w-1/2 overflow-hidden lg:flex lg:flex-col lg:items-center lg:justify-center">
+        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(225,30%,4%)] via-[hsl(225,28%,6%)] to-[hsl(225,25%,3%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_30%_20%,_rgba(59,130,246,0.08)_0%,_transparent_60%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_40%_at_70%_80%,_rgba(59,130,246,0.05)_0%,_transparent_50%)]" />
-        <div className="absolute inset-0 opacity-[0.025]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 0.5px, transparent 0.5px)', backgroundSize: '28px 28px' }} />
         <div className="absolute left-0 right-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/25 to-transparent" />
 
-        <div className="relative z-10 w-full max-w-[540px] px-8">
-          <div className="mb-10 flex justify-center animate-float">
-            <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/[0.12] ring-1 ring-primary/20 shadow-lg shadow-primary/10">
-              <Trophy className="h-8 w-8 text-primary" />
-            </div>
+        <div className="relative z-10 flex w-full max-w-[540px] flex-col items-center px-8">
+          {/* 3D Logo */}
+          <div className="mb-4 h-[280px] w-[280px]">
+            <Logo3DScene textureUrl={logoBonifica} />
           </div>
 
-          <h2 className="text-center text-[30px] font-bold leading-[1.2] tracking-tight text-white font-heading">
+          <h2 className="text-center text-[28px] font-bold leading-[1.2] tracking-tight text-white font-heading">
             Gestão inteligente<br />
             de bonificações
           </h2>
-          <p className="mt-5 text-center text-[15px] leading-relaxed text-slate-400">
+          <p className="mt-4 text-center text-[14px] leading-relaxed text-muted-foreground">
             Acompanhe pontuações, gerencie recompensas e fidelize seus clientes com uma plataforma pensada para resultados.
           </p>
 
-          <div className="mt-10 space-y-2.5">
+          <div className="mt-8 w-full space-y-2.5">
             {features.map((feature, i) => {
               const Icon = feature.icon
               return (
                 <div
                   key={feature.label}
-                  className="group flex items-center gap-4 rounded-xl border border-white/[0.06] bg-gradient-to-r from-white/[0.03] to-transparent px-5 py-4 transition-all duration-300 hover:border-primary/20 hover:from-primary/[0.07] hover:to-primary/[0.02] hover:shadow-lg hover:shadow-primary/5 animate-build-in"
+                  className="group flex items-center gap-4 rounded-xl border border-white/[0.06] bg-gradient-to-r from-white/[0.03] to-transparent px-5 py-4 transition-all duration-300 hover:border-primary/20 hover:from-primary/[0.07] hover:to-primary/[0.02] animate-build-in"
                   style={{ animationDelay: `${400 + i * 250}ms` }}
                 >
-                  <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary/[0.1] ring-1 ring-primary/20 transition-all duration-300 group-hover:bg-primary/[0.18] group-hover:ring-primary/30 group-hover:shadow-md group-hover:shadow-primary/10">
-                    <Icon className="h-5 w-5 text-primary transition-transform duration-300 group-hover:scale-110" />
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary/[0.1] ring-1 ring-primary/20 transition-all duration-300 group-hover:bg-primary/[0.18]">
+                    <Icon className="h-5 w-5 text-primary" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-[13px] font-semibold text-white">{feature.label}</p>
-                    <p className="mt-0.5 text-[12px] text-slate-400/80">{feature.desc}</p>
+                    <p className="mt-0.5 text-[12px] text-muted-foreground">{feature.desc}</p>
                   </div>
                 </div>
               )
@@ -134,11 +134,9 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_40%,_rgba(59,130,246,0.03)_0%,_transparent_60%)] lg:bg-none" />
 
         <div className="relative z-10 w-full max-w-[500px] xl:max-w-[540px]">
-          <div className="mb-10 flex items-center gap-3 lg:hidden">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 animate-float">
-              <Trophy className="h-5 w-5 text-primary" />
-            </div>
-            <span className="text-sm font-bold text-white">Programa de Pontos</span>
+          {/* Mobile logo */}
+          <div className="mb-10 flex items-center justify-center gap-3 lg:hidden">
+            <img src={logoBonifica} alt="Logo Bonifica" className="h-14 w-14 object-contain animate-float" />
           </div>
 
           <div className="mb-8 text-center">
@@ -153,7 +151,7 @@ export default function LoginPage() {
             </div>
           )}
 
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-6 lg:p-8 shadow-xl shadow-black/10">
+          <div className="rounded-xl border border-white/[0.06] bg-[hsl(var(--surface-1))] p-6 lg:p-8 shadow-xl shadow-black/10">
             <form onSubmit={handleSubmit} className="space-y-5">
               {error && (
                 <div className="flex items-center gap-2.5 rounded-lg border border-destructive/20 bg-destructive/[0.06] px-4 py-3 animate-enter">
