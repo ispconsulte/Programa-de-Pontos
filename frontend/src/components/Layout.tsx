@@ -378,7 +378,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <div className="relative ml-1" ref={userMenuRef}>
               <button
                 onClick={() => setUserMenuOpen((o) => !o)}
-                className="flex h-8 w-8 items-center justify-center rounded-full ring-2 ring-transparent transition-all hover:ring-primary/30"
+                className="flex h-8 w-8 items-center justify-center rounded-full transition-all hover:opacity-80"
               >
                 {avatarUrl ? (
                   <img src={avatarUrl} alt={profile.name} className="h-8 w-8 rounded-full object-cover" />
