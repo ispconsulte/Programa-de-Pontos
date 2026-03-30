@@ -78,31 +78,75 @@ export default function LoginPage() {
   }
 
   const features = [
-    { icon: Gift, label: 'Gestão completa de bônus e recompensas', desc: 'Controle total sobre campanhas e resgates' },
-    { icon: TrendingUp, label: 'Pontuação em tempo real', desc: 'Acompanhe o desempenho dos seus clientes' },
-    { icon: Star, label: 'Fidelização estratégica', desc: 'Campanhas de resgate e engajamento' },
+    { icon: Gift, label: 'Gestão completa de bônus', desc: 'Controle total sobre campanhas e resgates' },
+    { icon: Award, label: 'Programa de pontos inteligente', desc: 'Pontuação automatizada por performance' },
+    { icon: TrendingUp, label: 'Métricas em tempo real', desc: 'Acompanhe resultados e ROI de cada campanha' },
+    { icon: Zap, label: 'Fidelização que converte', desc: 'Engajamento contínuo com seus clientes' },
   ]
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Left panel — Brand + 3D */}
+      {/* Left panel — Brand showcase */}
       <div className="relative hidden w-1/2 overflow-hidden lg:flex lg:flex-col lg:items-center lg:justify-center">
-        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(225,30%,4%)] via-[hsl(225,28%,6%)] to-[hsl(225,25%,3%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_30%_20%,_rgba(59,130,246,0.08)_0%,_transparent_60%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_40%_at_70%_80%,_rgba(59,130,246,0.05)_0%,_transparent_50%)]" />
-        <div className="absolute left-0 right-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/25 to-transparent" />
+        {/* Base gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(225,35%,3%)] via-[hsl(225,30%,5%)] to-[hsl(230,28%,4%)]" />
+
+        {/* Animated blobs */}
+        <div
+          className="absolute opacity-60"
+          style={{
+            width: 500, height: 500, top: '-10%', left: '-10%',
+            background: 'radial-gradient(circle, hsl(var(--primary) / 0.12) 0%, transparent 70%)',
+            borderRadius: '50%',
+            animation: 'bgDrift 12s ease-in-out infinite',
+          }}
+        />
+        <div
+          className="absolute opacity-40"
+          style={{
+            width: 400, height: 400, bottom: '-5%', right: '-8%',
+            background: 'radial-gradient(circle, hsl(217 80% 55% / 0.1) 0%, transparent 65%)',
+            borderRadius: '50%',
+            animation: 'bgDrift 16s ease-in-out infinite reverse',
+          }}
+        />
+        <div
+          className="absolute opacity-30"
+          style={{
+            width: 250, height: 250, top: '40%', right: '20%',
+            background: 'radial-gradient(circle, hsl(var(--primary) / 0.08) 0%, transparent 60%)',
+            borderRadius: '50%',
+            animation: 'bgDrift 9s ease-in-out infinite',
+            animationDelay: '-4s',
+          }}
+        />
+
+        {/* Grid overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `linear-gradient(hsl(var(--primary) / 0.3) 1px, transparent 1px),
+              linear-gradient(90deg, hsl(var(--primary) / 0.3) 1px, transparent 1px)`,
+            backgroundSize: '60px 60px',
+          }}
+        />
+
+        {/* Top accent line */}
+        <div className="absolute left-0 right-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
 
         <div className="relative z-10 flex w-full max-w-[540px] flex-col items-center px-8">
-          {/* 3D Logo */}
-          <div className="mb-4">
-            <LogoAnimated src={logoBonifica} size={280} />
+          {/* Animated Logo */}
+          <div className="mb-6">
+            <LogoAnimated src={logoBonifica} size={320} />
           </div>
 
-          <h2 className="text-center text-[28px] font-bold leading-[1.2] tracking-tight text-white font-heading">
+          <h2 className="text-center text-[30px] font-bold leading-[1.15] tracking-tight text-foreground">
             Gestão inteligente<br />
-            de bonificações
+            <span className="bg-gradient-to-r from-primary to-[hsl(217,90%,72%)] bg-clip-text text-transparent">
+              de bonificações
+            </span>
           </h2>
-          <p className="mt-4 text-center text-[14px] leading-relaxed text-muted-foreground">
+          <p className="mt-4 max-w-[380px] text-center text-[14px] leading-relaxed text-muted-foreground">
             Acompanhe pontuações, gerencie recompensas e fidelize seus clientes com uma plataforma pensada para resultados.
           </p>
 
@@ -112,15 +156,15 @@ export default function LoginPage() {
               return (
                 <div
                   key={feature.label}
-                  className="group flex items-center gap-4 rounded-xl border border-white/[0.06] bg-gradient-to-r from-white/[0.03] to-transparent px-5 py-4 transition-all duration-300 hover:border-primary/20 hover:from-primary/[0.07] hover:to-primary/[0.02] animate-build-in"
-                  style={{ animationDelay: `${400 + i * 250}ms` }}
+                  className="group flex items-center gap-4 rounded-xl border border-border/50 bg-gradient-to-r from-muted/40 to-transparent px-5 py-3.5 transition-all duration-300 hover:border-primary/25 hover:from-primary/[0.08] hover:to-primary/[0.02] animate-build-in"
+                  style={{ animationDelay: `${500 + i * 200}ms` }}
                 >
-                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary/[0.1] ring-1 ring-primary/20 transition-all duration-300 group-hover:bg-primary/[0.18]">
-                    <Icon className="h-5 w-5 text-primary" />
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20 transition-all duration-300 group-hover:bg-primary/[0.18] group-hover:ring-primary/30">
+                    <Icon className="h-[18px] w-[18px] text-primary" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[13px] font-semibold text-white">{feature.label}</p>
-                    <p className="mt-0.5 text-[12px] text-muted-foreground">{feature.desc}</p>
+                    <p className="text-[13px] font-semibold text-foreground">{feature.label}</p>
+                    <p className="mt-0.5 text-[11.5px] text-muted-foreground">{feature.desc}</p>
                   </div>
                 </div>
               )
