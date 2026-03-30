@@ -138,7 +138,7 @@ async function getAuthenticatedUser(supabase: ReturnType<typeof createClient>, r
 }
 
 async function writeAuditLog(
-  supabase: ReturnType<typeof createClient>,
+  supabase: AnySupabase,
   tenantId: string,
   userId: string | null,
   action: string,
