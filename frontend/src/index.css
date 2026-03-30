@@ -61,7 +61,7 @@
 
     /* ── Layout ── */
     --page-max-width: 90rem;
-    --page-padding-inline: 1rem;
+    --page-padding-inline: max(1rem, env(safe-area-inset-left));
     --page-padding-block: 1.5rem;
     --section-gap: clamp(1.25rem, 1rem + 1vw, 2rem);
     --card-gap: clamp(0.875rem, 0.75rem + 0.5vw, 1.25rem);
@@ -396,11 +396,8 @@
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     border-radius: 1rem;
-  }
-
-  .table-fixed-layout {
-    table-layout: fixed;
-    width: 100%;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
   }
 
   .table-balanced {
@@ -747,55 +744,22 @@
   0%, 100% { transform: translateY(0); }
   50%      { transform: translateY(-3px); }
 }
-@keyframes logoFloat {
-  0%, 100% { transform: scale(1) translateY(0); }
-  50%      { transform: scale(1.03) translateY(-6px); }
-}
-@keyframes pulseGlow {
-  0%, 100% { opacity: 0.6; transform: scale(1); }
-  50%      { opacity: 1; transform: scale(1.08); }
-}
-@keyframes bonusHalo {
-  0%, 100% { opacity: 0.75; transform: scale(0.98); }
-  50%      { opacity: 1; transform: scale(1.06); }
-}
-@keyframes bonusRing {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-@keyframes sparkle {
-  0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
-  50%      { opacity: 1; transform: translate(-50%, -50%) scale(1.8); }
-}
-@keyframes orbitParticle {
-  0%   { transform: rotate(0deg) translateX(var(--orbit-r)) rotate(0deg); }
-  100% { transform: rotate(360deg) translateX(var(--orbit-r)) rotate(-360deg); }
-}
-@keyframes ring3dSpin {
-  from { transform: rotateX(65deg) rotateZ(0deg); }
-  to   { transform: rotateX(65deg) rotateZ(360deg); }
-}
-@keyframes ring3dSpinReverse {
-  from { transform: rotateX(65deg) rotateY(30deg) rotateZ(360deg); }
-  to   { transform: rotateX(65deg) rotateY(30deg) rotateZ(0deg); }
-}
-@keyframes ring3dSpinY {
-  from { transform: rotateY(65deg) rotateZ(0deg); }
-  to   { transform: rotateY(65deg) rotateZ(360deg); }
-}
-@keyframes bgDrift {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33%      { transform: translate(30px, -20px) scale(1.05); }
-  66%      { transform: translate(-20px, 15px) scale(0.98); }
-}
+
+/* ── Hero keyframes (still used by LoginHero) ── */
 @keyframes heroGlowDrift {
   0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
   33%      { transform: translate(25px, -18px) scale(1.06); opacity: 0.6; }
   66%      { transform: translate(-18px, 12px) scale(0.97); opacity: 0.45; }
 }
-@keyframes heroFloat {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-6px); }
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ── Reward centerpiece keyframes ── */
