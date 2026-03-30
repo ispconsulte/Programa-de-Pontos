@@ -58,16 +58,16 @@ export default function LoginHero() {
           className="mb-3 text-center font-heading text-[26px] font-bold leading-[1.15] tracking-tight text-foreground transition-all duration-700"
           style={{ opacity: v ? 1 : 0, transform: v ? 'translateY(0)' : 'translateY(14px)', ...d(180) }}
         >
-          Fidelidade que{' '}
+          Cada pagamento{' '}
           <span className="bg-gradient-to-r from-primary via-[hsl(48,96%,62%)] to-[hsl(160,70%,52%)] bg-clip-text text-transparent">
-            gera resultado
+            vale mais aqui
           </span>
         </h2>
         <p
           className="mb-10 max-w-[380px] text-center text-[13px] leading-relaxed text-muted-foreground transition-all duration-700"
           style={{ opacity: v ? 1 : 0, transform: v ? 'translateY(0)' : 'translateY(10px)', ...d(300) }}
         >
-          Pontos, recompensas e campanhas que transformam pagamentos em fidelização real.
+          Acumule pontos, suba de nível e resgate brindes exclusivos. Tudo automático, direto no seu painel.
         </p>
 
         {/* ── Tier progression ── */}
