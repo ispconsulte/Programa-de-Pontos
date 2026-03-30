@@ -102,7 +102,7 @@ function ScoreSummaryCard({
   color: string
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-white/[0.05] bg-white/[0.02] px-4 py-3">
+    <div className="flex items-center gap-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3">
       <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${color}`}>
         <Icon className="h-3.5 w-3.5" />
       </div>
@@ -200,9 +200,9 @@ export default function DashboardPage() {
           </div>
 
           {/* ── Recent payments section ── */}
-          <section className="rounded-xl border border-white/[0.06] bg-[hsl(var(--surface-1))]">
+          <section className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
             {/* Section header */}
-            <div className="flex flex-col gap-3 border-b border-white/[0.04] p-5 sm:flex-row sm:items-center sm:justify-between lg:p-6">
+            <div className="flex flex-col gap-3 border-b border-[hsl(var(--border))] p-5 sm:flex-row sm:items-center sm:justify-between lg:p-6">
               <div>
                 <h2 className="text-sm font-semibold text-foreground">Últimos pagamentos pontuados</h2>
                 <p className="mt-0.5 text-[13px] text-muted-foreground">
@@ -233,7 +233,7 @@ export default function DashboardPage() {
             ) : (
               <>
                 {/* Score distribution strip */}
-                <div className="grid gap-3 border-b border-white/[0.04] px-5 py-4 sm:grid-cols-3 lg:px-6">
+                <div className="grid gap-3 border-b border-[hsl(var(--border))] px-5 py-4 sm:grid-cols-3 lg:px-6">
                   <ScoreSummaryCard
                     icon={Zap}
                     label="Pagamentos antecipados"
@@ -255,12 +255,12 @@ export default function DashboardPage() {
                 </div>
 
                 {/* ── Mobile list ── */}
-                <div className="divide-y divide-white/[0.04] md:hidden">
+                <div className="divide-y divide-[hsl(var(--border))] md:hidden">
                   {receivables.map((item) => (
                     <Link
                       key={item.id}
                       to={`/receivables/${item.id}`}
-                      className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-white/[0.02]"
+                      className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-[hsl(var(--muted))]"
                     >
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-foreground">{formatClientName(item)}</p>
@@ -280,7 +280,7 @@ export default function DashboardPage() {
                 <div className="hidden md:block">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-white/[0.04]">
+                      <tr className="border-b border-[hsl(var(--border))]">
                         <th className="px-5 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground lg:px-6">Cliente</th>
                         <th className="px-3 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Classificação</th>
                         <th className="px-3 py-3 text-center text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Pontos</th>
@@ -290,9 +290,9 @@ export default function DashboardPage() {
                         <th className="px-5 py-3 lg:px-6"><span className="sr-only">Ações</span></th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/[0.03]">
+                    <tbody className="divide-y divide-[hsl(var(--border))]">
                       {receivables.map((item) => (
-                        <tr key={item.id} className="transition-colors hover:bg-white/[0.015]">
+                        <tr key={item.id} className="transition-colors hover:bg-[hsl(var(--muted))]">
                           <td className="px-5 py-3.5 lg:px-6">
                             <p className="font-medium text-foreground">{formatClientName(item)}</p>
                             <p className="mt-0.5 font-mono text-[11px] text-muted-foreground/70">#{item.id}</p>
