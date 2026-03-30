@@ -111,6 +111,9 @@ export default function ClienteEmDiaConfiguracoesPage() {
       })
     } finally {
       setSyncing(false)
+      // Cooldown to prevent spam
+      setSyncCooldown(true)
+      setTimeout(() => setSyncCooldown(false), 3000)
     }
   }
 
