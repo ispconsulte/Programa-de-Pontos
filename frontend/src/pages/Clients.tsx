@@ -111,7 +111,7 @@ export default function ClientsPage() {
                         'rounded-lg border px-3.5 py-1.5 text-xs font-medium transition-all duration-200',
                         searchType === type.value
                           ? 'border-primary/30 bg-primary/10 text-foreground'
-                          : 'border-white/[0.06] text-muted-foreground hover:border-white/[0.1] hover:text-foreground'
+                          : 'border-[hsl(var(--border))] text-muted-foreground hover:border-[hsl(var(--border))] hover:text-foreground'
                       )}
                     >
                       {type.label}
@@ -154,7 +154,7 @@ export default function ClientsPage() {
 
           {!loading && searched && clients !== null && (
             <Card>
-              <div className="border-b border-white/[0.04] px-5 py-4">
+              <div className="border-b border-[hsl(var(--border))] px-5 py-4">
                 <p className="text-sm font-medium text-foreground">
                   {clients.length === 0
                     ? 'Nenhum cliente encontrado'
@@ -174,7 +174,7 @@ export default function ClientsPage() {
                         <Link
                           key={client.id}
                           to={`/clients/${client.id}`}
-                          className="rounded-xl border border-white/[0.04] bg-white/[0.01] p-4 transition-all duration-200 hover:bg-white/[0.03] hover:border-white/[0.08]"
+                          className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 transition-all duration-200 hover:bg-[hsl(var(--muted))] hover:border-[hsl(var(--border))]"
                         >
                           <div className="flex items-start justify-between">
                             <div>

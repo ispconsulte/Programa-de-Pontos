@@ -218,17 +218,17 @@ export default function ReceivableDetailPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="mb-5 grid gap-3 sm:grid-cols-3">
-                      <div className="rounded-xl border border-white/[0.05] bg-white/[0.02] p-4">
+                      <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
                         <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Recebido</p>
                         <p className="mt-2 text-xl font-semibold text-emerald-400">{formatBRL(receivable.valor_recebido)}</p>
                       </div>
-                      <div className="rounded-xl border border-white/[0.05] bg-white/[0.02] p-4">
+                      <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
                         <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Vencimento</p>
-                        <p className="mt-2 text-xl font-semibold text-white">{formatDate(receivable.data_vencimento)}</p>
+                        <p className="mt-2 text-xl font-semibold text-foreground">{formatDate(receivable.data_vencimento)}</p>
                       </div>
-                      <div className="rounded-xl border border-white/[0.05] bg-white/[0.02] p-4">
+                      <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
                         <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Pagamento</p>
-                        <p className="mt-2 text-xl font-semibold text-white">{formatDate(receivable.data_pagamento)}</p>
+                        <p className="mt-2 text-xl font-semibold text-foreground">{formatDate(receivable.data_pagamento)}</p>
                       </div>
                     </div>
 
@@ -317,7 +317,7 @@ export default function ReceivableDetailPage() {
                           <Field label="Estado">{formatText(client.estado, { rejectNumericOnly: true })}</Field>
                         </div>
                         {client.id && (
-                          <div className="mt-5 border-t border-white/[0.04] pt-4">
+                          <div className="mt-5 border-t border-[hsl(var(--border))] pt-4">
                             <Link
                               to={`/clients/${client.id}`}
                               className="inline-flex items-center gap-1.5 text-sm text-primary transition-colors hover:text-primary/80"

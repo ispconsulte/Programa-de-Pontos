@@ -71,7 +71,7 @@ export default function PortalAccessPage() {
               {steps.map((step, index) => (
                 <div
                   key={step}
-                  className="flex items-start gap-3 rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-4 backdrop-blur-sm"
+                  className="flex items-start gap-3 rounded-2xl border border-white/8 bg-[hsl(var(--surface-2))] px-4 py-4 backdrop-blur-sm"
                 >
                   <div className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-emerald-400/15 text-sm font-semibold text-emerald-200">
                     {index + 1}
@@ -100,7 +100,7 @@ export default function PortalAccessPage() {
 
               <CardContent className="space-y-6">
                 <Tabs value={mode} onValueChange={(value) => setMode(value as AccessMode)} className="w-full">
-                  <TabsList className="grid h-auto w-full grid-cols-2 rounded-2xl border-white/10 bg-white/[0.04] p-1.5">
+                  <TabsList className="grid h-auto w-full grid-cols-2 rounded-2xl border-white/10 bg-[hsl(var(--surface-3))] p-1.5">
                     <TabsTrigger value="magic-link" className="h-11 rounded-xl">
                       <LinkIcon className="h-4 w-4" />
                       Link magico
@@ -158,7 +158,7 @@ export default function PortalAccessPage() {
                         </div>
                       </div>
 
-                      <div className="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-300">
+                      <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-2))] px-4 py-4 text-sm leading-6 text-slate-300">
                         Use o codigo enviado para seu canal cadastrado. {normalizedDocument.length > 0 ? 'Documento identificado para validacao segura.' : 'Informe seu CPF ou CNPJ para continuar.'}
                       </div>
 
@@ -175,7 +175,7 @@ export default function PortalAccessPage() {
                   </TabsContent>
                 </Tabs>
 
-                <div className="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-400">
+                <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-2))] px-4 py-4 text-sm leading-6 text-slate-400">
                   Se precisar de ajuda, fale com o time responsavel pela campanha. Seus dados sao utilizados somente para validar o acesso.
                 </div>
               </CardContent>

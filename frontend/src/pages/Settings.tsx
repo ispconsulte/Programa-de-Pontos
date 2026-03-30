@@ -122,7 +122,7 @@ export default function SettingsPage() {
                       <Plug className="h-4 w-4 text-primary" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-white">IXCSoft</p>
+                      <p className="truncate text-sm font-medium text-foreground">IXCSoft</p>
                       <div className="mt-0.5 flex items-center gap-1.5">
                         {settings?.ixc_configured ? (
                           <>
@@ -157,7 +157,7 @@ export default function SettingsPage() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+                    <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           {settings?.ixc_configured ? (
@@ -166,7 +166,7 @@ export default function SettingsPage() {
                             <WifiOff className="h-4 w-4 text-muted-foreground" />
                           )}
                           <div>
-                            <p className="text-sm font-medium text-white">
+                            <p className="text-sm font-medium text-foreground">
                               {tenantName || 'Base principal'}
                             </p>
                             <p className="text-xs text-muted-foreground">
@@ -260,7 +260,7 @@ export default function SettingsPage() {
                         {fieldErrors.ixcToken && <p className="text-xs text-destructive">{fieldErrors.ixcToken}</p>}
                       </div>
 
-                      <div className="flex justify-end border-t border-white/[0.04] pt-5">
+                      <div className="flex justify-end border-t border-[hsl(var(--border))] pt-5">
                         <Button
                           type="submit"
                           disabled={saving}

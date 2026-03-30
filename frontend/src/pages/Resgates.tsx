@@ -53,10 +53,10 @@ const statusConfig: Record<
   ciclo_concluido: {
     label: 'Ciclo da campanha concluido',
     icon: CalendarCheck,
-    color: 'text-slate-300',
-    bg: 'bg-white/[0.04]',
+    color: 'text-muted-foreground',
+    bg: 'bg-[hsl(var(--surface-3))]',
     ring: 'ring-white/[0.08]',
-    accent: 'border-white/[0.08]',
+    accent: 'border-[hsl(var(--border))]',
     description: 'Ciclo encerrado e contabilizado na campanha.',
   },
 }
@@ -82,7 +82,7 @@ export default function ResgatesPage() {
           subtitle="Painel operacional para acompanhar elegibilidade, solicitacoes, preparacao, entrega e encerramento do ciclo da campanha."
           actions={
             <>
-              <Button variant="outline" size="sm" className="border-emerald-500/20 bg-emerald-500/[0.04] text-emerald-200 hover:bg-emerald-500/[0.08] hover:text-white">
+              <Button variant="outline" size="sm" className="border-emerald-500/20 bg-emerald-500/[0.04] text-emerald-200 hover:bg-emerald-500/[0.08] hover:text-foreground">
                 <Filter className="h-3.5 w-3.5" />
                 Filtros ativos
               </Button>
@@ -110,8 +110,8 @@ export default function ResgatesPage() {
             const Icon = config.icon
 
             return (
-              <Card key={status} className={cn('min-h-[320px] border-white/[0.06]', config.accent)}>
-                <CardHeader className="border-b border-white/[0.06] pb-4">
+              <Card key={status} className={cn('min-h-[320px] border-[hsl(var(--border))]', config.accent)}>
+                <CardHeader className="border-b border-[hsl(var(--border))] pb-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className={cn('flex h-10 w-10 items-center justify-center rounded-xl ring-1', config.bg, config.ring)}>
                       <Icon className={cn('h-4 w-4', config.color)} />

@@ -74,7 +74,7 @@ export default function VersionUpdateNotifier() {
             </Button>
             <Button
               variant="outline"
-              className="border-white/[0.08]"
+              className="border-[hsl(var(--border))]"
               onClick={() => setDismissedVersion(nextVersion)}
             >
               Depois

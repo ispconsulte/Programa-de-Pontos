@@ -21,7 +21,7 @@ const logStyles: Record<string, string> = {
   parcial: 'border-amber-500/20 bg-amber-500/[0.06] text-amber-200',
   erro: 'border-red-500/20 bg-red-500/[0.06] text-red-200',
   processando: 'border-sky-500/20 bg-sky-500/[0.06] text-sky-200',
-  pendente: 'border-white/[0.08] bg-white/[0.03] text-slate-200',
+  pendente: 'border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-slate-200',
 }
 
 function formatDateInput(value: Date) {
@@ -156,12 +156,12 @@ export default function ClienteEmDiaConfiguracoesPage() {
                 ].map((item) => {
                   const Icon = item.icon
                   return (
-                    <div key={item.label} className="rounded-2xl border border-white/[0.06] bg-black/10 px-4 py-4 backdrop-blur-sm">
+                    <div key={item.label} className="rounded-2xl border border-[hsl(var(--border))] bg-black/10 px-4 py-4 backdrop-blur-sm">
                       <div className="flex items-center justify-between">
                         <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">{item.label}</p>
                         <Icon className="h-4 w-4 text-emerald-300" />
                       </div>
-                      <p className="mt-3 text-2xl font-semibold text-white">{item.value}</p>
+                      <p className="mt-3 text-2xl font-semibold text-foreground">{item.value}</p>
                     </div>
                   )
                 })}
@@ -194,7 +194,7 @@ export default function ClienteEmDiaConfiguracoesPage() {
                     <Input id="campaign-end" type="date" defaultValue="2027-01-31" className="[color-scheme:dark]" />
                   </div>
                 </div>
-                <div className="mt-4 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-4 text-sm text-muted-foreground">
+                <div className="mt-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-4 text-sm text-muted-foreground">
                   Vigencia oficial prevista: marco/2026 a janeiro/2027, com fechamento final e expiracao dos pontos em janeiro/2027.
                 </div>
               </CardContent>
@@ -258,7 +258,7 @@ export default function ClienteEmDiaConfiguracoesPage() {
                   <select
                     id="sync-interval"
                     defaultValue="30"
-                    className="h-10 w-full rounded-lg border border-white/[0.08] bg-background px-3 text-sm text-white focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
+                    className="h-10 w-full rounded-lg border border-[hsl(var(--border))] bg-background px-3 text-sm text-white focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
                   >
                     <option value="15">15 minutos</option>
                     <option value="30">30 minutos</option>
@@ -300,8 +300,8 @@ export default function ClienteEmDiaConfiguracoesPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {scoreRules.map((rule) => (
-                  <div key={rule.trigger} className="flex items-center justify-between gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
-                    <span className="text-sm text-white">{rule.trigger}</span>
+                  <div key={rule.trigger} className="flex items-center justify-between gap-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3">
+                    <span className="text-sm text-foreground">{rule.trigger}</span>
                     <span className="rounded-full border border-emerald-500/20 bg-emerald-500/[0.08] px-2.5 py-1 text-[11px] font-semibold text-emerald-200">
                       {rule.points}
                     </span>
@@ -321,7 +321,7 @@ export default function ClienteEmDiaConfiguracoesPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {ixcFields.map((field) => (
-                  <div key={field} className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-sm text-white">
+                  <div key={field} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3 text-sm text-foreground">
                     {field}
                   </div>
                 ))}
@@ -346,7 +346,7 @@ export default function ClienteEmDiaConfiguracoesPage() {
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="text-sm font-semibold text-white">{settings.latestSync.tipoSync}</p>
+                        <p className="text-sm font-semibold text-foreground">{settings.latestSync.tipoSync}</p>
                         <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                           {settings.latestSync.mensagem ?? 'Sincronizacao registrada sem mensagem adicional.'}
                         </p>

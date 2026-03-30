@@ -217,7 +217,7 @@ export default function ClientDetailPage() {
                       <TableBody>
                         {contracts.map((contract, index) => (
                           <TableRow key={contract.id ?? index}>
-                            <TableCell className="font-mono text-xs text-white">{contract.id ?? '-'}</TableCell>
+                            <TableCell className="font-mono text-xs text-foreground">{contract.id ?? '-'}</TableCell>
                             <TableCell className="text-slate-300">{contract.plano || '-'}</TableCell>
                             <TableCell>{contract.status ? statusBadge(contract.status) : '-'}</TableCell>
                             <TableCell className="text-slate-300">

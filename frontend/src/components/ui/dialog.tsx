@@ -35,7 +35,7 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-1/2 top-1/2 z-50 grid w-[min(calc(100%-1.5rem),42rem)] max-h-[var(--modal-max-height)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl border border-white/[0.08] bg-[hsl(var(--background))] shadow-2xl shadow-black/50 duration-200",
+        "fixed left-1/2 top-1/2 z-50 grid w-[min(calc(100%-1.5rem),42rem)] max-h-[var(--modal-max-height)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] shadow-2xl shadow-black/50 duration-200",
         "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-[0.97] data-[state=open]:zoom-in-[0.97] data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
         className
       )}
@@ -44,7 +44,7 @@ const DialogContent = React.forwardRef<
       <div className="scrollable-content max-h-[var(--modal-max-height)]">
         {children}
       </div>
-      <DialogPrimitive.Close className="absolute right-3.5 top-3.5 flex h-7 w-7 items-center justify-center rounded-lg bg-white/[0.04] text-muted-foreground transition-all hover:bg-white/[0.08] hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-background disabled:pointer-events-none">
+      <DialogPrimitive.Close className="absolute right-3.5 top-3.5 flex h-7 w-7 items-center justify-center rounded-lg bg-[hsl(var(--surface-3))] text-muted-foreground transition-all hover:bg-[hsl(var(--muted))] hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-background disabled:pointer-events-none">
         <X className="h-3.5 w-3.5" />
         <span className="sr-only">Fechar</span>
       </DialogPrimitive.Close>
@@ -59,7 +59,7 @@ const DialogHeader = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col gap-1.5 border-b border-white/[0.06] px-5 py-4 sm:px-6 sm:py-5",
+      "flex flex-col gap-1.5 border-b border-[hsl(var(--border))] px-5 py-4 sm:px-6 sm:py-5",
       className
     )}
     {...props}
@@ -73,7 +73,7 @@ const DialogFooter = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col-reverse gap-2 border-t border-white/[0.06] px-5 py-4 sm:flex-row sm:justify-end sm:gap-3 sm:px-6",
+      "flex flex-col-reverse gap-2 border-t border-[hsl(var(--border))] px-5 py-4 sm:flex-row sm:justify-end sm:gap-3 sm:px-6",
       className
     )}
     {...props}

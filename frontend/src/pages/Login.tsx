@@ -74,7 +74,7 @@ export default function LoginPage() {
           </div>
 
           {/* ── Card ── */}
-          <div className="rounded-2xl border border-white/[0.07] bg-gradient-to-b from-[hsl(var(--surface-1))] to-[hsl(var(--surface-2)_/_0.4)] p-7 shadow-[0_20px_60px_-16px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.03)] lg:p-8">
+          <div className="rounded-2xl border border-[hsl(var(--border))] bg-gradient-to-b from-[hsl(var(--surface-1))] to-[hsl(var(--surface-2)_/_0.4)] p-7 shadow-[0_20px_60px_-16px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.03)] lg:p-8">
             {/* Card header */}
             <div className="mb-8">
               <h1 className="font-heading text-[22px] font-bold tracking-tight text-foreground">
@@ -114,7 +114,7 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="seu@empresa.com"
                   autoComplete="email"
-                  className="h-[46px] rounded-xl border-white/[0.08] bg-white/[0.025] px-4 text-[14px] transition-all duration-200 placeholder:text-muted-foreground/25 focus-visible:border-primary/40 focus-visible:bg-white/[0.04] focus-visible:shadow-[0_0_0_3px_hsl(var(--primary)_/_0.08)]"
+                  className="h-[46px] rounded-xl border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 text-[14px] transition-all duration-200 placeholder:text-muted-foreground/25 focus-visible:border-primary/40 focus-visible:bg-[hsl(var(--surface-3))] focus-visible:shadow-[0_0_0_3px_hsl(var(--primary)_/_0.08)]"
                 />
               </div>
 
@@ -131,12 +131,12 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     autoComplete="current-password"
-                    className="h-[46px] rounded-xl border-white/[0.08] bg-white/[0.025] px-4 pr-11 text-[14px] transition-all duration-200 placeholder:text-muted-foreground/25 focus-visible:border-primary/40 focus-visible:bg-white/[0.04] focus-visible:shadow-[0_0_0_3px_hsl(var(--primary)_/_0.08)]"
+                    className="h-[46px] rounded-xl border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 pr-11 text-[14px] transition-all duration-200 placeholder:text-muted-foreground/25 focus-visible:border-primary/40 focus-visible:bg-[hsl(var(--surface-3))] focus-visible:shadow-[0_0_0_3px_hsl(var(--primary)_/_0.08)]"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground/40 transition-all duration-150 hover:bg-white/[0.05] hover:text-foreground/70"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground/40 transition-all duration-150 hover:bg-[hsl(var(--muted))] hover:text-foreground/70"
                     tabIndex={-1}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

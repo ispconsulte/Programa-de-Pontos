@@ -35,9 +35,9 @@ function GiftCatalogDialog({ trigger }: { trigger: React.ReactNode }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-xl border-white/[0.08] bg-[linear-gradient(180deg,rgba(16,185,129,0.06),rgba(255,255,255,0)_24%),hsl(var(--background))]">
+      <DialogContent className="max-w-xl border-[hsl(var(--border))] bg-[linear-gradient(180deg,rgba(16,185,129,0.06),rgba(255,255,255,0)_24%),hsl(var(--background))]">
         <DialogHeader>
-          <DialogTitle className="text-white">Adicionar brinde</DialogTitle>
+          <DialogTitle className="text-foreground">Adicionar brinde</DialogTitle>
           <DialogDescription>
             Cadastre um novo item apenas quando houver dados validados para nome e pontuacao.
           </DialogDescription>
@@ -112,17 +112,17 @@ export default function ClienteEmDiaBrindesPage() {
               <EmptyState title="Falha ao carregar catálogo" description={error} />
             ) : (
               <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl border border-white/[0.06] bg-black/10 px-4 py-4 backdrop-blur-sm">
+                <div className="rounded-2xl border border-[hsl(var(--border))] bg-black/10 px-4 py-4 backdrop-blur-sm">
                   <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Itens cadastrados</p>
-                  <p className="mt-2 text-2xl font-semibold text-white">{rewards.length}</p>
+                  <p className="mt-2 text-2xl font-semibold text-foreground">{rewards.length}</p>
                 </div>
-                <div className="rounded-2xl border border-white/[0.06] bg-black/10 px-4 py-4 backdrop-blur-sm">
+                <div className="rounded-2xl border border-[hsl(var(--border))] bg-black/10 px-4 py-4 backdrop-blur-sm">
                   <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Ativos</p>
-                  <p className="mt-2 text-2xl font-semibold text-white">{rewards.filter((item) => item.ativo).length}</p>
+                  <p className="mt-2 text-2xl font-semibold text-foreground">{rewards.filter((item) => item.ativo).length}</p>
                 </div>
-                <div className="rounded-2xl border border-white/[0.06] bg-black/10 px-4 py-4 backdrop-blur-sm">
+                <div className="rounded-2xl border border-[hsl(var(--border))] bg-black/10 px-4 py-4 backdrop-blur-sm">
                   <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Faixa inicial</p>
-                  <p className="mt-2 text-2xl font-semibold text-white">
+                  <p className="mt-2 text-2xl font-semibold text-foreground">
                     {rewards[0] ? `${rewards[0].pontosNecessarios} pts` : '--'}
                   </p>
                 </div>
@@ -148,9 +148,9 @@ export default function ClienteEmDiaBrindesPage() {
             ) : (
               <div className="space-y-3">
                 {rewards.map((reward) => (
-                  <div key={reward.id} className="flex items-center justify-between gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+                  <div key={reward.id} className="flex items-center justify-between gap-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3">
                     <div>
-                      <p className="text-sm font-medium text-white">{reward.nome}</p>
+                      <p className="text-sm font-medium text-foreground">{reward.nome}</p>
                       <p className="mt-1 text-xs text-muted-foreground">{reward.descricao ?? 'Sem descricao cadastrada.'}</p>
                     </div>
                     <div className="text-right">

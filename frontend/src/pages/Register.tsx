@@ -74,7 +74,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-[380px]">
         <Link
           to="/login"
-          className="mb-8 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-white"
+          className="mb-8 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Voltar para login
@@ -84,7 +84,7 @@ export default function RegisterPage() {
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15">
             <Trophy className="h-[18px] w-[18px] text-primary" />
           </div>
-          <span className="text-sm font-bold text-white">Programa de Pontos</span>
+          <span className="text-sm font-bold text-foreground">Programa de Pontos</span>
         </div>
 
         <div className="mb-8">
@@ -92,7 +92,7 @@ export default function RegisterPage() {
           <p className="mt-2 text-sm text-muted-foreground">Preencha os dados para começar.</p>
         </div>
 
-        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-6">
+        <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-6">
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
               <div className="flex items-center gap-2.5 rounded-lg border border-destructive/20 bg-destructive/[0.06] px-4 py-3">
@@ -130,7 +130,7 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
                   tabIndex={-1}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
