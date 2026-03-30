@@ -374,7 +374,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <div className="p-1.5">
                     <button
                       onClick={() => { fileInputRef.current?.click(); setUserMenuOpen(false) }}
-                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-white/[0.04] hover:text-foreground"
+                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-[hsl(var(--muted))] hover:text-foreground"
                     >
                       <Camera className="h-4 w-4" />
                       Alterar foto
