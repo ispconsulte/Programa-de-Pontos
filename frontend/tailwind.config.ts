@@ -1,13 +1,12 @@
 import type { Config } from 'tailwindcss'
+import animate from 'tailwindcss-animate'
 
 const config: Config = {
   darkMode: ['class'],
-  content: [
-    './src/pages/**/*.{ts,tsx}',
-    './src/components/**/*.{ts,tsx}',
-    './src/app/**/*.{ts,tsx}',
-    './src/lib/**/*.{ts,tsx}',
-  ],
+  content: {
+    relative: true,
+    files: ['./index.html', './src/**/*.{ts,tsx}'],
+  },
   theme: {
     container: {
       center: true,
@@ -17,6 +16,10 @@ const config: Config = {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['Manrope', 'sans-serif'],
+        heading: ['Sora', 'sans-serif'],
+      },
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
@@ -54,6 +57,12 @@ const config: Config = {
         sidebar: {
           DEFAULT: 'hsl(var(--sidebar))',
           active: 'hsl(var(--sidebar-active))',
+          border: 'hsl(var(--sidebar-border))',
+        },
+        surface: {
+          1: 'hsl(var(--surface-1))',
+          2: 'hsl(var(--surface-2))',
+          3: 'hsl(var(--surface-3))',
         },
       },
       borderRadius: {
@@ -77,7 +86,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [animate],
 }
 
 export default config

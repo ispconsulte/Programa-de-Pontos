@@ -1,9 +1,7 @@
-'use client'
-
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
-import { getAccessToken, getCachedAccessToken } from '@/lib/auth'
+import { useNavigate } from 'react-router-dom'
+import { supabase } from '@/lib/supabase-client'
+import { getAccessToken, getCachedAccessToken } from '@/lib/auth-client'
 import Spinner from './Spinner'
 
 interface ProtectedRouteProps {
@@ -11,7 +9,7 @@ interface ProtectedRouteProps {
 }
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const router = useRouter()
+  const navigate = useNavigate()
   const [checking, setChecking] = useState(() => getCachedAccessToken() === undefined)
 
   useEffect(() => {
@@ -22,7 +20,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       if (!mounted) return
 
       if (!token) {
-        router.replace('/login')
+        navigate('/login', { replace: true })
         return
       }
 
@@ -33,7 +31,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session?.access_token) {
-        router.replace('/login')
+        navigate('/login', { replace: true })
       }
     })
 
@@ -41,7 +39,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       mounted = false
       subscription.subscription.unsubscribe()
     }
-  }, [router])
+  }, [navigate])
 
   if (checking) {
     return (

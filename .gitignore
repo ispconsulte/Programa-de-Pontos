@@ -8,7 +8,11 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+.next
+frontend/.next/
+frontend/node_modules/
 dist
+backend/dist
 dist-ssr
 .env
 .env.*
@@ -16,6 +20,7 @@ dist-ssr
 *.local
 coverage
 *.tsbuildinfo
+frontend/_legacy-next/
 tmp-*.log
 tmp-*.out
 tmp-*.err
