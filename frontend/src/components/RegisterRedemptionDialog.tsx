@@ -291,7 +291,7 @@ export default function RegisterRedemptionDialog({
           </div>
         </div>
 
-        <DialogFooter className="border-t border-white/[0.06] px-6 py-4">
+        <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>
             Cancelar
           </Button>
