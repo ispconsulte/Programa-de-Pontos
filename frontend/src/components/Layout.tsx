@@ -253,14 +253,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         )}
       >
         {/* ── Brand ── */}
-        <div className="flex h-[60px] flex-shrink-0 items-center justify-center px-5">
+        <div className="flex h-[68px] flex-shrink-0 items-center justify-center px-5">
           <img
             src={logoBonifica}
             alt="Bonifica"
-            className="h-10 w-10 flex-shrink-0"
+            className="h-14 w-14 flex-shrink-0"
             style={{
               objectFit: 'contain',
-              filter: 'drop-shadow(0 0 6px hsl(var(--primary) / 0.3))',
+              filter: 'drop-shadow(0 0 8px hsl(var(--primary) / 0.3))',
             }}
           />
           <button onClick={closeSidebar} className="absolute right-3 rounded-md p-1 text-muted-foreground hover:text-foreground lg:hidden">
