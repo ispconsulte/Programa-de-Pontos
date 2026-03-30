@@ -176,6 +176,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const closeSidebar = () => setSidebarOpen(false)
+  const toggleCollapse = () => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev
+      window.localStorage.setItem('bonifica-sidebar-collapsed', String(next))
+      return next
+    })
+  }
 
   useEffect(() => {
     const root = document.documentElement
