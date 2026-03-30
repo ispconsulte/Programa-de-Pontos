@@ -93,6 +93,24 @@ function SidebarItem({ item, pathname, onNav, collapsed }: { item: NavItem; path
   const active = isActive || isChildActive
 
   if (hasChildren) {
+    if (collapsed) {
+      // In collapsed mode, just show the icon linking to the main href
+      return (
+        <Link
+          to={item.href}
+          onClick={onNav}
+          title={item.label}
+          className={cn(
+            'group flex items-center justify-center rounded-xl p-2.5 transition-all duration-150',
+            active
+              ? 'bg-[hsl(var(--sidebar-active))] text-foreground ring-1 ring-primary/10 shadow-sm'
+              : 'text-muted-foreground hover:bg-[hsl(var(--surface-2))] hover:text-foreground'
+          )}
+        >
+          <Icon className={cn('h-[18px] w-[18px] flex-shrink-0', active ? 'text-primary' : 'text-muted-foreground/70')} />
+        </Link>
+      )
+    }
     return (
       <div>
         <button
