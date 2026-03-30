@@ -210,9 +210,14 @@
 
   button,
   [role='button'],
-  .button,
-  [class*='btn'] {
+  .button {
     min-height: var(--touch-min);
+  }
+
+  /* Small chips/pills should not enforce touch target height */
+  [class*="rounded-full"][class*="px-"],
+  [class*="rounded-lg"][class*="py-1"] {
+    min-height: auto;
   }
 }
 
