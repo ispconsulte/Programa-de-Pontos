@@ -36,7 +36,7 @@ export default function ClienteEmDiaCadastrarPage() {
           subtitle="Inclua clientes do IXC na campanha Cliente em Dia por busca filtrada ou importacao de lista com ixc_cliente_id."
           actions={
             <>
-              <Button variant="outline" size="sm" className="border-emerald-500/20 bg-emerald-500/[0.04] text-emerald-200 hover:bg-emerald-500/[0.08] hover:text-white">
+              <Button variant="outline" size="sm" className="border-emerald-500/20 bg-emerald-500/[0.04] text-emerald-200 hover:bg-emerald-500/[0.08] hover:text-foreground">
                 <Upload className="h-3.5 w-3.5" />
                 Modelo CSV
               </Button>
@@ -56,9 +56,9 @@ export default function ClienteEmDiaCadastrarPage() {
                 { label: 'Selecionados em lote', value: '0' },
                 { label: 'IDs no CSV', value: String(csvIds.length) },
               ].map((item) => (
-                <div key={item.label} className="rounded-2xl border border-white/[0.06] bg-black/10 px-4 py-4 backdrop-blur-sm">
+                <div key={item.label} className="rounded-2xl border border-[hsl(var(--border))] bg-black/10 px-4 py-4 backdrop-blur-sm">
                   <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">{item.label}</p>
-                  <p className="mt-2 text-2xl font-semibold text-white">{item.value}</p>
+                  <p className="mt-2 text-2xl font-semibold text-foreground">{item.value}</p>
                 </div>
               ))}
             </div>
@@ -81,7 +81,7 @@ export default function ClienteEmDiaCadastrarPage() {
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Buscar por nome, IXC ID ou cidade"
-                  className="h-10 w-full rounded-lg border border-white/[0.08] bg-background pl-9 pr-3 text-sm text-white placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
+                  className="h-10 w-full rounded-lg border border-[hsl(var(--border))] bg-background pl-9 pr-3 text-sm text-white placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
                 />
               </div>
 
@@ -100,7 +100,7 @@ export default function ClienteEmDiaCadastrarPage() {
               <CardContent className="space-y-4">
                 <div className="rounded-2xl border border-dashed border-emerald-500/20 bg-emerald-500/[0.04] px-4 py-8 text-center">
                   <Upload className="mx-auto h-8 w-8 text-emerald-300" />
-                  <p className="mt-3 text-sm font-medium text-white">Arraste um CSV ou use a área abaixo</p>
+                  <p className="mt-3 text-sm font-medium text-foreground">Arraste um CSV ou use a área abaixo</p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     Aceite uma coluna simples com lista de `ixc_cliente_id`.
                   </p>
@@ -110,12 +110,12 @@ export default function ClienteEmDiaCadastrarPage() {
                   value={csvList}
                   onChange={(event) => setCsvList(event.target.value)}
                   placeholder="Cole uma lista de ixc_cliente_id, um por linha"
-                  className="min-h-[160px] w-full rounded-lg border border-white/[0.08] bg-[hsl(var(--surface-1))] px-3.5 py-3 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none transition-all duration-200 focus:border-primary/40 focus:ring-1 focus:ring-primary/20"
+                  className="min-h-[160px] w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3.5 py-3 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none transition-all duration-200 focus:border-primary/40 focus:ring-1 focus:ring-primary/20"
                 />
 
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+                <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3">
                   <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Prévia</p>
-                  <p className="mt-2 text-sm text-white">{csvIds.length} IDs detectados para inclusão</p>
+                  <p className="mt-2 text-sm text-foreground">{csvIds.length} IDs detectados para inclusão</p>
                 </div>
               </CardContent>
             </Card>
@@ -128,13 +128,13 @@ export default function ClienteEmDiaCadastrarPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-4">
+                <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-4">
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 ring-1 ring-emerald-500/20">
                       <Users className="h-4 w-4 text-emerald-300" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-white">Resumo do lote</p>
+                      <p className="text-sm font-semibold text-foreground">Resumo do lote</p>
                       <p className="mt-1 text-xs text-muted-foreground">
                         0 clientes encontrados na busca e {csvIds.length} IDs informados manualmente.
                       </p>
@@ -146,7 +146,7 @@ export default function ClienteEmDiaCadastrarPage() {
                   <Button className="bg-emerald-600 text-white hover:bg-emerald-500">
                     Incluir clientes na campanha
                   </Button>
-                  <Button variant="outline" className="border-white/[0.08]">
+                  <Button variant="outline" className="border-[hsl(var(--border))]">
                     Limpar seleção
                   </Button>
                 </div>

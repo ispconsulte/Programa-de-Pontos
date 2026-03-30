@@ -136,7 +136,7 @@ export default function ClienteEmDiaPage() {
 
         {/* Customers list */}
         <Card>
-          <CardHeader className="border-b border-white/[0.06]">
+          <CardHeader className="border-b border-[hsl(var(--border))]">
             <CardTitle>Clientes da campanha</CardTitle>
             <CardDescription>
               Clientes, status, pontos disponíveis e última movimentação.
@@ -156,12 +156,12 @@ export default function ClienteEmDiaPage() {
                 <EmptyState title="Ainda não há registros" description="Nenhum cliente sincronizado foi encontrado." />
               </div>
             ) : (
-              <div className="divide-y divide-white/[0.04]">
+              <div className="divide-y divide-[hsl(var(--border))]">
                 {overview.slice(0, 8).map((customer) => (
                   <Link
                     key={customer.id}
                     to={`/cliente-em-dia/${customer.ixcClienteId}`}
-                    className="flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-white/[0.02]"
+                    className="flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-[hsl(var(--muted))]"
                   >
                     <div>
                       <p className="text-sm font-medium text-foreground">{customer.nomeCliente}</p>

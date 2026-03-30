@@ -102,7 +102,7 @@ export default function RegisterRedemptionDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-2xl border-white/[0.08] bg-[linear-gradient(180deg,rgba(16,185,129,0.06),rgba(255,255,255,0)_22%),hsl(var(--background))] p-0">
+      <DialogContent className="max-w-2xl border-[hsl(var(--border))] bg-[linear-gradient(180deg,rgba(16,185,129,0.06),rgba(255,255,255,0)_22%),hsl(var(--background))] p-0">
         <DialogHeader className="px-6 py-5">
           <div className="flex items-start gap-4">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 ring-1 ring-emerald-500/20">
@@ -140,7 +140,7 @@ export default function RegisterRedemptionDialog({
                   />
                 </div>
 
-                <div className="scrollable-content max-h-44 space-y-2 rounded-xl border border-white/[0.06] bg-white/[0.02] p-2">
+                <div className="scrollable-content max-h-44 space-y-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-2">
                   {filteredCustomers.map((customer) => {
                     const isSelected = customer.id === selectedCustomerId
                     return (
@@ -153,7 +153,7 @@ export default function RegisterRedemptionDialog({
                         }}
                         className={cn(
                           'flex w-full items-center justify-between rounded-lg px-3 py-2 text-left transition-colors',
-                          isSelected ? 'bg-emerald-500/10 text-white ring-1 ring-emerald-500/20' : 'hover:bg-white/[0.04] text-slate-200'
+                          isSelected ? 'bg-emerald-500/10 text-white ring-1 ring-emerald-500/20' : 'hover:bg-[hsl(var(--muted))] text-slate-200'
                         )}
                       >
                         <div>
@@ -171,7 +171,7 @@ export default function RegisterRedemptionDialog({
                   })}
 
                   {filteredCustomers.length === 0 && (
-                    <div className="rounded-lg border border-dashed border-white/[0.08] px-3 py-5 text-center text-sm text-muted-foreground">
+                    <div className="rounded-lg border border-dashed border-[hsl(var(--border))] px-3 py-5 text-center text-sm text-muted-foreground">
                       {customers.length === 0 ? 'Ainda nao ha registros aqui.' : 'Nenhum resultado encontrado. Tente novamente mais tarde.'}
                     </div>
                   )}
@@ -213,7 +213,7 @@ export default function RegisterRedemptionDialog({
                   <Label className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
                     Pontos disponiveis do cliente
                   </Label>
-                  <div className="flex h-10 items-center rounded-lg border border-white/[0.08] bg-white/[0.03] px-3.5 text-sm font-semibold text-white">
+                  <div className="flex h-10 items-center rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3.5 text-sm font-semibold text-white">
                     {selectedCustomer ? `${availablePoints.toLocaleString('pt-BR')} pts` : 'Nenhum dado encontrado'}
                   </div>
                 </div>
@@ -228,7 +228,7 @@ export default function RegisterRedemptionDialog({
                   value={notes}
                   onChange={(event) => setNotes(event.target.value)}
                   placeholder="Observacoes operacionais, contexto da entrega ou anotacoes do IXC"
-                  className="min-h-[110px] w-full rounded-lg border border-white/[0.08] bg-[hsl(var(--surface-1))] px-3.5 py-3 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none transition-all duration-200 focus:border-primary/40 focus:ring-1 focus:ring-primary/20"
+                  className="min-h-[110px] w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3.5 py-3 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none transition-all duration-200 focus:border-primary/40 focus:ring-1 focus:ring-primary/20"
                 />
               </div>
             </div>
@@ -274,9 +274,9 @@ export default function RegisterRedemptionDialog({
                 </div>
               )}
 
-              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+              <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
                 <div className="flex items-start gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.04] text-slate-200 ring-1 ring-white/[0.08]">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[hsl(var(--surface-3))] text-slate-200 ring-1 ring-white/[0.08]">
                     <UserRound className="h-4 w-4" />
                   </div>
                   <div>

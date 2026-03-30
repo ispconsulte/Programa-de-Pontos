@@ -329,13 +329,13 @@ export default function ReceivablesPage() {
                 </div>
               ) : (
                 <>
-                  <div className="grid gap-3 border-b border-white/[0.04] px-5 py-4 md:grid-cols-3">
+                  <div className="grid gap-3 border-b border-[hsl(var(--border))] px-5 py-4 md:grid-cols-3">
                     {[
                       { label: '5 pontos', helper: 'Pagamentos antecipados', value: scoreSummary.fivePoints, color: 'text-emerald-400' },
                       { label: '4 pontos', helper: 'Pagamentos no vencimento', value: scoreSummary.fourPoints, color: 'text-sky-400' },
                       { label: '2 pontos', helper: 'Pagamentos apos o vencimento', value: scoreSummary.twoPoints, color: 'text-amber-400' },
                     ].map((item) => (
-                      <div key={item.label} className="rounded-xl border border-white/[0.05] bg-white/[0.02] px-4 py-3">
+                      <div key={item.label} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3">
                         <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{item.label}</p>
                         <p className={`mt-2 text-2xl font-semibold ${item.color}`}>{item.value}</p>
                         <p className="mt-1 text-xs text-muted-foreground">{item.helper}</p>
@@ -345,10 +345,10 @@ export default function ReceivablesPage() {
 
                   <div className="grid gap-2 p-4 md:hidden">
                     {visibleReceivables.map((item) => (
-                      <Link key={item.id} to={`/receivables/${item.id}`} className="rounded-xl border border-white/[0.04] bg-white/[0.01] p-4 transition-all duration-200 hover:bg-white/[0.03] hover:border-white/[0.08]">
+                      <Link key={item.id} to={`/receivables/${item.id}`} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 transition-all duration-200 hover:bg-[hsl(var(--muted))] hover:border-[hsl(var(--border))]">
                         <div className="flex items-start justify-between">
                           <div>
-                            <p className="text-sm font-medium text-white">{formatClientLabel(item)}</p>
+                            <p className="text-sm font-medium text-foreground">{formatClientLabel(item)}</p>
                             <p className="mt-1 text-xs text-muted-foreground">Recebimento #{item.id}</p>
                           </div>
                           <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
@@ -387,16 +387,16 @@ export default function ReceivablesPage() {
                           <TableRow key={item.id}>
                             <TableCell className="text-slate-300">
                               <div>
-                                <p className="font-medium text-white">{formatClientLabel(item)}</p>
+                                <p className="font-medium text-foreground">{formatClientLabel(item)}</p>
                                 <p className="mt-1 text-xs text-muted-foreground">Cliente #{formatText(item.id_cliente)}</p>
                               </div>
                             </TableCell>
-                            <TableCell className="font-mono text-xs text-white">{item.id}</TableCell>
+                            <TableCell className="font-mono text-xs text-foreground">{item.id}</TableCell>
                             <TableCell className="text-slate-300">{getPaymentBehaviorLabel(item)}</TableCell>
                             <TableCell className="text-right font-semibold text-emerald-400">+{getPaymentScore(item)}</TableCell>
                             <TableCell className="whitespace-nowrap text-slate-300">{formatDate(item.data_vencimento)}</TableCell>
                             <TableCell className="whitespace-nowrap text-slate-300">{formatDate(item.data_pagamento ?? '')}</TableCell>
-                            <TableCell className="whitespace-nowrap text-right font-medium text-white">{formatBRL(item.valor)}</TableCell>
+                            <TableCell className="whitespace-nowrap text-right font-medium text-foreground">{formatBRL(item.valor)}</TableCell>
                             <TableCell className="whitespace-nowrap text-right text-emerald-400">{formatBRL(item.valor_recebido)}</TableCell>
                             <TableCell>{statusBadge(item.status)}</TableCell>
                             <TableCell className="text-right">
@@ -410,7 +410,7 @@ export default function ReceivablesPage() {
                     </Table>
                   </div>
 
-                  <div className="border-t border-white/[0.04] px-5 py-4">
+                  <div className="border-t border-[hsl(var(--border))] px-5 py-4">
                     <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
                   </div>
                 </>
