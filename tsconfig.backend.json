@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022"],
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src/server.ts", "src/modules/**/*", "src/db/**/*", "src/lib/app-error.ts", "src/lib/audit.ts", "src/lib/business-rules.ts", "src/lib/campaign.ts", "src/lib/crypto.ts", "src/lib/ixc-connections.ts", "src/lib/ixc-proxy.ts", "src/lib/ssrf-guard.ts", "src/lib/supabase-admin.ts", "src/lib/supabase.ts", "src/middleware/**/*", "src/types/**/*"],
+  "exclude": ["node_modules", "dist", "tests"]
+}
