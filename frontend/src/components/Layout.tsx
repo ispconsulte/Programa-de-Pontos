@@ -262,7 +262,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       >
         {/* ── Brand ── */}
         <div className="relative flex h-14 flex-shrink-0 items-center gap-3 border-b border-white/[0.05] px-4">
-          <img src={logoBonifica} alt="Bonifica" className="h-7 w-7 object-contain" />
+          <img
+            src={logoBonifica}
+            alt="Bonifica"
+            className="h-7 w-7 flex-shrink-0"
+            style={{
+              objectFit: 'contain',
+              background: 'transparent',
+              mixBlendMode: 'normal',
+              filter: 'drop-shadow(0 0 1px hsl(var(--primary) / 0.3))',
+            }}
+          />
           <div className="min-w-0">
             <p className="truncate text-[13px] font-semibold text-foreground">Bonifica</p>
           </div>
