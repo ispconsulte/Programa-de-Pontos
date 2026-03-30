@@ -1,4 +1,5 @@
 import Layout from '@/components/Layout'
+import { useNavigate } from 'react-router-dom'
 import {
   Users,
   Coins,
@@ -106,6 +107,7 @@ function ChartTooltip({ active, payload, label }: any) {
 /* ── Page ── */
 
 export default function ClienteEmDiaPage() {
+  const navigate = useNavigate()
   return (
     <Layout>
       <div className="space-y-6">
@@ -255,7 +257,8 @@ export default function ClienteEmDiaPage() {
                 {clients.map((c) => (
                   <tr
                     key={c.id}
-                    className="transition-colors hover:bg-muted/30"
+                    onClick={() => navigate(`/cliente-em-dia/${c.id}`)}
+                    className="cursor-pointer transition-colors hover:bg-muted/30"
                   >
                     <td className="whitespace-nowrap px-5 py-3.5 font-medium text-foreground">
                       {c.nome}
