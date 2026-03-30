@@ -10,11 +10,11 @@ import {
   Menu,
   Search,
   Settings,
-  Trophy,
   Users,
   Wrench,
   X,
 } from 'lucide-react'
+import logoBonifica from '@/assets/logo-bonifica.png'
 import { useState } from 'react'
 import { logout } from '@/lib/auth-client'
 import { cn } from '@/lib/utils'
