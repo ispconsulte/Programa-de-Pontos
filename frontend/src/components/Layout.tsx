@@ -269,7 +269,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
             {/* Secondary nav (bottom-pinned) */}
             <div className="mt-4 space-y-0.5 border-t border-white/[0.04] pt-3">
-              {(filteredSections[1]?.items ?? []).map(item => (
+              {(navSections[1]?.items ?? []).map(item => (
                 <SidebarItem key={item.href} item={item} pathname={pathname} onNav={closeSidebar} />
               ))}
             </div>
