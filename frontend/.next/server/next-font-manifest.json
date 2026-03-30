@@ -1,0 +1,35 @@
+{
+  "app": {
+    "[project]/src/app/receivables/[id]/page": [
+      "static/media/xn7gYHE41ni1AdIRggexSvfedN4-s.p.2b9b556b.woff2",
+      "static/media/xMQbuFFYT72XzQUpDqW1KX4-s.p.58140a9c.woff2"
+    ],
+    "[project]/src/app/page": [
+      "static/media/xn7gYHE41ni1AdIRggexSvfedN4-s.p.2b9b556b.woff2",
+      "static/media/xMQbuFFYT72XzQUpDqW1KX4-s.p.58140a9c.woff2"
+    ],
+    "[project]/src/app/dashboard/page": [
+      "static/media/xn7gYHE41ni1AdIRggexSvfedN4-s.p.2b9b556b.woff2",
+      "static/media/xMQbuFFYT72XzQUpDqW1KX4-s.p.58140a9c.woff2"
+    ],
+    "[project]/src/app/receivables/page": [
+      "static/media/xn7gYHE41ni1AdIRggexSvfedN4-s.p.2b9b556b.woff2",
+      "static/media/xMQbuFFYT72XzQUpDqW1KX4-s.p.58140a9c.woff2"
+    ],
+    "[project]/src/app/login/page": [
+      "static/media/xn7gYHE41ni1AdIRggexSvfedN4-s.p.2b9b556b.woff2",
+      "static/media/xMQbuFFYT72XzQUpDqW1KX4-s.p.58140a9c.woff2"
+    ],
+    "[project]/src/app/settings/page": [
+      "static/media/xn7gYHE41ni1AdIRggexSvfedN4-s.p.2b9b556b.woff2",
+      "static/media/xMQbuFFYT72XzQUpDqW1KX4-s.p.58140a9c.woff2"
+    ],
+    "[project]/src/app/_not-found/page": [
+      "static/media/xn7gYHE41ni1AdIRggexSvfedN4-s.p.2b9b556b.woff2",
+      "static/media/xMQbuFFYT72XzQUpDqW1KX4-s.p.58140a9c.woff2"
+    ]
+  },
+  "appUsingSizeAdjust": true,
+  "pages": {},
+  "pagesUsingSizeAdjust": false
+}

@@ -1,0 +1,9 @@
+{
+  "/receivables/[id]/page": "app/receivables/[id]/page.js",
+  "/page": "app/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/receivables/page": "app/receivables/page.js",
+  "/login/page": "app/login/page.js",
+  "/settings/page": "app/settings/page.js",
+  "/_not-found/page": "app/_not-found/page.js"
+}
