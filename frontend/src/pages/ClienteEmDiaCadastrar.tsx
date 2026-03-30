@@ -81,7 +81,7 @@ export default function ClienteEmDiaCadastrarPage() {
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Buscar por nome, IXC ID ou cidade"
-                  className="h-10 w-full rounded-lg border border-[hsl(var(--border))] bg-background pl-9 pr-3 text-sm text-white placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
+                  className="h-10 w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
                 />
               </div>
 
