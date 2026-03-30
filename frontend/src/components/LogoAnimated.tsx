@@ -194,30 +194,24 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
 
       {/* ── Central logo ── */}
       <div
-        className="relative z-30 flex items-center justify-center rounded-2xl border border-white/10 transition-all duration-700"
+        className="relative z-30 flex items-center justify-center transition-all duration-700"
         style={{
-          width: compact ? size * 0.48 : size * 0.38,
-          height: compact ? size * 0.48 : size * 0.38,
-          background: 'linear-gradient(160deg, hsl(var(--surface-1)), hsl(var(--surface-2)))',
-          boxShadow: loaded
-            ? '0 0 40px hsl(var(--primary) / 0.12), 0 20px 50px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06)'
-            : 'none',
+          width: compact ? size * 0.52 : size * 0.44,
+          height: compact ? size * 0.52 : size * 0.44,
           opacity: loaded ? 1 : 0,
           transform: loaded ? 'scale(1) translateY(0)' : 'scale(0.8) translateY(12px)',
           animation: loaded ? 'rewardCoreFloat 5s ease-in-out infinite' : 'none',
         }}
       >
-        {/* Top edge highlight */}
-        <div className="absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
         <img
           src={src}
           alt={alt}
           className="object-contain"
           style={{
-            width: compact ? size * 0.3 : size * 0.22,
-            height: compact ? size * 0.3 : size * 0.22,
+            width: compact ? size * 0.38 : size * 0.32,
+            height: compact ? size * 0.38 : size * 0.32,
             filter: loaded
-              ? 'drop-shadow(0 0 16px hsl(48 96% 58% / 0.18))'
+              ? 'drop-shadow(0 0 20px hsl(var(--primary) / 0.25)) drop-shadow(0 0 40px hsl(48 96% 58% / 0.12))'
               : 'none',
           }}
           onLoad={() => setLoaded(true)}
