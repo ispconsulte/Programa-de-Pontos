@@ -1,0 +1,78 @@
+import { Badge as ShadcnBadge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
+
+type BadgeVariant = 'green' | 'yellow' | 'blue' | 'red' | 'gray'
+
+interface BadgeProps {
+  variant: BadgeVariant
+  label: string
+}
+
+const variantClasses: Record<BadgeVariant, string> = {
+  green: 'border-emerald-500/20 bg-emerald-500/[0.08] text-emerald-400',
+  yellow: 'border-amber-500/20 bg-amber-500/[0.08] text-amber-400',
+  blue: 'border-sky-500/20 bg-sky-500/[0.08] text-sky-400',
+  red: 'border-rose-500/20 bg-rose-500/[0.08] text-rose-400',
+  gray: 'border-white/[0.08] bg-white/[0.04] text-slate-400',
+}
+
+export default function Badge({ variant, label }: BadgeProps) {
+  return (
+    <ShadcnBadge
+      variant="outline"
+      className={cn('rounded-md px-2.5 py-0.5 text-[11px] font-medium', variantClasses[variant])}
+    >
+      {label}
+    </ShadcnBadge>
+  )
+}
+
+export function categoryBadge(category: string) {
+  switch (category?.toLowerCase()) {
+    case 'pagamento antecipado':
+      return <Badge variant="green" label="Pagamento antecipado" />
+    case 'pagamento no vencimento':
+      return <Badge variant="blue" label="Pagamento no vencimento" />
+    case 'pagamento após o vencimento':
+    case 'pagamento apos o vencimento':
+      return <Badge variant="yellow" label="Pagamento após o vencimento" />
+    case 'received':
+    case 'recebido':
+      return <Badge variant="green" label="Recebido" />
+    case 'renegotiated':
+    case 'renegociado':
+      return <Badge variant="yellow" label="Renegociado" />
+    case 'open':
+    case 'em aberto':
+    case 'aberto':
+      return <Badge variant="blue" label="Em aberto" />
+    case 'cancelled':
+    case 'cancelado':
+      return <Badge variant="red" label="Cancelado" />
+    default:
+      return <Badge variant="gray" label={category || 'Não encontrado'} />
+  }
+}
+
+export function statusBadge(status: string | number | boolean) {
+  const s = String(status).toLowerCase()
+  if (s === 'r' || s === 'recebido') {
+    return <Badge variant="green" label="Recebido" />
+  }
+  if (s === 'renegociado') {
+    return <Badge variant="yellow" label="Renegociado" />
+  }
+  if (s === 'a' || s === 'open' || s === 'aberto' || s === 'em aberto') {
+    return <Badge variant="blue" label="Em aberto" />
+  }
+  if (s === 'c' || s === 'cancelado' || s === 'cancelled') {
+    return <Badge variant="red" label="Cancelado" />
+  }
+  if (s === 'ativo' || s === 'active' || s === 'true' || s === '1' || s === 's' || s === 'sim') {
+    return <Badge variant="green" label="Ativo" />
+  }
+  if (s === 'inativo' || s === 'inactive' || s === 'false' || s === '0' || s === 'i' || s === 'n' || s === 'nao') {
+    return <Badge variant="red" label="Inativo" />
+  }
+  return <Badge variant="gray" label={String(status) || 'Não encontrado'} />
+}
