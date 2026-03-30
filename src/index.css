@@ -4,6 +4,7 @@
 
 @layer base {
   :root {
+    /* ── Color tokens ── */
     --background: 222 47% 6%;
     --foreground: 220 14% 96%;
     --card: 222 40% 8%;
@@ -30,6 +31,31 @@
     --radius: 0.5rem;
     --sidebar: 222 44% 5%;
     --sidebar-active: 222 35% 10%;
+
+    /* ── Spacing scale ── */
+    --spacing-xs: 0.25rem;   /* 4px */
+    --spacing-sm: 0.5rem;    /* 8px */
+    --spacing-md: 1rem;      /* 16px */
+    --spacing-lg: 1.5rem;    /* 24px */
+    --spacing-xl: 2rem;      /* 32px */
+    --spacing-2xl: 3rem;     /* 48px */
+
+    /* ── Icon sizing ── */
+    --icon-size: 1.125rem;   /* 18px — default icon */
+    --icon-size-sm: 1rem;    /* 16px */
+    --icon-size-lg: 1.5rem;  /* 24px */
+
+    /* ── Touch targets ── */
+    --touch-min: 2.75rem;    /* 44px */
+
+    /* ── Scrollbar ── */
+    --scrollbar-width: 5px;
+    --scrollbar-track: transparent;
+    --scrollbar-thumb: rgba(255, 255, 255, 0.08);
+    --scrollbar-thumb-hover: rgba(255, 255, 255, 0.14);
+
+    /* ── Select / dropdown ── */
+    --dropdown-max-height: 320px;
   }
 
   * {
@@ -49,14 +75,11 @@
     font-feature-settings: 'rlig' 1, 'calt' 1;
     font-family: 'Manrope', sans-serif;
     text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
+  h1, h2, h3, h4, h5, h6 {
     font-family: 'Sora', sans-serif;
     letter-spacing: -0.02em;
   }
@@ -64,6 +87,64 @@
   ::selection {
     background: rgba(59, 130, 246, 0.2);
     color: hsl(var(--foreground));
+  }
+}
+
+/* ── Reusable component layer ── */
+@layer components {
+  /* Scrollable area — apply to any overflow container */
+  .scrollable-content {
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
+
+  /* Text truncation helper */
+  .text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Responsive table wrapper — horizontal scroll on small screens */
+  .table-responsive {
+    position: relative;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Fixed-layout table for predictable column widths */
+  .table-fixed-layout {
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  /* Modal inner content — prevents overflow */
+  .modal-body {
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
+
+  /* Card grid — auto responsive */
+  .card-grid {
+    display: grid;
+    gap: var(--spacing-md);
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 480px) {
+    .card-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .card-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
   }
 }
 
@@ -93,84 +174,54 @@
   }
 }
 
+/* ── Keyframes ── */
 @keyframes enter {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 @keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 
 @keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 @keyframes buildIn {
-  from {
-    opacity: 0;
-    transform: translateX(-20px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-  }
+  from { opacity: 0; transform: translateX(-20px) scale(0.95); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
 }
 
 @keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-3px);
-  }
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-3px); }
 }
 
+/* ── Global scrollbar styling ── */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: var(--scrollbar-width);
+  height: var(--scrollbar-width);
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--scrollbar-track);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--scrollbar-thumb);
   border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--scrollbar-thumb-hover);
 }
 
 /* Date input dark-mode fix */
