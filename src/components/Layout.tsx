@@ -280,7 +280,7 @@ export default function Layout({ children }: LayoutProps) {
               <span className="font-medium text-foreground">{getPageTitle(pathname)}</span>
             </div>
             <div className="flex items-center gap-2 lg:hidden">
-              <Trophy className="h-4 w-4 text-primary" />
+              <img src={logoBonifica} alt="Logo" className="h-5 w-5 object-contain" />
               <span className="text-sm font-semibold text-white">{getPageTitle(pathname)}</span>
             </div>
           </div>
