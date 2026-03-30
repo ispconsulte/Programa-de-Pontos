@@ -200,9 +200,9 @@ export default function DashboardPage() {
           </div>
 
           {/* ── Recent payments section ── */}
-          <section className="rounded-xl border border-white/[0.06] bg-[hsl(var(--surface-1))]">
+          <section className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
             {/* Section header */}
-            <div className="flex flex-col gap-3 border-b border-white/[0.04] p-5 sm:flex-row sm:items-center sm:justify-between lg:p-6">
+            <div className="flex flex-col gap-3 border-b border-[hsl(var(--border))] p-5 sm:flex-row sm:items-center sm:justify-between lg:p-6">
               <div>
                 <h2 className="text-sm font-semibold text-foreground">Últimos pagamentos pontuados</h2>
                 <p className="mt-0.5 text-[13px] text-muted-foreground">
