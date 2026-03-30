@@ -16,7 +16,7 @@ import {
   Users,
   X,
 } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import logoBonifica from '@/assets/logo-bonifica.png'
 import { logout } from '@/lib/auth-client'
 import { cn } from '@/lib/utils'
