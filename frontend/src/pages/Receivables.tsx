@@ -385,17 +385,17 @@ export default function ReceivablesPage() {
                       <TableBody>
                         {visibleReceivables.map((item) => (
                           <TableRow key={item.id}>
-                            <TableCell className="text-slate-300">
+                            <TableCell className="text-muted-foreground">
                               <div>
                                 <p className="font-medium text-foreground">{formatClientLabel(item)}</p>
                                 <p className="mt-1 text-xs text-muted-foreground">Cliente #{formatText(item.id_cliente)}</p>
                               </div>
                             </TableCell>
                             <TableCell className="font-mono text-xs text-foreground">{item.id}</TableCell>
-                            <TableCell className="text-slate-300">{getPaymentBehaviorLabel(item)}</TableCell>
+                            <TableCell className="text-muted-foreground">{getPaymentBehaviorLabel(item)}</TableCell>
                             <TableCell className="text-right font-semibold text-emerald-400">+{getPaymentScore(item)}</TableCell>
-                            <TableCell className="whitespace-nowrap text-slate-300">{formatDate(item.data_vencimento)}</TableCell>
-                            <TableCell className="whitespace-nowrap text-slate-300">{formatDate(item.data_pagamento ?? '')}</TableCell>
+                            <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(item.data_vencimento)}</TableCell>
+                            <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(item.data_pagamento ?? '')}</TableCell>
                             <TableCell className="whitespace-nowrap text-right font-medium text-foreground">{formatBRL(item.valor)}</TableCell>
                             <TableCell className="whitespace-nowrap text-right text-emerald-400">{formatBRL(item.valor_recebido)}</TableCell>
                             <TableCell>{statusBadge(item.status)}</TableCell>

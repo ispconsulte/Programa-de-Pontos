@@ -3,7 +3,6 @@ import {
   Bell,
   Camera,
   ChevronDown,
-  ChevronRight,
   Coins,
   Gift,
   Home,
@@ -23,7 +22,6 @@ import { logout } from '@/lib/auth-client'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase-client'
 
-/* ── Navigation config ── */
 interface NavItem {
   href: string
   label: string
@@ -39,9 +37,7 @@ interface NavSection {
 const navSections: NavSection[] = [
   {
     label: 'DASHBOARD',
-    items: [
-      { href: '/dashboard', label: 'Dashboard', icon: Home },
-    ],
+    items: [{ href: '/dashboard', label: 'Dashboard', icon: Home }],
   },
   {
     label: 'GESTÃO',
@@ -61,9 +57,7 @@ const navSections: NavSection[] = [
   },
   {
     label: 'CONFIGURAÇÕES',
-    items: [
-      { href: '/settings', label: 'Configurações', icon: Settings },
-    ],
+    items: [{ href: '/settings', label: 'Configurações', icon: Settings }],
   },
 ]
 
@@ -83,20 +77,15 @@ function getPageTitle(pathname: string): string {
   return 'Painel'
 }
 
-/* ── Nav item component ── */
-function SidebarItem({
-  item,
-  pathname,
-  onNav,
-}: {
-  item: NavItem
-  pathname: string
-  onNav: () => void
-}) {
+function SidebarItem({ item, pathname, onNav }: { item: NavItem; pathname: string; onNav: () => void }) {
   const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
   const hasChildren = !!item.children?.length
-  const isChildActive = hasChildren && item.children!.some(c => pathname === c.href || pathname.startsWith(c.href + '/'))
+  const isChildActive = hasChildren && item.children!.some((c) => pathname === c.href || pathname.startsWith(c.href + '/'))
   const [open, setOpen] = useState(isActive || isChildActive)
+
+  useEffect(() => {
+    if (isActive || isChildActive) setOpen(true)
+  }, [isActive, isChildActive])
 
   const Icon = item.icon
   const active = isActive || isChildActive
@@ -119,11 +108,14 @@ function SidebarItem({
             <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/60" />
           </div>
         </button>
-        <div className={cn(
-          'ml-[18px] mt-0.5 space-y-1 border-l border-[hsl(var(--border))] pl-4 transition-all duration-200',
-          open ? 'max-h-40 opacity-100' : 'max-h-0 overflow-hidden opacity-0'
-        )}>
-          {item.children!.map(child => {
+
+        <div
+          className={cn(
+            'ml-[18px] mt-1 space-y-1 border-l border-[hsl(var(--border))] pl-4 transition-all duration-200',
+            open ? 'max-h-40 opacity-100' : 'max-h-0 overflow-hidden opacity-0'
+          )}
+        >
+          {item.children!.map((child) => {
             const childActive = pathname === child.href || pathname.startsWith(child.href + '/')
             return (
               <Link
@@ -163,7 +155,6 @@ function SidebarItem({
   )
 }
 
-/* ── Layout ── */
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -210,10 +201,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         email: user?.email || 'Sem e-mail',
       })
     })
-    return () => { mounted = false; sub.subscription.unsubscribe() }
+    return () => {
+      mounted = false
+      sub.subscription.unsubscribe()
+    }
   }, [])
 
-  // Close user menu on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
@@ -240,35 +233,26 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden" onClick={closeSidebar} />
-      )}
+      {sidebarOpen && <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden" onClick={closeSidebar} />}
 
-      {/* ── Sidebar ── */}
       <aside
         className={cn(
           'fixed inset-y-0 left-0 z-50 flex w-[248px] flex-col border-r border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar))] shadow-xl shadow-black/5 transition-transform duration-300 ease-out lg:relative lg:z-auto lg:translate-x-0 lg:shadow-none',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        {/* ── Brand ── */}
         <div className="flex h-[92px] flex-shrink-0 items-center justify-center px-5">
           <img
             src={logoBonifica}
             alt="Bonifica"
             className="h-[4.5rem] w-auto max-w-[4.5rem] flex-shrink-0"
-            style={{
-              objectFit: 'contain',
-              filter: 'drop-shadow(0 0 12px hsl(var(--primary) / 0.35))',
-            }}
+            style={{ objectFit: 'contain', filter: 'drop-shadow(0 0 12px hsl(var(--primary) / 0.35))' }}
           />
           <button onClick={closeSidebar} className="absolute right-3 rounded-md p-1 text-muted-foreground hover:text-foreground lg:hidden">
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        {/* ── Navigation ── */}
         <nav className="flex-1 overflow-y-auto scrollable-content px-4 pt-2 pb-4">
           <div className="space-y-6">
             {navSections.map((section, si) => (
@@ -279,7 +263,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   </p>
                 )}
                 <div className="space-y-1">
-                  {section.items.map(item => (
+                  {section.items.map((item) => (
                     <SidebarItem key={item.href} item={item} pathname={pathname} onNav={closeSidebar} />
                   ))}
                 </div>
@@ -288,7 +272,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </nav>
 
-        {/* ── Footer ── */}
         <div className="flex-shrink-0 px-4 pb-4">
           <button
             onClick={() => logout()}
@@ -297,15 +280,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <LogOut className="h-[18px] w-[18px] transition-colors group-hover:text-destructive" />
             <span>Sair</span>
           </button>
-          </button>
         </div>
       </aside>
 
-      {/* ── Main area ── */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        {/* Header */}
         <header className="flex h-[52px] flex-shrink-0 items-center border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 lg:px-5">
-          {/* Left: mobile menu + user name */}
           <div className="flex items-center gap-3">
             <button onClick={() => setSidebarOpen(true)} className="rounded-md p-1.5 text-muted-foreground hover:text-foreground lg:hidden">
               <Menu className="h-5 w-5" />
@@ -314,44 +293,38 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <User className="h-4 w-4 text-muted-foreground/50" />
               <span className="text-[13px] font-medium text-foreground/90">{profile.name}</span>
             </div>
-            {/* Mobile title */}
             <div className="flex items-center gap-2 lg:hidden">
               <span className="text-[13px] font-semibold text-foreground">{getPageTitle(pathname)}</span>
             </div>
           </div>
 
-          {/* Center: search */}
           <div className="mx-auto hidden max-w-[400px] flex-1 px-8 lg:block">
             <label className="flex items-center gap-2.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-[7px] transition-colors focus-within:border-primary/30 focus-within:bg-[hsl(var(--surface-3))]">
               <Search className="h-3.5 w-3.5 text-muted-foreground/40" />
               <input
                 placeholder="Buscar páginas, clientes..."
-                className="w-full bg-transparent text-[12.5px] text-foreground outline-none placeholder:text-muted-foreground/35"
+                className="w-full bg-transparent text-[12.5px] text-foreground outline-none placeholder:text-muted-foreground/55"
               />
             </label>
           </div>
 
-          {/* Right: actions */}
           <div className="flex items-center gap-1">
-            {/* Notifications */}
             <button className="relative flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-[hsl(var(--muted))] hover:text-foreground">
               <Bell className="h-4 w-4" />
               <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">4</span>
             </button>
 
-            {/* Theme toggle */}
             <button
-              onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+              onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
               className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-[hsl(var(--muted))] hover:text-foreground"
               title={theme === 'dark' ? 'Tema claro' : 'Tema escuro'}
             >
               {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
 
-            {/* User avatar + dropdown */}
             <div className="relative ml-1" ref={userMenuRef}>
               <button
-                onClick={() => setUserMenuOpen(o => !o)}
+                onClick={() => setUserMenuOpen((o) => !o)}
                 className="flex h-8 w-8 items-center justify-center rounded-full ring-2 ring-transparent transition-all hover:ring-primary/30"
               >
                 {avatarUrl ? (
@@ -363,18 +336,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 )}
               </button>
 
-              {/* Dropdown */}
               {userMenuOpen && (
                 <div className="absolute right-0 top-[calc(100%+6px)] z-50 w-56 overflow-hidden rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-xl shadow-black/20">
-                  {/* User info */}
                   <div className="border-b border-[hsl(var(--border))] px-4 py-3">
                     <p className="truncate text-[13px] font-medium text-foreground">{profile.name}</p>
                     <p className="truncate text-[11.5px] text-muted-foreground">{profile.email}</p>
                   </div>
-                  {/* Menu items */}
                   <div className="p-1.5">
                     <button
-                      onClick={() => { fileInputRef.current?.click(); setUserMenuOpen(false) }}
+                      onClick={() => {
+                        fileInputRef.current?.click()
+                        setUserMenuOpen(false)
+                      }}
                       className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-[hsl(var(--muted))] hover:text-foreground"
                     >
                       <Camera className="h-4 w-4" />
@@ -389,10 +362,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       Configurações
                     </Link>
                   </div>
-                  {/* Logout */}
                   <div className="border-t border-[hsl(var(--border))] p-1.5">
                     <button
-                      onClick={() => { logout(); setUserMenuOpen(false) }}
+                      onClick={() => {
+                        logout()
+                        setUserMenuOpen(false)
+                      }}
                       className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-destructive/[0.06] hover:text-destructive"
                     >
                       <LogOut className="h-4 w-4" />

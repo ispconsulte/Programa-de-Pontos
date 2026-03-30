@@ -143,7 +143,7 @@ export default function ClienteEmDiaCadastrarPage() {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <Button className="bg-emerald-600 text-white hover:bg-emerald-500">
+                  <Button variant="success">
                     Incluir clientes na campanha
                   </Button>
                   <Button variant="outline" className="border-[hsl(var(--border))]">
