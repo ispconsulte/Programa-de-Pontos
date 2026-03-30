@@ -11,12 +11,13 @@ import {
   Menu,
   Moon,
   Search,
+  
   Settings,
   Sun,
   Users,
   X,
 } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import logoBonifica from '@/assets/logo-bonifica.png'
 import { logout } from '@/lib/auth-client'
 import { cn } from '@/lib/utils'
@@ -40,12 +41,8 @@ const navSections: NavSection[] = [
     label: '',
     items: [
       { href: '/dashboard', label: 'Início', icon: Home },
-    ],
-  },
-  {
-    label: 'Gestão',
-    items: [
       { href: '/clients', label: 'Clientes', icon: Users },
+      { href: '/receivables', label: 'Pontuação', icon: Coins },
       {
         href: '/cliente-em-dia',
         label: 'Cliente em Dia',
@@ -58,13 +55,7 @@ const navSections: NavSection[] = [
     ],
   },
   {
-    label: 'Ferramentas',
-    items: [
-      { href: '/receivables', label: 'Pontuação', icon: Coins },
-    ],
-  },
-  {
-    label: 'Sistema',
+    label: '',
     items: [
       { href: '/settings', label: 'Configurações', icon: Settings },
     ],
@@ -173,7 +164,6 @@ function SidebarItem({
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     if (typeof window === 'undefined') return 'dark'
     return window.localStorage.getItem('bonifica-theme') === 'light' ? 'light' : 'dark'
@@ -218,19 +208,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     return () => { mounted = false; sub.subscription.unsubscribe() }
   }, [])
 
-  const filteredSections = useMemo(() => {
-    const q = searchTerm.trim().toLowerCase()
-    if (!q) return navSections
-    return navSections
-      .map(s => ({
-        ...s,
-        items: s.items.filter(i =>
-          i.label.toLowerCase().includes(q) ||
-          i.children?.some(c => c.label.toLowerCase().includes(q))
-        ),
-      }))
-      .filter(s => s.items.length > 0)
-  }, [searchTerm])
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -281,39 +258,22 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </button>
         </div>
 
-        {/* ── Search ── */}
-        <div className="px-3 pt-3">
-          <label className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-[7px] transition-colors focus-within:border-primary/30 focus-within:bg-white/[0.04]">
-            <Search className="h-3.5 w-3.5 text-muted-foreground/50" />
-            <input
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              placeholder="Buscar…"
-              className="w-full bg-transparent text-[12.5px] text-foreground outline-none placeholder:text-muted-foreground/40"
-            />
-          </label>
-        </div>
-
         {/* ── Navigation ── */}
-        <nav className="flex-1 overflow-y-auto scrollable-content px-3 py-4">
-          <div className="space-y-5">
-            {filteredSections.map((section, si) => (
-              <div key={section.label || si}>
-                {section.label && (
-                  <p className="mb-1.5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/35">
-                    {section.label}
-                  </p>
-                )}
-                <div className="space-y-px">
-                  {section.items.map(item => (
-                    <SidebarItem key={item.href} item={item} pathname={pathname} onNav={closeSidebar} />
-                  ))}
-                </div>
-              </div>
-            ))}
-            {filteredSections.length === 0 && (
-              <p className="px-2.5 py-4 text-center text-[12px] text-muted-foreground/50">Nenhum resultado</p>
-            )}
+        <nav className="flex-1 overflow-y-auto scrollable-content px-3 py-3">
+          <div className="flex h-full flex-col justify-between">
+            {/* Primary nav */}
+            <div className="space-y-0.5">
+              {(navSections[0]?.items ?? []).map(item => (
+                <SidebarItem key={item.href} item={item} pathname={pathname} onNav={closeSidebar} />
+              ))}
+            </div>
+
+            {/* Secondary nav (bottom-pinned) */}
+            <div className="mt-4 space-y-0.5 border-t border-white/[0.04] pt-3">
+              {(navSections[1]?.items ?? []).map(item => (
+                <SidebarItem key={item.href} item={item} pathname={pathname} onNav={closeSidebar} />
+              ))}
+            </div>
           </div>
         </nav>
 
