@@ -120,7 +120,7 @@ function SidebarItem({
           </div>
         </button>
         <div className={cn(
-          'ml-[18px] mt-0.5 space-y-0.5 border-l border-white/[0.06] pl-4 transition-all duration-200',
+          'ml-[18px] mt-0.5 space-y-0.5 border-l border-[hsl(var(--border))] pl-4 transition-all duration-200',
           open ? 'max-h-40 opacity-100' : 'max-h-0 overflow-hidden opacity-0'
         )}>
           {item.children!.map(child => {
