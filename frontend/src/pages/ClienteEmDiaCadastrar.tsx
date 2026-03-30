@@ -36,11 +36,11 @@ export default function ClienteEmDiaCadastrarPage() {
           subtitle="Inclua clientes do IXC na campanha Cliente em Dia por busca filtrada ou importacao de lista com ixc_cliente_id."
           actions={
             <>
-              <Button variant="outline" size="sm" className="border-emerald-500/20 bg-emerald-500/[0.04] text-emerald-200 hover:bg-emerald-500/[0.08] hover:text-foreground">
+              <Button variant="outline" size="sm" className="border-emerald-500/20 bg-emerald-500/[0.08] text-[hsl(var(--success))] hover:bg-emerald-500/[0.12]">
                 <Upload className="h-3.5 w-3.5" />
                 Modelo CSV
               </Button>
-              <Button size="sm" className="bg-emerald-600 text-white hover:bg-emerald-500">
+              <Button variant="success" size="sm">
                 <CheckCircle2 className="h-3.5 w-3.5" />
                 Incluir selecionados
               </Button>
@@ -56,7 +56,7 @@ export default function ClienteEmDiaCadastrarPage() {
                 { label: 'Selecionados em lote', value: '0' },
                 { label: 'IDs no CSV', value: String(csvIds.length) },
               ].map((item) => (
-                <div key={item.label} className="rounded-2xl border border-[hsl(var(--border))] bg-black/10 px-4 py-4 backdrop-blur-sm">
+                <div key={item.label} className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-4">
                   <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">{item.label}</p>
                   <p className="mt-2 text-2xl font-semibold text-foreground">{item.value}</p>
                 </div>
@@ -81,7 +81,7 @@ export default function ClienteEmDiaCadastrarPage() {
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Buscar por nome, IXC ID ou cidade"
-                  className="h-10 w-full rounded-lg border border-[hsl(var(--border))] bg-background pl-9 pr-3 text-sm text-white placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
+                  className="h-10 w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
                 />
               </div>
 
@@ -143,7 +143,7 @@ export default function ClienteEmDiaCadastrarPage() {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <Button className="bg-emerald-600 text-white hover:bg-emerald-500">
+                  <Button variant="success">
                     Incluir clientes na campanha
                   </Button>
                   <Button variant="outline" className="border-[hsl(var(--border))]">

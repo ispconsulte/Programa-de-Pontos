@@ -61,13 +61,13 @@ export default function VersionUpdateNotifier() {
           <RefreshCw className="h-4 w-4 text-emerald-300" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-white">Nova versao disponivel</p>
+          <p className="text-sm font-semibold text-foreground">Nova versao disponivel</p>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">
             Encontramos uma atualizacao do sistema. Clique em atualizar para carregar a versao mais recente.
           </p>
           <div className="mt-4 flex flex-col gap-3 sm:flex-row">
             <Button
-              className="bg-emerald-600 text-white hover:bg-emerald-500"
+              variant="success"
               onClick={() => window.location.reload()}
             >
               Atualizar agora

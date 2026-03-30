@@ -84,7 +84,7 @@
   }
 
   .light {
-    --background: 220 40% 98%;
+    --background: 220 28% 95%;
     --foreground: 222 36% 12%;
     --card: 0 0% 100%;
     --card-foreground: 222 36% 12%;
@@ -92,25 +92,25 @@
     --popover-foreground: 222 36% 12%;
     --primary: 214 92% 52%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 214 34% 95%;
+    --secondary: 220 24% 94%;
     --secondary-foreground: 222 36% 12%;
-    --muted: 214 26% 94%;
-    --muted-foreground: 220 14% 42%;
+    --muted: 220 20% 92%;
+    --muted-foreground: 220 12% 38%;
     --accent: 214 92% 52%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 78% 50%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214 24% 88%;
-    --input: 214 24% 92%;
+    --border: 220 18% 84%;
+    --input: 220 18% 90%;
     --ring: 214 92% 52%;
-    --sidebar: 210 60% 99%;
-    --sidebar-active: 214 38% 95%;
-    --sidebar-border: 214 24% 88%;
+    --sidebar: 0 0% 100%;
+    --sidebar-active: 214 100% 97%;
+    --sidebar-border: 220 18% 88%;
     --surface-1: 0 0% 100%;
-    --surface-2: 214 34% 97%;
-    --surface-3: 214 26% 94%;
-    --scrollbar-thumb: hsla(220, 10%, 40%, 0.18);
-    --scrollbar-thumb-hover: hsla(220, 10%, 40%, 0.28);
+    --surface-2: 220 30% 97%;
+    --surface-3: 220 22% 93%;
+    --scrollbar-thumb: hsla(220, 10%, 40%, 0.22);
+    --scrollbar-thumb-hover: hsla(220, 10%, 40%, 0.34);
   }
 
   @media (min-width: 480px) {

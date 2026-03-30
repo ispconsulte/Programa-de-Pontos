@@ -253,12 +253,12 @@ export default function ReceivablesPage() {
 
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">De</label>
-                  <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="[color-scheme:dark]" />
+                  <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Até</label>
-                  <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="[color-scheme:dark]" />
+                  <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
                 </div>
 
                 <div className="space-y-1.5">
@@ -316,7 +316,7 @@ export default function ReceivablesPage() {
                 <div className="m-5 rounded-xl border border-destructive/20 bg-destructive/[0.06] px-4 py-3">
                   <div className="flex items-center gap-2">
                     <ShieldAlert className="h-4 w-4 flex-shrink-0 text-destructive" />
-                    <p className="text-sm text-red-300">{error}</p>
+                    <p className="text-sm text-foreground">{error}</p>
                   </div>
                   <Button variant="outline" size="sm" className="mt-3" onClick={() => void fetchReceivables()}>
                     Tentar novamente
@@ -385,17 +385,17 @@ export default function ReceivablesPage() {
                       <TableBody>
                         {visibleReceivables.map((item) => (
                           <TableRow key={item.id}>
-                            <TableCell className="text-slate-300">
+                            <TableCell className="text-muted-foreground">
                               <div>
                                 <p className="font-medium text-foreground">{formatClientLabel(item)}</p>
                                 <p className="mt-1 text-xs text-muted-foreground">Cliente #{formatText(item.id_cliente)}</p>
                               </div>
                             </TableCell>
                             <TableCell className="font-mono text-xs text-foreground">{item.id}</TableCell>
-                            <TableCell className="text-slate-300">{getPaymentBehaviorLabel(item)}</TableCell>
+                            <TableCell className="text-muted-foreground">{getPaymentBehaviorLabel(item)}</TableCell>
                             <TableCell className="text-right font-semibold text-emerald-400">+{getPaymentScore(item)}</TableCell>
-                            <TableCell className="whitespace-nowrap text-slate-300">{formatDate(item.data_vencimento)}</TableCell>
-                            <TableCell className="whitespace-nowrap text-slate-300">{formatDate(item.data_pagamento ?? '')}</TableCell>
+                            <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(item.data_vencimento)}</TableCell>
+                            <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(item.data_pagamento ?? '')}</TableCell>
                             <TableCell className="whitespace-nowrap text-right font-medium text-foreground">{formatBRL(item.valor)}</TableCell>
                             <TableCell className="whitespace-nowrap text-right text-emerald-400">{formatBRL(item.valor_recebido)}</TableCell>
                             <TableCell>{statusBadge(item.status)}</TableCell>

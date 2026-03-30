@@ -13,7 +13,7 @@ const variantClasses: Record<BadgeVariant, string> = {
   yellow: 'border-amber-500/20 bg-amber-500/[0.08] text-amber-400',
   blue: 'border-sky-500/20 bg-sky-500/[0.08] text-sky-400',
   red: 'border-rose-500/20 bg-rose-500/[0.08] text-rose-400',
-  gray: 'border-[hsl(var(--border))] bg-[hsl(var(--surface-3))] text-slate-400',
+  gray: 'border-[hsl(var(--border))] bg-[hsl(var(--surface-3))] text-muted-foreground',
 }
 
 export default function Badge({ variant, label }: BadgeProps) {
