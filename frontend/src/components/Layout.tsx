@@ -11,9 +11,9 @@ import {
   Menu,
   Moon,
   Search,
-  
   Settings,
   Sun,
+  User,
   Users,
   X,
 } from 'lucide-react'
@@ -38,9 +38,14 @@ interface NavSection {
 
 const navSections: NavSection[] = [
   {
-    label: '',
+    label: 'DASHBOARD',
     items: [
-      { href: '/dashboard', label: 'Início', icon: Home },
+      { href: '/dashboard', label: 'Dashboard', icon: Home },
+    ],
+  },
+  {
+    label: 'GESTÃO',
+    items: [
       { href: '/clients', label: 'Clientes', icon: Users },
       { href: '/receivables', label: 'Pontuação', icon: Coins },
       {
@@ -55,7 +60,7 @@ const navSections: NavSection[] = [
     ],
   },
   {
-    label: '',
+    label: 'CONFIGURAÇÕES',
     items: [
       { href: '/settings', label: 'Configurações', icon: Settings },
     ],
@@ -63,7 +68,7 @@ const navSections: NavSection[] = [
 ]
 
 const pageTitles: Record<string, string> = {
-  '/dashboard': 'Início',
+  '/dashboard': 'Dashboard',
   '/clients': 'Clientes',
   '/cliente-em-dia': 'Cliente em Dia',
   '/cliente-em-dia/resgates': 'Resgates',
@@ -102,30 +107,20 @@ function SidebarItem({
         <button
           onClick={() => setOpen(!open)}
           className={cn(
-            'group relative flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left transition-all duration-200',
+            'group flex w-full items-center gap-3 rounded-lg px-3 py-[9px] text-left transition-all duration-150',
             active
-              ? 'bg-primary/[0.08] text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]'
-              : 'text-muted-foreground/80 hover:bg-white/[0.05] hover:text-foreground active:scale-[0.98]'
+              ? 'text-foreground'
+              : 'text-muted-foreground hover:text-foreground/90'
           )}
         >
-          {active && (
-            <div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-primary shadow-[0_0_8px_hsl(var(--primary)/0.4)]" />
-          )}
-          <div className={cn(
-            'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg transition-all duration-200',
-            active
-              ? 'bg-primary/15 text-primary'
-              : 'text-muted-foreground/60 group-hover:bg-white/[0.04] group-hover:text-muted-foreground'
-          )}>
-            <Icon className="h-[15px] w-[15px]" />
-          </div>
-          <span className={cn('flex-1 text-[13px] font-medium', active && 'text-foreground')}>{item.label}</span>
+          <Icon className={cn('h-[18px] w-[18px] flex-shrink-0', active ? 'text-primary' : 'text-muted-foreground/50')} />
+          <span className="flex-1 text-[13.5px] font-medium">{item.label}</span>
           <div className={cn('transition-transform duration-200', open && 'rotate-180')}>
-            <ChevronDown className="h-3 w-3 text-muted-foreground/40" />
+            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/30" />
           </div>
         </button>
         <div className={cn(
-          'ml-[22px] mt-1 space-y-0.5 border-l-[1.5px] border-white/[0.06] pl-3 transition-all duration-200',
+          'ml-[18px] mt-0.5 space-y-0.5 border-l border-white/[0.06] pl-4 transition-all duration-200',
           open ? 'max-h-40 opacity-100' : 'max-h-0 overflow-hidden opacity-0'
         )}>
           {item.children!.map(child => {
@@ -136,15 +131,12 @@ function SidebarItem({
                 to={child.href}
                 onClick={onNav}
                 className={cn(
-                  'relative block rounded-lg px-2.5 py-[6px] text-[12.5px] font-medium transition-all duration-200',
+                  'block rounded-md px-3 py-[7px] text-[13px] font-medium transition-all duration-150',
                   childActive
-                    ? 'bg-primary/[0.08] text-primary'
-                    : 'text-muted-foreground/60 hover:bg-white/[0.04] hover:text-foreground/80 active:scale-[0.98]'
+                    ? 'text-primary'
+                    : 'text-muted-foreground/50 hover:text-foreground/80'
                 )}
               >
-                {childActive && (
-                  <div className="absolute -left-[13.5px] top-1/2 h-2 w-[1.5px] -translate-y-1/2 rounded-full bg-primary" />
-                )}
                 {child.label}
               </Link>
             )
@@ -159,24 +151,14 @@ function SidebarItem({
       to={item.href}
       onClick={onNav}
       className={cn(
-        'group relative flex items-center gap-2.5 rounded-xl px-3 py-2 transition-all duration-200',
+        'group flex items-center gap-3 rounded-lg px-3 py-[9px] transition-all duration-150',
         isActive
-          ? 'bg-primary/[0.08] text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]'
-          : 'text-muted-foreground/80 hover:bg-white/[0.05] hover:text-foreground active:scale-[0.98]'
+          ? 'text-foreground'
+          : 'text-muted-foreground hover:text-foreground/90'
       )}
     >
-      {isActive && (
-        <div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-primary shadow-[0_0_8px_hsl(var(--primary)/0.4)]" />
-      )}
-      <div className={cn(
-        'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg transition-all duration-200',
-        isActive
-          ? 'bg-primary/15 text-primary'
-          : 'text-muted-foreground/60 group-hover:bg-white/[0.04] group-hover:text-muted-foreground'
-      )}>
-        <Icon className="h-[15px] w-[15px]" />
-      </div>
-      <span className={cn('text-[13px] font-medium', isActive && 'text-foreground')}>{item.label}</span>
+      <Icon className={cn('h-[18px] w-[18px] flex-shrink-0', isActive ? 'text-primary' : 'text-muted-foreground/50')} />
+      <span className="text-[13.5px] font-medium">{item.label}</span>
     </Link>
   )
 }
@@ -185,6 +167,8 @@ function SidebarItem({
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement | null>(null)
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     if (typeof window === 'undefined') return 'dark'
     return window.localStorage.getItem('bonifica-theme') === 'light' ? 'light' : 'dark'
@@ -229,6 +213,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     return () => { mounted = false; sub.subscription.unsubscribe() }
   }, [])
 
+  // Close user menu on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -254,58 +248,53 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* ── Sidebar ── */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-[248px] flex-col border-r border-white/[0.04] bg-[hsl(var(--sidebar))] transition-transform duration-300 ease-out lg:relative lg:z-auto lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 flex w-[240px] flex-col bg-[hsl(var(--sidebar))] transition-transform duration-300 ease-out lg:relative lg:z-auto lg:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         {/* ── Brand ── */}
-        <div className="relative flex h-[56px] flex-shrink-0 items-center gap-2.5 px-5">
+        <div className="flex h-[60px] flex-shrink-0 items-center justify-center px-5">
           <img
             src={logoBonifica}
             alt="Bonifica"
-            className="h-6 w-6 flex-shrink-0"
+            className="h-10 w-10 flex-shrink-0"
             style={{
               objectFit: 'contain',
-              filter: 'drop-shadow(0 0 2px hsl(var(--primary) / 0.35))',
+              filter: 'drop-shadow(0 0 6px hsl(var(--primary) / 0.3))',
             }}
           />
-          <span className="text-[14px] font-semibold tracking-[-0.01em] text-foreground">Bonifica</span>
-          <button onClick={closeSidebar} className="ml-auto rounded-md p-1 text-muted-foreground hover:text-foreground lg:hidden">
+          <button onClick={closeSidebar} className="absolute right-3 rounded-md p-1 text-muted-foreground hover:text-foreground lg:hidden">
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Subtle divider */}
-        <div className="mx-4 h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
-
         {/* ── Navigation ── */}
-        <nav className="flex-1 overflow-y-auto scrollable-content px-3 pt-4 pb-2">
-          <div className="flex h-full flex-col justify-between">
-            {/* Primary nav */}
-            <div className="space-y-1">
-              {(navSections[0]?.items ?? []).map(item => (
-                <SidebarItem key={item.href} item={item} pathname={pathname} onNav={closeSidebar} />
-              ))}
-            </div>
-
-            {/* Secondary nav */}
-            <div className="space-y-1">
-              <div className="mx-2 mb-2 h-px bg-gradient-to-r from-transparent via-white/[0.05] to-transparent" />
-              {(navSections[1]?.items ?? []).map(item => (
-                <SidebarItem key={item.href} item={item} pathname={pathname} onNav={closeSidebar} />
-              ))}
-            </div>
+        <nav className="flex-1 overflow-y-auto scrollable-content px-4 pt-2 pb-4">
+          <div className="space-y-6">
+            {navSections.map((section, si) => (
+              <div key={section.label || si}>
+                {section.label && (
+                  <p className="mb-2 px-3 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/30">
+                    {section.label}
+                  </p>
+                )}
+                <div className="space-y-0.5">
+                  {section.items.map(item => (
+                    <SidebarItem key={item.href} item={item} pathname={pathname} onNav={closeSidebar} />
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </nav>
 
         {/* ── Footer ── */}
-        <div className="flex-shrink-0 px-3 pb-3 pt-1">
-          <div className="mx-1 mb-2 h-px bg-gradient-to-r from-transparent via-white/[0.05] to-transparent" />
+        <div className="flex-shrink-0 px-4 pb-4">
           <button
             onClick={() => logout()}
-            className="group flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[12.5px] font-medium text-muted-foreground/70 transition-all duration-200 hover:bg-destructive/[0.06] hover:text-destructive active:scale-[0.98]"
+            className="group flex w-full items-center gap-3 rounded-lg px-3 py-[9px] text-[13.5px] font-medium text-muted-foreground/50 transition-all duration-150 hover:text-destructive"
           >
-            <LogOut className="h-[14px] w-[14px] transition-colors group-hover:text-destructive" />
+            <LogOut className="h-[18px] w-[18px] transition-colors group-hover:text-destructive" />
             <span>Sair</span>
           </button>
         </div>
@@ -314,41 +303,39 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* ── Main area ── */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {/* Header */}
-        <header className="flex h-14 flex-shrink-0 items-center justify-between border-b border-white/[0.05] bg-[hsl(var(--surface-1))] px-4 lg:px-6">
+        <header className="flex h-[52px] flex-shrink-0 items-center border-b border-white/[0.05] bg-[hsl(var(--surface-1))] px-4 lg:px-5">
+          {/* Left: mobile menu + user name */}
           <div className="flex items-center gap-3">
             <button onClick={() => setSidebarOpen(true)} className="rounded-md p-1.5 text-muted-foreground hover:text-foreground lg:hidden">
               <Menu className="h-5 w-5" />
             </button>
-            {/* Breadcrumb */}
-            <div className="hidden items-center gap-1.5 text-[13px] lg:flex">
-              <span className="text-muted-foreground/60">Bonifica</span>
-              <span className="text-muted-foreground/30">/</span>
-              <span className="font-medium text-foreground">{getPageTitle(pathname)}</span>
+            <div className="hidden items-center gap-2 lg:flex">
+              <User className="h-4 w-4 text-muted-foreground/50" />
+              <span className="text-[13px] font-medium text-foreground/90">{profile.name}</span>
             </div>
             {/* Mobile title */}
             <div className="flex items-center gap-2 lg:hidden">
-              <img src={logoBonifica} alt="Logo" className="h-5 w-5 object-contain" />
               <span className="text-[13px] font-semibold text-foreground">{getPageTitle(pathname)}</span>
             </div>
           </div>
 
-          {/* ── Right actions ── */}
-          <div className="flex items-center gap-1">
-            {/* Search (desktop) */}
-            <label className="hidden items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-1.5 transition-colors focus-within:border-primary/30 focus-within:bg-white/[0.04] lg:flex">
-              <Search className="h-3.5 w-3.5 text-muted-foreground/50" />
+          {/* Center: search */}
+          <div className="mx-auto hidden max-w-[400px] flex-1 px-8 lg:block">
+            <label className="flex items-center gap-2.5 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-[7px] transition-colors focus-within:border-primary/30 focus-within:bg-white/[0.04]">
+              <Search className="h-3.5 w-3.5 text-muted-foreground/40" />
               <input
-                placeholder="Buscar…"
-                className="w-36 bg-transparent text-[12.5px] text-foreground outline-none placeholder:text-muted-foreground/40"
+                placeholder="Buscar páginas, clientes..."
+                className="w-full bg-transparent text-[12.5px] text-foreground outline-none placeholder:text-muted-foreground/35"
               />
             </label>
+          </div>
 
-            <div className="mx-1 hidden h-5 w-px bg-white/[0.06] lg:block" />
-
+          {/* Right: actions */}
+          <div className="flex items-center gap-1">
             {/* Notifications */}
             <button className="relative flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-white/[0.04] hover:text-foreground">
-              <Bell className="h-[15px] w-[15px]" />
-              <span className="absolute right-2 top-1.5 h-1.5 w-1.5 rounded-full bg-primary" />
+              <Bell className="h-4 w-4" />
+              <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">4</span>
             </button>
 
             {/* Theme toggle */}
@@ -357,25 +344,63 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-white/[0.04] hover:text-foreground"
               title={theme === 'dark' ? 'Tema claro' : 'Tema escuro'}
             >
-              {theme === 'dark' ? <Moon className="h-[15px] w-[15px]" /> : <Sun className="h-[15px] w-[15px]" />}
+              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
 
-            <div className="mx-1 h-5 w-px bg-white/[0.06]" />
+            {/* User avatar + dropdown */}
+            <div className="relative ml-1" ref={userMenuRef}>
+              <button
+                onClick={() => setUserMenuOpen(o => !o)}
+                className="flex h-8 w-8 items-center justify-center rounded-full ring-2 ring-transparent transition-all hover:ring-primary/30"
+              >
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt={profile.name} className="h-8 w-8 rounded-full object-cover" />
+                ) : (
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 text-[11px] font-bold text-primary">
+                    {initial}
+                  </div>
+                )}
+              </button>
 
-            {/* User avatar */}
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="relative flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-white/[0.04]"
-              title={profile.name}
-            >
-              {avatarUrl ? (
-                <img src={avatarUrl} alt={profile.name} className="h-7 w-7 rounded-md object-cover" />
-              ) : (
-                <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/15 text-[11px] font-bold text-primary">
-                  {initial}
+              {/* Dropdown */}
+              {userMenuOpen && (
+                <div className="absolute right-0 top-[calc(100%+6px)] z-50 w-56 overflow-hidden rounded-xl border border-white/[0.06] bg-[hsl(var(--surface-1))] shadow-xl shadow-black/30">
+                  {/* User info */}
+                  <div className="border-b border-white/[0.05] px-4 py-3">
+                    <p className="truncate text-[13px] font-medium text-foreground">{profile.name}</p>
+                    <p className="truncate text-[11.5px] text-muted-foreground/50">{profile.email}</p>
+                  </div>
+                  {/* Menu items */}
+                  <div className="p-1.5">
+                    <button
+                      onClick={() => { fileInputRef.current?.click(); setUserMenuOpen(false) }}
+                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-white/[0.04] hover:text-foreground"
+                    >
+                      <Camera className="h-4 w-4" />
+                      Alterar foto
+                    </button>
+                    <Link
+                      to="/settings"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-white/[0.04] hover:text-foreground"
+                    >
+                      <Settings className="h-4 w-4" />
+                      Configurações
+                    </Link>
+                  </div>
+                  {/* Logout */}
+                  <div className="border-t border-white/[0.05] p-1.5">
+                    <button
+                      onClick={() => { logout(); setUserMenuOpen(false) }}
+                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-destructive/[0.06] hover:text-destructive"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Sair
+                    </button>
+                  </div>
                 </div>
               )}
-            </button>
+            </div>
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
           </div>
         </header>
