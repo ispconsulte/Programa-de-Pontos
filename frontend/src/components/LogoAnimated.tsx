@@ -26,7 +26,7 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
       ]
 
   /* ── Orbit geometry ── */
-  const orbitRadius = size * 0.48
+  const orbitRadius = size * 0.58
   const arcRadius = size * 0.35
   const arcCircumference = 2 * Math.PI * arcRadius
 
