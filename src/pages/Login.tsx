@@ -110,8 +110,7 @@ export default function LoginPage() {
             width: 250, height: 250, top: '40%', right: '20%',
             background: 'radial-gradient(circle, hsl(var(--primary) / 0.08) 0%, transparent 60%)',
             borderRadius: '50%',
-            animation: 'bgDrift 9s ease-in-out infinite',
-            animationDelay: '-4s',
+            animation: 'bgDrift 9s ease-in-out -4s infinite',
           }}
         />
 
