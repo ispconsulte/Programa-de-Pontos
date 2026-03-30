@@ -90,21 +90,25 @@
     --card-foreground: 222 36% 12%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 36% 12%;
-    --primary: 214 92% 52%;
+    --primary: 214 92% 45%;
     --primary-foreground: 0 0% 100%;
     --secondary: 220 24% 94%;
     --secondary-foreground: 222 36% 12%;
     --muted: 220 20% 92%;
     --muted-foreground: 220 12% 38%;
-    --accent: 214 92% 52%;
+    --accent: 214 92% 45%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 78% 50%;
+    --destructive: 0 78% 45%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 18% 84%;
-    --input: 220 18% 90%;
-    --ring: 214 92% 52%;
-    --sidebar: 0 0% 100%;
-    --sidebar-active: 214 100% 97%;
+    --border: 220 18% 82%;
+    --input: 220 18% 88%;
+    --ring: 214 92% 45%;
+    --success: 160 60% 36%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 42%;
+    --warning-foreground: 0 0% 100%;
+    --sidebar: 220 20% 98%;
+    --sidebar-active: 214 100% 96%;
     --sidebar-border: 220 18% 88%;
     --surface-1: 0 0% 100%;
     --surface-2: 220 30% 97%;
@@ -115,7 +119,7 @@
 
   @media (min-width: 480px) {
     :root {
-      --page-padding-inline: 1rem;
+      --page-padding-inline: 1.25rem;
       --page-padding-block: 1.5rem;
     }
   }
@@ -134,13 +138,6 @@
     }
   }
 
-  @media (min-width: 1280px) {
-    :root {
-      --page-padding-inline: 2rem;
-      --page-padding-block: 2rem;
-    }
-  }
-
   * {
     @apply border-border;
     box-sizing: border-box;
@@ -152,6 +149,7 @@
     overflow-x: hidden;
     scroll-behavior: smooth;
     color-scheme: dark;
+    -webkit-text-size-adjust: 100%;
   }
 
   html.light {
@@ -169,8 +167,13 @@
     transition: background-color 0.35s ease, color 0.35s ease;
   }
 
-  /* Smooth theme transitions on key surfaces */
-  body *:not([class*="animate-"]):not(svg):not(path):not(img):not(video):not(canvas) {
+  /* Smooth theme transitions — scoped to key surfaces only for performance */
+  .bg-background,
+  .bg-card,
+  [class*="bg-surface-"],
+  [class*="bg-sidebar"],
+  [class*="bg-muted"],
+  [class*="border-"] {
     transition:
       background-color 0.3s ease,
       border-color 0.3s ease,
@@ -207,9 +210,14 @@
 
   button,
   [role='button'],
-  .button,
-  [class*='btn'] {
+  .button {
     min-height: var(--touch-min);
+  }
+
+  /* Small chips/pills should not enforce touch target height */
+  [class*="rounded-full"][class*="px-"],
+  [class*="rounded-lg"][class*="py-1"] {
+    min-height: auto;
   }
 }
 
