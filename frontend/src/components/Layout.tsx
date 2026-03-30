@@ -321,7 +321,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
           {/* Center: search */}
           <div className="mx-auto hidden max-w-[400px] flex-1 px-8 lg:block">
-            <label className="flex items-center gap-2.5 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-[7px] transition-colors focus-within:border-primary/30 focus-within:bg-white/[0.04]">
+            <label className="flex items-center gap-2.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-[7px] transition-colors focus-within:border-primary/30 focus-within:bg-[hsl(var(--surface-3))]">
               <Search className="h-3.5 w-3.5 text-muted-foreground/40" />
               <input
                 placeholder="Buscar páginas, clientes..."
