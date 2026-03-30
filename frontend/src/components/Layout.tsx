@@ -207,19 +207,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     return () => { mounted = false; sub.subscription.unsubscribe() }
   }, [])
 
-  const filteredSections = useMemo(() => {
-    const q = searchTerm.trim().toLowerCase()
-    if (!q) return navSections
-    return navSections
-      .map(s => ({
-        ...s,
-        items: s.items.filter(i =>
-          i.label.toLowerCase().includes(q) ||
-          i.children?.some(c => c.label.toLowerCase().includes(q))
-        ),
-      }))
-      .filter(s => s.items.length > 0)
-  }, [searchTerm])
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
