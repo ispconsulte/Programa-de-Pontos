@@ -3,6 +3,8 @@ import {
   Bell,
   Camera,
   ChevronDown,
+  ChevronsLeft,
+  ChevronsRight,
   Coins,
   Gift,
   Home,
