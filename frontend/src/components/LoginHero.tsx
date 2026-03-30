@@ -41,7 +41,7 @@ export default function LoginHero() {
           className="mb-8 transition-all duration-[1000ms]"
           style={{ opacity: v ? 1 : 0, transform: v ? 'translateY(0) scale(1)' : 'translateY(16px) scale(0.9)', ...d(0) }}
         >
-          <LogoAnimated src={logoBonifica} size={240} />
+          <LogoAnimated src={logoBonifica} size={320} />
         </div>
 
         {/* Headline */}

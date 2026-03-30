@@ -20,13 +20,13 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
   const orbitTokens = compact
     ? []
     : [
-        { icon: Coins, angle: 0, radius: 0.48, color: 'hsl(var(--primary))', dur: 26, label: '' },
-        { icon: Gift, angle: 120, radius: 0.48, color: 'hsl(48 96% 58%)', dur: 26, label: '' },
-        { icon: Sparkles, angle: 240, radius: 0.48, color: 'hsl(160 70% 48%)', dur: 26, label: '' },
+        { icon: Coins, angle: 0, radius: 0.58, color: 'hsl(var(--primary))', dur: 30, label: '' },
+        { icon: Gift, angle: 120, radius: 0.58, color: 'hsl(48 96% 58%)', dur: 30, label: '' },
+        { icon: Sparkles, angle: 240, radius: 0.58, color: 'hsl(160 70% 48%)', dur: 30, label: '' },
       ]
 
   /* ── Orbit geometry ── */
-  const orbitRadius = size * 0.48
+  const orbitRadius = size * 0.58
   const arcRadius = size * 0.35
   const arcCircumference = 2 * Math.PI * arcRadius
 
@@ -110,7 +110,7 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
       {/* ── Orbiting reward tokens ── */}
       {orbitTokens.map((token, i) => {
         const Icon = token.icon
-        const tokenSize = size * 0.12
+        const tokenSize = size * 0.14
         return (
           <div
             key={`orbit-${i}`}
