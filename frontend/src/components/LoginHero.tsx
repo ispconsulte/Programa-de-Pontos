@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Gift, Trophy, TrendingUp, Crown, Gem, Star } from 'lucide-react'
+import { Crown, Gem, Star } from 'lucide-react'
 import LogoAnimated from '@/components/LogoAnimated'
 import logoBonifica from '@/assets/logo-bonifica.png'
 
