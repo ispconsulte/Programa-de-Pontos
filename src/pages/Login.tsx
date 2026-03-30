@@ -62,10 +62,10 @@ export default function LoginPage() {
         })
         if (!res.ok) {
           const body = await res.json().catch(() => ({}))
-          console.warn('Tenant bootstrap failed:', body.error || res.status)
+          console.debug('Tenant bootstrap failed:', body.error || res.status)
         }
-      } catch (bootstrapErr) {
-        console.warn('Tenant bootstrap unreachable:', bootstrapErr)
+      } catch {
+        // Bootstrap endpoint unreachable — expected when backend is not running
       }
 
       navigate('/dashboard', { replace: true })
