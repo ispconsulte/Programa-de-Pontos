@@ -206,19 +206,8 @@ export default function SettingsPage() {
                   </CardHeader>
                   <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-5">
-                      {error && (
-                        <div className="flex items-center gap-2.5 rounded-lg border border-destructive/20 bg-destructive/[0.06] px-4 py-3">
-                          <ShieldAlert className="h-4 w-4 flex-shrink-0 text-destructive" />
-                          <p className="text-sm text-red-300">{error}</p>
-                        </div>
-                      )}
-
-                      {success && (
-                        <div className="flex items-center gap-2.5 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.06] px-4 py-3">
-                          <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-emerald-400" />
-                          <p className="text-sm text-emerald-300">Configurações salvas.</p>
-                        </div>
-                      )}
+                      {error && <AlertBanner variant="error" message={error} />}
+                      {success && <AlertBanner variant="success" message="Configurações salvas com sucesso." />}
 
                       <div className="grid gap-5 md:grid-cols-2">
                         <div className="space-y-2">
