@@ -255,12 +255,12 @@ export default function DashboardPage() {
                 </div>
 
                 {/* ── Mobile list ── */}
-                <div className="divide-y divide-white/[0.04] md:hidden">
+                <div className="divide-y divide-[hsl(var(--border))] md:hidden">
                   {receivables.map((item) => (
                     <Link
                       key={item.id}
                       to={`/receivables/${item.id}`}
-                      className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-white/[0.02]"
+                      className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-[hsl(var(--muted))]"
                     >
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-foreground">{formatClientName(item)}</p>
