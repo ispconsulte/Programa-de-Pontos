@@ -165,8 +165,6 @@ export default function LoginPage() {
               </button>
             </form>
 
-            {/* Subtle footer */}
-            </p>
           </div>
 
         </div>
