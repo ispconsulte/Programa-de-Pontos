@@ -1,88 +1,15 @@
-import { useState, FormEvent, useEffect, useRef, Suspense } from 'react'
+import { useState, FormEvent, useEffect } from 'react'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { Eye, EyeOff, AlertCircle, CheckCircle, ArrowRight, Gift, Star, TrendingUp } from 'lucide-react'
-import { Canvas, useFrame } from '@react-three/fiber'
-import { Float, Environment } from '@react-three/drei'
-import * as THREE from 'three'
 import { supabase } from '@/lib/supabase-client'
 import Spinner from '@/components/Spinner'
+import Logo3DScene from '@/components/Logo3DScene'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import logoBonifica from '@/assets/logo-bonifica.png'
 
 const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/+$/, '')
-
-function LogoPlane() {
-  const meshRef = useRef<THREE.Mesh>(null!)
-  const texture = new THREE.TextureLoader().load(logoBonifica)
-  texture.colorSpace = THREE.SRGBColorSpace
-
-  useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.5) * 0.15
-      meshRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.3) * 0.05
-    }
-  })
-
-  return (
-    <Float speed={2} rotationIntensity={0.3} floatIntensity={0.8}>
-      <mesh ref={meshRef}>
-        <planeGeometry args={[3, 3]} />
-        <meshStandardMaterial
-          map={texture}
-          transparent
-          side={THREE.DoubleSide}
-          roughness={0.3}
-          metalness={0.1}
-        />
-      </mesh>
-    </Float>
-  )
-}
-
-function GlowRing() {
-  const ringRef = useRef<THREE.Mesh>(null!)
-
-  useFrame((state) => {
-    if (ringRef.current) {
-      ringRef.current.rotation.z = state.clock.elapsedTime * 0.2
-      ringRef.current.rotation.x = Math.PI * 0.5 + Math.sin(state.clock.elapsedTime * 0.4) * 0.1
-    }
-  })
-
-  return (
-    <mesh ref={ringRef} position={[0, 0, -0.3]}>
-      <torusGeometry args={[2.2, 0.03, 16, 80]} />
-      <meshStandardMaterial
-        color="#3b82f6"
-        emissive="#3b82f6"
-        emissiveIntensity={0.8}
-        transparent
-        opacity={0.4}
-      />
-    </mesh>
-  )
-}
-
-function Scene3D() {
-  return (
-    <Canvas
-      camera={{ position: [0, 0, 5], fov: 45 }}
-      style={{ width: '100%', height: '100%' }}
-      gl={{ antialias: true, alpha: true }}
-    >
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[5, 5, 5]} intensity={0.8} />
-      <pointLight position={[-3, 2, 4]} intensity={0.5} color="#3b82f6" />
-      <Suspense fallback={null}>
-        <LogoPlane />
-        <GlowRing />
-        <Environment preset="city" />
-      </Suspense>
-    </Canvas>
-  )
-}
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -168,7 +95,7 @@ export default function LoginPage() {
         <div className="relative z-10 flex w-full max-w-[540px] flex-col items-center px-8">
           {/* 3D Logo */}
           <div className="mb-4 h-[280px] w-[280px]">
-            <Scene3D />
+            <Logo3DScene textureUrl={logoBonifica} />
           </div>
 
           <h2 className="text-center text-[28px] font-bold leading-[1.2] tracking-tight text-white font-heading">
