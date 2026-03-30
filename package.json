@@ -4,18 +4,14 @@
   "description": "IXC Integration API - Fase 1",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "dev:frontend": "npm --prefix frontend run dev",
-    "dev:full": "concurrently \"npm run dev\" \"npm run dev:frontend\"",
-    "build": "tsc",
-    "build:frontend": "npm --prefix frontend run build",
-    "build:full": "npm run build && npm run build:frontend",
-    "start": "node dist/server.js",
-    "start:frontend": "npm --prefix frontend run start",
+    "dev": "vite",
+    "build": "vite build",
+    "build:dev": "vite build",
+    "preview": "vite preview",
+    "dev:backend": "tsx watch src/server.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "migrate": "node -r tsx/cjs src/db/migrate.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
