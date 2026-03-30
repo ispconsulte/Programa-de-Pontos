@@ -10,7 +10,7 @@ import {
   LogOut,
   Menu,
   Moon,
-  Search,
+  
   Settings,
   Sun,
   Users,
