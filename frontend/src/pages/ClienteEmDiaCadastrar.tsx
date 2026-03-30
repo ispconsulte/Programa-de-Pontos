@@ -36,11 +36,11 @@ export default function ClienteEmDiaCadastrarPage() {
           subtitle="Inclua clientes do IXC na campanha Cliente em Dia por busca filtrada ou importacao de lista com ixc_cliente_id."
           actions={
             <>
-              <Button variant="outline" size="sm" className="border-emerald-500/20 bg-emerald-500/[0.04] text-emerald-200 hover:bg-emerald-500/[0.08] hover:text-foreground">
+              <Button variant="outline" size="sm" className="border-emerald-500/20 bg-emerald-500/[0.08] text-[hsl(var(--success))] hover:bg-emerald-500/[0.12]">
                 <Upload className="h-3.5 w-3.5" />
                 Modelo CSV
               </Button>
-              <Button size="sm" className="bg-emerald-600 text-white hover:bg-emerald-500">
+              <Button variant="success" size="sm">
                 <CheckCircle2 className="h-3.5 w-3.5" />
                 Incluir selecionados
               </Button>

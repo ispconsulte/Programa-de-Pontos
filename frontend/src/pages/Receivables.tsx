@@ -253,12 +253,12 @@ export default function ReceivablesPage() {
 
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">De</label>
-                  <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="[color-scheme:dark]" />
+                  <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Até</label>
-                  <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="[color-scheme:dark]" />
+                  <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
                 </div>
 
                 <div className="space-y-1.5">
