@@ -77,12 +77,6 @@ export default function LoginPage() {
     }
   }
 
-  const features = [
-    { icon: Gift, label: 'Gestão completa de bônus', desc: 'Controle total sobre campanhas e resgates' },
-    { icon: Award, label: 'Programa de pontos inteligente', desc: 'Pontuação automatizada por performance' },
-    { icon: TrendingUp, label: 'Métricas em tempo real', desc: 'Acompanhe resultados e ROI de cada campanha' },
-    { icon: Zap, label: 'Fidelização que converte', desc: 'Engajamento contínuo com seus clientes' },
-  ]
 
   return (
     <div className="flex min-h-screen bg-background">
