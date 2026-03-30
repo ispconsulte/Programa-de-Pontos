@@ -149,6 +149,7 @@
     overflow-x: hidden;
     scroll-behavior: smooth;
     color-scheme: dark;
+    -webkit-text-size-adjust: 100%;
   }
 
   html.light {
