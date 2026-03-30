@@ -270,15 +270,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-[248px] flex-col border-r border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar))] shadow-xl shadow-black/5 transition-transform duration-300 ease-out lg:relative lg:z-auto lg:translate-x-0 lg:shadow-none',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          'fixed inset-y-0 left-0 z-50 flex flex-col border-r border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar))] shadow-xl shadow-black/5 transition-all duration-300 ease-out lg:relative lg:z-auto lg:translate-x-0 lg:shadow-none',
+          sidebarCollapsed ? 'lg:w-[68px]' : 'lg:w-[248px]',
+          sidebarOpen ? 'translate-x-0 w-[248px]' : '-translate-x-full w-[248px]'
         )}
       >
-        <div className="flex h-[92px] flex-shrink-0 items-center justify-center px-5">
+        <div className={cn('flex h-[92px] flex-shrink-0 items-center justify-center', sidebarCollapsed ? 'px-2' : 'px-5')}>
           <img
             src={logoBonifica}
             alt="Bonifica"
-            className="h-[4.5rem] w-auto max-w-[4.5rem] flex-shrink-0"
+            className={cn(
+              'w-auto flex-shrink-0 transition-all duration-300',
+              sidebarCollapsed ? 'h-8 max-w-[2.5rem]' : 'h-[4.5rem] max-w-[4.5rem]'
+            )}
             style={{ objectFit: 'contain', filter: 'drop-shadow(0 0 12px hsl(var(--primary) / 0.35))' }}
           />
           <button onClick={closeSidebar} className="absolute right-3 rounded-md p-1 text-muted-foreground hover:text-foreground lg:hidden">
@@ -286,18 +290,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto scrollable-content px-4 pt-2 pb-4">
+        <nav className={cn('flex-1 overflow-y-auto scrollable-content pt-2 pb-4', sidebarCollapsed ? 'px-2' : 'px-4')}>
           <div className="space-y-6">
             {navSections.map((section, si) => (
               <div key={section.label || si}>
-                {section.label && (
+                {section.label && !sidebarCollapsed && (
                   <p className="mb-2 px-3 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/70">
                     {section.label}
                   </p>
                 )}
+                {section.label && sidebarCollapsed && (
+                  <div className="mb-2 mx-auto h-px w-6 bg-[hsl(var(--border))]" />
+                )}
                 <div className="space-y-1">
                   {section.items.map((item) => (
-                    <SidebarItem key={item.href} item={item} pathname={pathname} onNav={closeSidebar} />
+                    <SidebarItem key={item.href} item={item} pathname={pathname} onNav={closeSidebar} collapsed={sidebarCollapsed} />
                   ))}
                 </div>
               </div>
@@ -305,13 +312,26 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </nav>
 
-        <div className="flex-shrink-0 px-4 pb-4">
+        <div className={cn('flex-shrink-0 pb-4', sidebarCollapsed ? 'px-2' : 'px-4')}>
           <button
             onClick={() => logout()}
-            className="group flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-[13.5px] font-medium text-muted-foreground transition-all duration-150 hover:bg-destructive/[0.06] hover:text-destructive"
+            title={sidebarCollapsed ? 'Sair' : undefined}
+            className={cn(
+              'group flex w-full items-center rounded-xl text-[13.5px] font-medium text-muted-foreground transition-all duration-150 hover:bg-destructive/[0.06] hover:text-destructive',
+              sidebarCollapsed ? 'justify-center p-2.5' : 'gap-3 px-3.5 py-2.5'
+            )}
           >
             <LogOut className="h-[18px] w-[18px] transition-colors group-hover:text-destructive" />
-            <span>Sair</span>
+            {!sidebarCollapsed && <span>Sair</span>}
+          </button>
+
+          {/* Collapse toggle - desktop only */}
+          <button
+            onClick={toggleCollapse}
+            className="hidden lg:flex w-full items-center justify-center rounded-xl p-2 mt-2 text-muted-foreground/50 transition-colors hover:bg-[hsl(var(--surface-2))] hover:text-foreground"
+            title={sidebarCollapsed ? 'Expandir menu' : 'Recolher menu'}
+          >
+            {sidebarCollapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
           </button>
         </div>
       </aside>
