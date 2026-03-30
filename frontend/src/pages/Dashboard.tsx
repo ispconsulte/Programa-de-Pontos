@@ -233,7 +233,7 @@ export default function DashboardPage() {
             ) : (
               <>
                 {/* Score distribution strip */}
-                <div className="grid gap-3 border-b border-white/[0.04] px-5 py-4 sm:grid-cols-3 lg:px-6">
+                <div className="grid gap-3 border-b border-[hsl(var(--border))] px-5 py-4 sm:grid-cols-3 lg:px-6">
                   <ScoreSummaryCard
                     icon={Zap}
                     label="Pagamentos antecipados"
