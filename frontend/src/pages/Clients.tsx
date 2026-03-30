@@ -78,7 +78,9 @@ export default function ClientsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [query, searchType])
+
+  const [throttledSearch, refreshBusy] = useThrottledAction(runSearch)
 
   const handleSearch = async (e: FormEvent) => {
     e.preventDefault()
