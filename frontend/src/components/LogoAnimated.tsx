@@ -15,10 +15,10 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
     return () => clearTimeout(t)
   }, [])
 
-  /* ── Orbit geometry ── */
-  const orbitRadius = size * 0.72
   const arcRadius = size * 0.45
   const arcCircumference = 2 * Math.PI * arcRadius
+  const outerR = size * 0.72
+  const midR = size * 0.58
 
   return (
     <div
@@ -37,7 +37,7 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
         }}
       />
 
-      {/* ── Unified orbit system (SVG) ── */}
+      {/* ── SVG ring system ── */}
       {!compact && (
         <svg
           className="absolute transition-all duration-1000"
@@ -55,17 +55,44 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
               <stop offset="50%" stopColor="hsl(48 96% 58%)" />
               <stop offset="100%" stopColor="hsl(160 70% 48%)" />
             </linearGradient>
+            <linearGradient id="outerRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="hsl(217 91% 60% / 0.3)" />
+              <stop offset="50%" stopColor="hsl(48 96% 58% / 0.15)" />
+              <stop offset="100%" stopColor="hsl(160 70% 48% / 0.3)" />
+            </linearGradient>
           </defs>
 
+          {/* Outer ring - slow spin */}
           <circle
             cx={size / 2}
             cy={size / 2}
-            r={orbitRadius}
+            r={outerR}
             fill="none"
-            stroke="hsla(217, 91%, 60%, 0.06)"
-            strokeWidth={1}
+            stroke="url(#outerRingGrad)"
+            strokeWidth={1.5}
+            strokeDasharray={`${outerR * 0.8} ${outerR * 0.4}`}
+            style={{
+              transformOrigin: 'center',
+              animation: loaded ? 'rewardOrbit 40s linear infinite' : 'none',
+            }}
           />
 
+          {/* Mid ring - reverse spin, dotted */}
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={midR}
+            fill="none"
+            stroke="hsla(217, 91%, 60%, 0.08)"
+            strokeWidth={1}
+            strokeDasharray="4 12"
+            style={{
+              transformOrigin: 'center',
+              animation: loaded ? 'rewardOrbitCounter 50s linear infinite' : 'none',
+            }}
+          />
+
+          {/* Inner progress track */}
           <circle
             cx={size / 2}
             cy={size / 2}
@@ -75,6 +102,7 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
             strokeWidth={2.5}
           />
 
+          {/* Animated progress arc */}
           <circle
             cx={size / 2}
             cy={size / 2}
@@ -94,10 +122,29 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
         </svg>
       )}
 
+      {/* ── Light rays from center ── */}
+      {!compact && [0, 60, 120, 180, 240, 300].map((angle, i) => (
+        <div
+          key={`ray-${i}`}
+          className="absolute"
+          style={{
+            width: 1,
+            height: size * 0.18,
+            left: '50%',
+            top: '50%',
+            transformOrigin: '0 0',
+            transform: `rotate(${angle}deg)`,
+            background: `linear-gradient(to bottom, hsl(var(--primary) / ${0.12 - i * 0.01}), transparent)`,
+            opacity: loaded ? 1 : 0,
+            animation: loaded ? `rewardSparkle ${3 + i * 0.5}s ease-in-out ${i * 0.4}s infinite` : 'none',
+          }}
+        />
+      ))}
+
       {/* ── Sparkle particles ── */}
-      {!compact && [0, 1, 2, 3, 4].map((i) => {
-        const angle = (i / 5) * 360
-        const dist = size * (0.28 + (i % 2) * 0.08)
+      {!compact && [0, 1, 2, 3, 4, 5, 6].map((i) => {
+        const angle = (i / 7) * 360
+        const dist = size * (0.3 + (i % 3) * 0.06)
         const x = 50 + Math.cos((angle * Math.PI) / 180) * (dist / size) * 100
         const y = 50 + Math.sin((angle * Math.PI) / 180) * (dist / size) * 100
         return (
@@ -105,8 +152,8 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
             key={`particle-${i}`}
             className="absolute rounded-full"
             style={{
-              width: 4 + (i % 2) * 2,
-              height: 4 + (i % 2) * 2,
+              width: 3 + (i % 2) * 2,
+              height: 3 + (i % 2) * 2,
               left: `${x}%`,
               top: `${y}%`,
               background: i % 3 === 0
@@ -114,10 +161,10 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
                 : i % 3 === 1
                   ? 'hsl(48 96% 58%)'
                   : 'hsl(160 70% 48%)',
-              opacity: loaded ? 0.6 : 0,
-              boxShadow: '0 0 8px currentColor',
+              opacity: loaded ? 0.5 : 0,
+              boxShadow: '0 0 6px currentColor',
               animation: loaded
-                ? `rewardSparkle ${2.5 + i * 0.4}s ease-in-out ${i * 0.3}s infinite`
+                ? `rewardSparkle ${2.5 + i * 0.35}s ease-in-out ${i * 0.25}s infinite`
                 : 'none',
             }}
           />
