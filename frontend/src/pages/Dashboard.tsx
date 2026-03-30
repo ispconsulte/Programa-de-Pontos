@@ -290,9 +290,9 @@ export default function DashboardPage() {
                         <th className="px-5 py-3 lg:px-6"><span className="sr-only">Ações</span></th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/[0.03]">
+                    <tbody className="divide-y divide-[hsl(var(--border))]">
                       {receivables.map((item) => (
-                        <tr key={item.id} className="transition-colors hover:bg-white/[0.015]">
+                        <tr key={item.id} className="transition-colors hover:bg-[hsl(var(--muted))]">
                           <td className="px-5 py-3.5 lg:px-6">
                             <p className="font-medium text-foreground">{formatClientName(item)}</p>
                             <p className="mt-0.5 font-mono text-[11px] text-muted-foreground/70">#{item.id}</p>
