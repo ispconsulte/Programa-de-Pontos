@@ -1,4 +1,5 @@
-import { useState, FormEvent } from 'react'
+import { useState, useCallback, FormEvent } from 'react'
+import { useThrottledAction } from '@/hooks/useThrottledAction'
 import { Link } from 'react-router-dom'
 import { ArrowRight, RefreshCw, Search, Users } from 'lucide-react'
 import Layout from '@/components/Layout'

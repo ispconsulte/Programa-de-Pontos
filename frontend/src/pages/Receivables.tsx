@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
+import { useThrottledAction } from '@/hooks/useThrottledAction'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Coins, RefreshCw, Search, ShieldAlert } from 'lucide-react'
 import Layout from '@/components/Layout'
