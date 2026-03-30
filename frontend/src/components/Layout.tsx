@@ -318,17 +318,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </nav>
 
         {/* ── Footer ── */}
-        <div className="flex-shrink-0 border-t border-white/[0.05] p-3 space-y-2">
-          {/* Theme toggle */}
-          <button
-            onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
-            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[12.5px] font-medium text-muted-foreground transition-all duration-150 hover:bg-white/[0.04] hover:text-foreground/80"
-          >
-            {theme === 'dark' ? <Moon className="h-[15px] w-[15px]" /> : <Sun className="h-[15px] w-[15px]" />}
-            <span>{theme === 'dark' ? 'Tema escuro' : 'Tema claro'}</span>
-          </button>
-
-          {/* Logout */}
+        <div className="flex-shrink-0 border-t border-white/[0.05] p-3">
           <button
             onClick={() => logout()}
             className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[12.5px] font-medium text-muted-foreground transition-all duration-150 hover:bg-destructive/[0.08] hover:text-destructive"
@@ -336,27 +326,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <LogOut className="h-[15px] w-[15px]" />
             <span>Sair</span>
           </button>
-
-          {/* User */}
-          <div className="flex items-center gap-2.5 rounded-lg border border-white/[0.05] bg-white/[0.02] p-2.5">
-            <button onClick={() => fileInputRef.current?.click()} className="relative flex-shrink-0">
-              {avatarUrl ? (
-                <img src={avatarUrl} alt={profile.name} className="h-8 w-8 rounded-lg object-cover" />
-              ) : (
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 text-[12px] font-bold text-primary">
-                  {initial}
-                </div>
-              )}
-              <div className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full border border-[hsl(var(--sidebar))] bg-white/10">
-                <Camera className="h-2 w-2 text-foreground/70" />
-              </div>
-            </button>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-[12px] font-medium text-foreground/90">{profile.name}</p>
-              <p className="truncate text-[10.5px] text-muted-foreground/50">{profile.email}</p>
-            </div>
-          </div>
-          <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
         </div>
       </aside>
 
@@ -381,11 +350,51 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button className="relative flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-white/[0.04] hover:text-foreground">
-              <Bell className="h-4 w-4" />
-              <span className="absolute right-2.5 top-2 h-1.5 w-1.5 rounded-full bg-primary" />
+          {/* ── Right actions ── */}
+          <div className="flex items-center gap-1">
+            {/* Search (desktop) */}
+            <label className="hidden items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-1.5 transition-colors focus-within:border-primary/30 focus-within:bg-white/[0.04] lg:flex">
+              <Search className="h-3.5 w-3.5 text-muted-foreground/50" />
+              <input
+                placeholder="Buscar…"
+                className="w-36 bg-transparent text-[12.5px] text-foreground outline-none placeholder:text-muted-foreground/40"
+              />
+            </label>
+
+            <div className="mx-1 hidden h-5 w-px bg-white/[0.06] lg:block" />
+
+            {/* Notifications */}
+            <button className="relative flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-white/[0.04] hover:text-foreground">
+              <Bell className="h-[15px] w-[15px]" />
+              <span className="absolute right-2 top-1.5 h-1.5 w-1.5 rounded-full bg-primary" />
             </button>
+
+            {/* Theme toggle */}
+            <button
+              onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-white/[0.04] hover:text-foreground"
+              title={theme === 'dark' ? 'Tema claro' : 'Tema escuro'}
+            >
+              {theme === 'dark' ? <Moon className="h-[15px] w-[15px]" /> : <Sun className="h-[15px] w-[15px]" />}
+            </button>
+
+            <div className="mx-1 h-5 w-px bg-white/[0.06]" />
+
+            {/* User avatar */}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="relative flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-white/[0.04]"
+              title={profile.name}
+            >
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={profile.name} className="h-7 w-7 rounded-md object-cover" />
+              ) : (
+                <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/15 text-[11px] font-bold text-primary">
+                  {initial}
+                </div>
+              )}
+            </button>
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
           </div>
         </header>
 
