@@ -327,8 +327,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             className={cn(
               'flex-shrink-0 transition-all duration-300 object-contain',
               collapsed
-                ? 'h-8 w-8'
-                : 'h-10'
+                ? 'h-10 w-10'
+                : 'h-14'
             )}
             style={{ filter: 'drop-shadow(0 0 8px hsl(var(--primary) / 0.25))' }}
           />
