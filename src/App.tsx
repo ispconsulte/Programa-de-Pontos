@@ -8,6 +8,7 @@ import ClientDetailPage from './pages/ClientDetail'
 import ReceivablesPage from './pages/Receivables'
 import ReceivableDetailPage from './pages/ReceivableDetail'
 import SettingsPage from './pages/Settings'
+import ClienteEmDiaPage from './pages/ClienteEmDia'
 import NotFound from './pages/NotFound'
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/clients" element={<ClientsPage />} />
         <Route path="/clients/:id" element={<ClientDetailPage />} />
+        <Route path="/cliente-em-dia" element={<ClienteEmDiaPage />} />
         <Route path="/receivables" element={<ReceivablesPage />} />
         <Route path="/receivables/:id" element={<ReceivableDetailPage />} />
         <Route path="/settings" element={<SettingsPage />} />
