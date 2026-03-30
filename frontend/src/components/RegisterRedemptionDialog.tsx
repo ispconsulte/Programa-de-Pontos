@@ -102,15 +102,15 @@ export default function RegisterRedemptionDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-2xl overflow-hidden border-white/[0.08] bg-[linear-gradient(180deg,rgba(16,185,129,0.06),rgba(255,255,255,0)_22%),hsl(var(--background))] p-0">
-        <DialogHeader className="border-b border-white/[0.06] px-6 py-5">
+      <DialogContent className="max-w-2xl border-white/[0.08] bg-[linear-gradient(180deg,rgba(16,185,129,0.06),rgba(255,255,255,0)_22%),hsl(var(--background))] p-0">
+        <DialogHeader className="px-6 py-5">
           <div className="flex items-start gap-4">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/10 ring-1 ring-emerald-500/20">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 ring-1 ring-emerald-500/20">
               <Gift className="h-5 w-5 text-emerald-300" />
             </div>
             <div>
-              <DialogTitle className="text-xl text-white">Registrar resgate</DialogTitle>
-              <DialogDescription className="mt-2 max-w-xl text-sm leading-relaxed">
+              <DialogTitle>Registrar resgate</DialogTitle>
+              <DialogDescription className="mt-1.5 max-w-xl">
                 Registre um novo resgate apenas quando houver dados reais de cliente e de brinde disponiveis.
               </DialogDescription>
             </div>
