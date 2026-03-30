@@ -10,6 +10,7 @@ import {
   Menu,
   Search,
   Settings,
+  Star,
   Users,
   Wrench,
   X,
