@@ -74,11 +74,11 @@ export default function LoginPage() {
           <div className="rounded-2xl border border-white/[0.07] bg-gradient-to-b from-[hsl(var(--surface-1))] to-[hsl(var(--surface-2)_/_0.5)] p-7 shadow-[0_24px_80px_-12px_rgba(0,0,0,0.35)] lg:p-8">
             {/* Header inside card */}
             <div className="mb-7">
-              <h1 className="font-heading text-[24px] font-bold tracking-tight text-foreground">
-                Entrar na sua conta
+               <h1 className="font-heading text-[24px] font-bold tracking-tight text-foreground">
+                Acesse seu painel
               </h1>
               <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
-                Acesse o painel de pontos e recompensas.
+                Seus pontos e recompensas estão te esperando.
               </p>
             </div>
 
