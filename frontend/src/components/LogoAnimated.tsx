@@ -47,7 +47,7 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
       />
 
       {/* ── Concentric orbit rings ── */}
-      {!compact && [0.42, 0.34].map((r, i) => (
+      {!compact && [0.48, 0.38].map((r, i) => (
         <div
           key={`ring-${i}`}
           className="absolute rounded-full border transition-all duration-1000"
