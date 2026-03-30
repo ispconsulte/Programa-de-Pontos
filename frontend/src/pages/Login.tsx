@@ -61,47 +61,47 @@ export default function LoginPage() {
 
       {/* ── Right: Login form (45%) ── */}
       <div className="relative flex w-full flex-col items-center justify-center px-6 py-10 lg:w-[45%] lg:px-10 xl:px-16">
-        {/* Subtle ambient glow for mobile */}
+        {/* Ambient glow (mobile) */}
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_35%,hsl(217_91%_60%_/_0.03),transparent_65%)] lg:hidden" />
 
-        <div className="relative z-10 w-full max-w-[420px]">
+        <div className="relative z-10 w-full max-w-[400px]">
           {/* ── Mobile-only logo ── */}
           <div className="mb-8 flex items-center justify-center lg:hidden">
             <LogoAnimated src={logoBonifica} alt="Logo Bonifica" size={110} />
           </div>
 
-          {/* ── Header ── */}
-          <div className="mb-8">
-            <h1 className="font-heading text-[22px] font-bold tracking-tight text-foreground">
-              Bem-vindo de volta
-            </h1>
-            <p className="mt-1.5 text-[13px] text-muted-foreground">
-              Entre com suas credenciais para acessar sua conta.
-            </p>
-          </div>
-
-          {/* ── Registered success ── */}
-          {registered && (
-            <div className="mb-5 flex items-center gap-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] px-4 py-3 animate-enter">
-              <CheckCircle className="h-4 w-4 flex-shrink-0 text-emerald-400" />
-              <p className="text-[13px] text-emerald-300">Conta criada com sucesso. Faça login para continuar.</p>
+          {/* ── Form container ── */}
+          <div className="rounded-2xl border border-white/[0.07] bg-gradient-to-b from-[hsl(var(--surface-1))] to-[hsl(var(--surface-2)_/_0.5)] p-7 shadow-[0_24px_80px_-12px_rgba(0,0,0,0.35)] lg:p-8">
+            {/* Header inside card */}
+            <div className="mb-7">
+              <h1 className="font-heading text-[24px] font-bold tracking-tight text-foreground">
+                Entrar na sua conta
+              </h1>
+              <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+                Acesse o painel de pontos e recompensas.
+              </p>
             </div>
-          )}
 
-          {/* ── Form card ── */}
-          <div className="rounded-2xl border border-white/[0.06] bg-[hsl(var(--surface-1))] p-6 shadow-2xl shadow-black/8 lg:p-7">
+            {/* Registered banner */}
+            {registered && (
+              <div className="mb-5 flex items-center gap-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] px-4 py-3 animate-enter">
+                <CheckCircle className="h-4 w-4 flex-shrink-0 text-emerald-400" />
+                <p className="text-[13px] text-emerald-300">Conta criada. Faça login para continuar.</p>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Error alert */}
+              {/* Error */}
               {error && (
-                <div className="flex items-center gap-2.5 rounded-lg border border-destructive/20 bg-destructive/[0.06] px-3.5 py-2.5 animate-enter">
+                <div className="flex items-center gap-2.5 rounded-xl border border-destructive/20 bg-destructive/[0.06] px-4 py-3 animate-enter">
                   <AlertCircle className="h-4 w-4 flex-shrink-0 text-destructive" />
                   <p className="text-[13px] text-red-300">{error}</p>
                 </div>
               )}
 
               {/* Email */}
-              <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/70">
                   E-mail
                 </Label>
                 <Input
@@ -109,14 +109,15 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="seu@email.com"
+                  placeholder="seu@empresa.com"
                   autoComplete="email"
+                  className="h-11 rounded-xl border-white/[0.1] bg-white/[0.03] px-4 text-[14px] placeholder:text-muted-foreground/30 focus-visible:border-primary/50 focus-visible:bg-white/[0.04]"
                 />
               </div>
 
               {/* Password */}
-              <div className="space-y-1.5">
-                <Label htmlFor="password" className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/70">
                   Senha
                 </Label>
                 <div className="relative">
@@ -125,14 +126,14 @@ export default function LoginPage() {
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Digite sua senha"
+                    placeholder="••••••••"
                     autoComplete="current-password"
-                    className="pr-10"
+                    className="h-11 rounded-xl border-white/[0.1] bg-white/[0.03] px-4 pr-11 text-[14px] placeholder:text-muted-foreground/30 focus-visible:border-primary/50 focus-visible:bg-white/[0.04]"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/50 transition-colors hover:text-foreground"
                     tabIndex={-1}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -140,26 +141,47 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* Submit */}
-              <Button type="submit" disabled={loading} className="w-full" size="lg">
-                {loading ? <Spinner size="sm" /> : <ArrowRight className="h-4 w-4" />}
-                {loading ? 'Entrando...' : 'Entrar'}
-              </Button>
+              {/* Separator */}
+              <div className="pt-1" />
+
+              {/* CTA */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="group relative flex h-12 w-full items-center justify-center gap-2.5 overflow-hidden rounded-xl bg-primary font-semibold text-primary-foreground shadow-[0_0_0_1px_hsl(var(--primary)),0_4px_24px_-4px_hsl(var(--primary)_/_0.4)] transition-all duration-200 hover:shadow-[0_0_0_1px_hsl(var(--primary)),0_8px_32px_-4px_hsl(var(--primary)_/_0.5)] hover:brightness-110 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+              >
+                {/* Shine effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.08] to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <span className="relative text-[14px]">
+                  {loading ? 'Entrando...' : 'Entrar'}
+                </span>
+                {loading
+                  ? <Spinner size="sm" />
+                  : <ArrowRight className="relative h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+                }
+              </button>
             </form>
+
+            {/* Divider */}
+            <div className="mt-6 flex items-center gap-3">
+              <div className="h-px flex-1 bg-white/[0.06]" />
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground/40">ou</span>
+              <div className="h-px flex-1 bg-white/[0.06]" />
+            </div>
+
+            {/* Secondary action */}
+            <p className="mt-4 text-center text-[13px] text-muted-foreground/60">
+              Ainda não tem uma conta?{' '}
+              <Link to="/register" className="font-medium text-primary/80 transition-colors hover:text-primary">
+                Criar conta
+              </Link>
+            </p>
           </div>
 
-          {/* ── Footer link ── */}
-          <p className="mt-6 text-center text-[13px] text-muted-foreground">
-            Não tem conta?{' '}
-            <Link to="/register" className="font-medium text-primary transition-colors hover:text-primary/80">
-              Criar conta
-            </Link>
-          </p>
-
-          {/* ── Bottom branding ── */}
-          <div className="mt-10 flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground/40">
+          {/* Branding */}
+          <div className="mt-8 flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground/30">
             <span>Powered by</span>
-            <span className="font-semibold text-muted-foreground/60">Bonifica</span>
+            <span className="font-semibold text-muted-foreground/50">Bonifica</span>
           </div>
         </div>
       </div>
