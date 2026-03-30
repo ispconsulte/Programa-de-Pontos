@@ -4,15 +4,9 @@ import LogoAnimated from '@/components/LogoAnimated'
 import logoBonifica from '@/assets/logo-bonifica.png'
 
 const tiers = [
-  { name: 'Bronze', pts: '500', icon: Star, accent: 'hsl(30 70% 50%)' },
-  { name: 'Prata', pts: '1.500', icon: Gem, accent: 'hsl(220 20% 70%)' },
-  { name: 'Ouro', pts: '5.000', icon: Crown, accent: 'hsl(45 95% 55%)' },
-]
-
-const features = [
-  { icon: TrendingUp, label: 'Pontos automáticos' },
-  { icon: Trophy, label: 'Campanhas ativas' },
-  { icon: Gift, label: 'Catálogo de brindes' },
+  { name: 'Bronze', icon: Star, accent: 'hsl(30 70% 50%)' },
+  { name: 'Prata', icon: Gem, accent: 'hsl(220 20% 70%)' },
+  { name: 'Ouro', icon: Crown, accent: 'hsl(45 95% 55%)' },
 ]
 
 export default function LoginHero() {
