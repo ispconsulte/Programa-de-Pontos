@@ -34,9 +34,8 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
             opacity: loaded ? 0.5 + (i % 3) * 0.15 : 0,
             filter: `blur(${i % 2}px)`,
             animation: loaded
-              ? `orbitParticle ${6 + i * 1.5}s linear infinite`
+              ? `orbitParticle ${6 + i * 1.5}s linear ${i * -1.2}s infinite`
               : 'none',
-            animationDelay: `${i * -1.2}s`,
             transformOrigin: '0 0',
             // Each particle orbits at a different radius
             ['--orbit-r' as string]: `${r * 0.7 + i * 8}px`,
@@ -108,8 +107,7 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
               left: `calc(50% + ${Math.cos(angle) * dist}px)`,
               transform: 'translate(-50%, -50%)',
               opacity: loaded ? 1 : 0,
-              animation: loaded ? `sparkle 2s ease-in-out infinite` : 'none',
-              animationDelay: `${i * 0.5}s`,
+              animation: loaded ? `sparkle 2s ease-in-out ${i * 0.5}s infinite` : 'none',
               boxShadow: '0 0 6px hsl(var(--primary) / 0.6)',
               transition: 'opacity 0.6s ease',
             }}
