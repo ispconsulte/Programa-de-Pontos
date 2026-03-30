@@ -234,7 +234,7 @@ export default function ReceivablesPage() {
         <div className="space-y-5">
           <Card>
             <CardContent className="p-5">
-              <div className="grid gap-4 lg:grid-cols-[1fr_1fr_1fr_1fr_auto_auto]">
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 <div className="space-y-2">
                   <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Situação do pagamento</label>
                   <Select value={category} onValueChange={setCategory}>
@@ -259,7 +259,7 @@ export default function ReceivablesPage() {
 
                 <div className="space-y-2">
                   <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Buscar cliente</label>
-                  <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Nome, ID do cliente ou recebimento" />
+                  <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Nome ou ID" />
                 </div>
 
                 <div className="space-y-2">
@@ -277,7 +277,7 @@ export default function ReceivablesPage() {
                 <div className="space-y-2">
                   <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Por página</label>
                   <Select value={String(limit)} onValueChange={(value) => { setLimit(Number(value)); setPage(1) }}>
-                    <SelectTrigger className="w-20"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="w-full sm:w-24"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {PAGE_SIZES.map((size) => (
                         <SelectItem key={size} value={String(size)}>{size}</SelectItem>
@@ -285,16 +285,16 @@ export default function ReceivablesPage() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
 
-                <div className="flex items-end gap-2">
-                  <Button onClick={handleFilterApply}>
-                    <Search className="h-3.5 w-3.5" />
-                    Aplicar
-                  </Button>
-                  <Button variant="outline" size="icon" onClick={() => void fetchReceivables()}>
-                    <RefreshCw className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
+              <div className="mt-4 flex items-center gap-2">
+                <Button onClick={handleFilterApply}>
+                  <Search className="h-3.5 w-3.5" />
+                  Aplicar
+                </Button>
+                <Button variant="outline" size="icon" onClick={() => void fetchReceivables()}>
+                  <RefreshCw className="h-3.5 w-3.5" />
+                </Button>
               </div>
             </CardContent>
           </Card>
