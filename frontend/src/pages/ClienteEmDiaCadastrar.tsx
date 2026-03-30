@@ -56,7 +56,7 @@ export default function ClienteEmDiaCadastrarPage() {
                 { label: 'Selecionados em lote', value: '0' },
                 { label: 'IDs no CSV', value: String(csvIds.length) },
               ].map((item) => (
-                <div key={item.label} className="rounded-2xl border border-[hsl(var(--border))] bg-black/10 px-4 py-4 backdrop-blur-sm">
+                <div key={item.label} className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-4">
                   <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">{item.label}</p>
                   <p className="mt-2 text-2xl font-semibold text-foreground">{item.value}</p>
                 </div>
