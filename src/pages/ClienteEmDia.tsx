@@ -256,7 +256,8 @@ export default function ClienteEmDiaPage() {
                 {clients.map((c) => (
                   <tr
                     key={c.id}
-                    className="transition-colors hover:bg-muted/30"
+                    onClick={() => navigate(`/cliente-em-dia/${c.id}`)}
+                    className="cursor-pointer transition-colors hover:bg-muted/30"
                   >
                     <td className="whitespace-nowrap px-5 py-3.5 font-medium text-foreground">
                       {c.nome}
