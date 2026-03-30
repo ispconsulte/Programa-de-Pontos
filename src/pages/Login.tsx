@@ -94,8 +94,8 @@ export default function LoginPage() {
 
         <div className="relative z-10 flex w-full max-w-[540px] flex-col items-center px-8">
           {/* 3D Logo */}
-          <div className="mb-4 h-[280px] w-[280px]">
-            <Logo3DScene textureUrl={logoBonifica} />
+          <div className="mb-4">
+            <LogoAnimated src={logoBonifica} size={280} />
           </div>
 
           <h2 className="text-center text-[28px] font-bold leading-[1.2] tracking-tight text-white font-heading">
