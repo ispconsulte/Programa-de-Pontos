@@ -364,11 +364,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
               {/* Dropdown */}
               {userMenuOpen && (
-                <div className="absolute right-0 top-[calc(100%+6px)] z-50 w-56 overflow-hidden rounded-xl border border-white/[0.06] bg-[hsl(var(--surface-1))] shadow-xl shadow-black/30">
+                <div className="absolute right-0 top-[calc(100%+6px)] z-50 w-56 overflow-hidden rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-xl shadow-black/20">
                   {/* User info */}
-                  <div className="border-b border-white/[0.05] px-4 py-3">
+                  <div className="border-b border-[hsl(var(--border))] px-4 py-3">
                     <p className="truncate text-[13px] font-medium text-foreground">{profile.name}</p>
-                    <p className="truncate text-[11.5px] text-muted-foreground/50">{profile.email}</p>
+                    <p className="truncate text-[11.5px] text-muted-foreground">{profile.email}</p>
                   </div>
                   {/* Menu items */}
                   <div className="p-1.5">
