@@ -7,6 +7,9 @@ import {
   RefreshCw,
   TrendingUp,
   Wallet,
+  Zap,
+  Clock,
+  CalendarCheck,
 } from 'lucide-react'
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
@@ -19,16 +22,8 @@ import { categoryBadge } from '@/components/Badge'
 import { apiFetch, getApiErrorMessage, getDisplayError } from '@/lib/api-client'
 import { getPaymentBehaviorLabel, getPaymentScore } from '@/lib/receivables-utils'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 
+/* ── Types ── */
 interface Receivable {
   id: string | number
   id_cliente: string | number
@@ -53,6 +48,7 @@ interface ReceivablesResponse {
   }
 }
 
+/* ── Helpers ── */
 function formatBRL(value: string | number | undefined): string {
   if (value === undefined || value === null) return 'R$ 0,00'
   const num = typeof value === 'string' ? parseFloat(value) : value
@@ -76,6 +72,48 @@ function formatClientName(receivable: Receivable): string {
   return `Cliente #${receivable.id_cliente}`
 }
 
+/* ── Score pill component ── */
+function ScorePill({ score }: { score: number }) {
+  const colors =
+    score >= 5
+      ? 'bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))]'
+      : score >= 4
+        ? 'bg-primary/10 text-primary'
+        : 'bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning))]'
+
+  return (
+    <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold ${colors}`}>
+      +{score}
+    </span>
+  )
+}
+
+/* ── Score summary mini-card ── */
+function ScoreSummaryCard({
+  icon: Icon,
+  label,
+  value,
+  color,
+}: {
+  icon: typeof Zap
+  label: string
+  value: number
+  color: string
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-lg border border-white/[0.05] bg-white/[0.02] px-4 py-3">
+      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${color}`}>
+        <Icon className="h-3.5 w-3.5" />
+      </div>
+      <div className="min-w-0">
+        <p className="text-lg font-semibold text-foreground">{formatCount(value)}</p>
+        <p className="truncate text-[11px] text-muted-foreground">{label}</p>
+      </div>
+    </div>
+  )
+}
+
+/* ── Page ── */
 export default function DashboardPage() {
   const [receivables, setReceivables] = useState<Receivable[]>([])
   const [loading, setLoading] = useState(true)
@@ -85,9 +123,9 @@ export default function DashboardPage() {
   const [totalAmount, setTotalAmount] = useState(0)
 
   const scoreSummary = {
-    fivePoints: receivables.filter((item) => getPaymentScore(item) === 5).length,
-    fourPoints: receivables.filter((item) => getPaymentScore(item) === 4).length,
-    twoPoints: receivables.filter((item) => getPaymentScore(item) === 2).length,
+    five: receivables.filter((r) => getPaymentScore(r) === 5).length,
+    four: receivables.filter((r) => getPaymentScore(r) === 4).length,
+    two: receivables.filter((r) => getPaymentScore(r) === 2).length,
   }
 
   const fetchData = useCallback(async () => {
@@ -133,7 +171,7 @@ export default function DashboardPage() {
         />
 
         <div className="page-stack">
-          {/* Stats */}
+          {/* ── Top stat cards ── */}
           <div className="grid gap-4 sm:grid-cols-3">
             <StatCard
               label="Recebimentos pagos"
@@ -158,143 +196,130 @@ export default function DashboardPage() {
             />
           </div>
 
-          {/* Recent table */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+          {/* ── Recent payments section ── */}
+          <section className="rounded-xl border border-white/[0.06] bg-[hsl(var(--surface-1))]">
+            {/* Section header */}
+            <div className="flex flex-col gap-3 border-b border-white/[0.04] p-5 sm:flex-row sm:items-center sm:justify-between lg:p-6">
               <div>
-                <CardTitle>Últimos pagamentos pontuados</CardTitle>
-                <p className="mt-1 text-[13px] text-muted-foreground">
-                  Pagamentos recentes já classificados conforme a regra da campanha.
+                <h2 className="text-sm font-semibold text-foreground">Últimos pagamentos pontuados</h2>
+                <p className="mt-0.5 text-[13px] text-muted-foreground">
+                  Pagamentos recentes classificados conforme a regra da campanha.
                 </p>
               </div>
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="outline" size="sm" className="w-fit">
                 <Link to="/receivables">
                   Ver todos
-                  <ArrowRight className="h-3.5 w-3.5" />
+                  <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                 </Link>
               </Button>
-            </CardHeader>
-            <CardContent className="p-0">
-              {loading ? (
-                <div className="flex items-center justify-center py-16">
-                  <Spinner size="md" />
+            </div>
+
+            {/* Content area */}
+            {loading ? (
+              <div className="flex items-center justify-center py-20">
+                <Spinner size="md" />
+              </div>
+            ) : error ? (
+              <div className="p-5">
+                <AlertBanner variant="error" message={error} actionLabel="Tentar novamente" onAction={() => void fetchData()} />
+              </div>
+            ) : receivables.length === 0 ? (
+              <div className="p-5">
+                <EmptyState icon={<Coins className="h-5 w-5" />} title="Nenhum recebimento" description="Nenhum recebimento encontrado ainda." />
+              </div>
+            ) : (
+              <>
+                {/* Score distribution strip */}
+                <div className="grid gap-3 border-b border-white/[0.04] px-5 py-4 sm:grid-cols-3 lg:px-6">
+                  <ScoreSummaryCard
+                    icon={Zap}
+                    label="Pagamentos antecipados"
+                    value={scoreSummary.five}
+                    color="bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))]"
+                  />
+                  <ScoreSummaryCard
+                    icon={CalendarCheck}
+                    label="Pagamentos no vencimento"
+                    value={scoreSummary.four}
+                    color="bg-primary/10 text-primary"
+                  />
+                  <ScoreSummaryCard
+                    icon={Clock}
+                    label="Pagamentos após o vencimento"
+                    value={scoreSummary.two}
+                    color="bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))]"
+                  />
                 </div>
-              ) : error ? (
-                <div className="p-5">
-                  <AlertBanner variant="error" message={error} actionLabel="Tentar novamente" onAction={() => void fetchData()} />
-                </div>
-              ) : receivables.length === 0 ? (
-                <div className="p-5">
-                  <EmptyState icon={<Coins className="h-5 w-5" />} title="Nenhum recebimento" description="Nenhum recebimento encontrado ainda." />
-                </div>
-              ) : (
-                <>
-                  {/* Score summary */}
-                  <div className="grid gap-3 border-b border-white/[0.04] px-5 py-4 md:grid-cols-3">
-                    {[
-                      { label: '5 pontos', helper: 'Pagamentos antecipados', value: scoreSummary.fivePoints, color: 'text-[hsl(var(--success))]' },
-                      { label: '4 pontos', helper: 'Pagamentos no vencimento', value: scoreSummary.fourPoints, color: 'text-primary' },
-                      { label: '2 pontos', helper: 'Pagamentos após o vencimento', value: scoreSummary.twoPoints, color: 'text-[hsl(var(--warning))]' },
-                    ].map((item) => (
-                      <div key={item.label} className="rounded-xl border border-white/[0.05] bg-white/[0.02] px-4 py-3">
-                        <p className="text-[11px] font-medium uppercase tracking-[0.1em] text-muted-foreground">{item.label}</p>
-                        <p className={`mt-2 text-2xl font-semibold ${item.color}`}>{formatCount(item.value)}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">{item.helper}</p>
+
+                {/* ── Mobile list ── */}
+                <div className="divide-y divide-white/[0.04] md:hidden">
+                  {receivables.map((item) => (
+                    <Link
+                      key={item.id}
+                      to={`/receivables/${item.id}`}
+                      className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-white/[0.02]"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-foreground">{formatClientName(item)}</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {formatDate(item.data_vencimento)} · {formatBRL(item.valor_recebido)}
+                        </p>
                       </div>
-                    ))}
-                  </div>
+                      <div className="flex items-center gap-2.5">
+                        <ScorePill score={getPaymentScore(item)} />
+                        <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+                      </div>
+                    </Link>
+                  ))}
+                </div>
 
-                  {/* Mobile cards */}
-                  <div className="grid gap-2 p-4 md:hidden">
-                    {receivables.map((item) => (
-                      <Link
-                        key={item.id}
-                        to={`/receivables/${item.id}`}
-                        className="rounded-xl border border-white/[0.04] bg-white/[0.01] p-4 transition-all duration-200 hover:bg-white/[0.03] hover:border-white/[0.08]"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-medium text-foreground">{formatClientName(item)}</p>
-                            <p className="mt-1 text-xs text-muted-foreground">
-                              {getPaymentBehaviorLabel(item)} • #{item.id}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <div className="text-right">
-                              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Pontos</p>
-                              <p className="text-sm font-semibold text-[hsl(var(--success))]">+{getPaymentScore(item)}</p>
-                            </div>
-                            <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-                          </div>
-                        </div>
-                        <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-                          <div>
-                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Vencimento</p>
-                            <p className="mt-0.5 text-foreground">{formatDate(item.data_vencimento)}</p>
-                          </div>
-                          <div>
-                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Pago em</p>
-                            <p className="mt-0.5 text-foreground">{formatDate(item.data_pagamento ?? '')}</p>
-                          </div>
-                        </div>
-                        <div className="mt-3 flex items-center justify-between text-sm">
-                          <div>
-                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Valor pago</p>
-                            <p className="mt-0.5 font-medium text-[hsl(var(--success))]">{formatBRL(item.valor_recebido)}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Faixa</p>
-                            <div className="mt-0.5">{categoryBadge(getPaymentBehaviorLabel(item))}</div>
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-
-                  {/* Desktop table */}
-                  <div className="hidden md:block">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Cliente</TableHead>
-                          <TableHead>Evento</TableHead>
-                          <TableHead className="text-right">Pontos</TableHead>
-                          <TableHead>Vencimento</TableHead>
-                          <TableHead>Pago em</TableHead>
-                          <TableHead className="text-right">Valor pago</TableHead>
-                          <TableHead className="text-right" />
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {receivables.map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell>
-                              <div>
-                                <p className="font-medium text-foreground">{formatClientName(item)}</p>
-                                <p className="mt-0.5 font-mono text-xs text-muted-foreground">#{item.id}</p>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-muted-foreground">{getPaymentBehaviorLabel(item)}</TableCell>
-                            <TableCell className="text-right font-semibold text-[hsl(var(--success))]">
-                              +{getPaymentScore(item)}
-                            </TableCell>
-                            <TableCell className="text-muted-foreground">{formatDate(item.data_vencimento)}</TableCell>
-                            <TableCell className="text-muted-foreground">{formatDate(item.data_pagamento ?? '')}</TableCell>
-                            <TableCell className="text-right text-[hsl(var(--success))]">{formatBRL(item.valor_recebido)}</TableCell>
-                            <TableCell className="text-right">
-                              <Link to={`/receivables/${item.id}`} className="text-sm text-primary transition-colors hover:text-primary/80">
-                                Detalhe
-                              </Link>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
+                {/* ── Desktop table ── */}
+                <div className="hidden md:block">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-white/[0.04]">
+                        <th className="px-5 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground lg:px-6">Cliente</th>
+                        <th className="px-3 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Classificação</th>
+                        <th className="px-3 py-3 text-center text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Pontos</th>
+                        <th className="px-3 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Vencimento</th>
+                        <th className="px-3 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Pago em</th>
+                        <th className="px-3 py-3 text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Valor pago</th>
+                        <th className="px-5 py-3 lg:px-6"><span className="sr-only">Ações</span></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/[0.03]">
+                      {receivables.map((item) => (
+                        <tr key={item.id} className="transition-colors hover:bg-white/[0.015]">
+                          <td className="px-5 py-3.5 lg:px-6">
+                            <p className="font-medium text-foreground">{formatClientName(item)}</p>
+                            <p className="mt-0.5 font-mono text-[11px] text-muted-foreground/70">#{item.id}</p>
+                          </td>
+                          <td className="px-3 py-3.5">
+                            {categoryBadge(getPaymentBehaviorLabel(item))}
+                          </td>
+                          <td className="px-3 py-3.5 text-center">
+                            <ScorePill score={getPaymentScore(item)} />
+                          </td>
+                          <td className="px-3 py-3.5 text-muted-foreground">{formatDate(item.data_vencimento)}</td>
+                          <td className="px-3 py-3.5 text-muted-foreground">{formatDate(item.data_pagamento ?? '')}</td>
+                          <td className="px-3 py-3.5 text-right font-medium text-[hsl(var(--success))]">{formatBRL(item.valor_recebido)}</td>
+                          <td className="px-5 py-3.5 text-right lg:px-6">
+                            <Link
+                              to={`/receivables/${item.id}`}
+                              className="inline-flex items-center gap-1 text-[13px] text-primary transition-colors hover:text-primary/80"
+                            >
+                              Detalhe
+                              <ArrowRight className="h-3 w-3" />
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </section>
         </div>
       </Layout>
     </ProtectedRoute>
