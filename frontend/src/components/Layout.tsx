@@ -158,6 +158,10 @@ function SidebarItem({ item, pathname, onNav }: { item: NavItem; pathname: strin
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return window.localStorage.getItem('bonifica-sidebar-collapsed') === 'true'
+  })
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const userMenuRef = useRef<HTMLDivElement | null>(null)
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
