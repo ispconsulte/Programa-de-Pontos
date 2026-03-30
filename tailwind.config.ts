@@ -54,6 +54,12 @@ const config: Config = {
         sidebar: {
           DEFAULT: 'hsl(var(--sidebar))',
           active: 'hsl(var(--sidebar-active))',
+          border: 'hsl(var(--sidebar-border))',
+        },
+        surface: {
+          1: 'hsl(var(--surface-1))',
+          2: 'hsl(var(--surface-2))',
+          3: 'hsl(var(--surface-3))',
         },
       },
       borderRadius: {
