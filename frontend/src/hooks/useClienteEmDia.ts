@@ -248,7 +248,7 @@ export function useClienteEmDia(options: UseClienteEmDiaOptions = {}): UseClient
           .order('created_at', { ascending: false })
 
         if (options.redemptionsCustomerId) {
-          query = query.eq('campanha_cliente_id', options.redemptionsCustomerId)
+          query = query.eq('ixc_cliente_id', options.redemptionsCustomerId)
         }
 
         return query
