@@ -394,6 +394,21 @@ async function getAuthenticatedUser(supabase: AnySupabase, request: Request): Pr
 
   const authHeader = request.headers.get('Authorization')
   const jwt = authHeader?.startsWith('Bearer ') ? authHeader.slice('Bearer '.length).trim() : ''
+
+  // Check for service role invocation (body.tenantId required)
+  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+  if (serviceRoleKey && jwt === serviceRoleKey) {
+    const body = (await request.clone().json().catch(() => ({}))) as SyncRequest
+    if (!body.tenantId) {
+      throw new Error('tenantId is required for service role sync')
+    }
+    return {
+      id: null,
+      tenant_id: body.tenantId,
+      role: 'system',
+    }
+  }
+
   if (!jwt) throw new Error('Authorization header is required')
 
   // Check if this is the service_role key (for admin/system calls)
