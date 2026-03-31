@@ -35,7 +35,7 @@ function toShape(row: ReceivableRow) {
   return {
     id: row.id,
     id_cliente: row.ixc_cliente_id,
-    cliente_nome: null,
+    cliente_nome: null as string | null,
     data_vencimento: (payload.competencia as string | undefined) ?? row.competencia ?? '',
     data_pagamento: row.data_pagamento ?? null,
     valor: row.valor_pago ?? 0,
