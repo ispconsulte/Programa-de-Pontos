@@ -107,8 +107,7 @@ export async function fetchReceivableById(
     .select(
       `id, fatura_id, ixc_cliente_id, ixc_contrato_id, competencia,
        data_pagamento, valor_pago, pontos_gerados, status_processamento,
-       payload, created_at, campanha_cliente_id,
-       pontuacao_campanha_clientes(nome_cliente, documento, email, telefone)`
+       payload, created_at, campanha_cliente_id`
     )
     .eq('tenant_id', tenantId)
     .eq('id', id)
