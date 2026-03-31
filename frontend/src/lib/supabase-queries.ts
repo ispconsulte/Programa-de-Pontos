@@ -184,7 +184,7 @@ export async function fetchCampaignClientFaturas(
   tenantId: string,
   campanha_cliente_id: string
 ): Promise<ReceivableRow[]> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('pontuacao_faturas_processadas')
     .select('id, fatura_id, ixc_contrato_id, competencia, data_pagamento, valor_pago, pontos_gerados, status_processamento, created_at')
     .eq('tenant_id', tenantId)
