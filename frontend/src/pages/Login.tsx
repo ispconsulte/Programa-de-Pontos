@@ -36,14 +36,10 @@ export default function LoginPage() {
       const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
       if (signInError || !data.session?.access_token) { setError(signInError?.message || 'Credenciais inválidas.'); return }
 
+      // Bootstrap tenant if needed (idempotent)
       try {
-        const res = await fetch(`${BASE_URL}/auth/register`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${data.session.access_token}` },
-          body: JSON.stringify({}),
-        })
-        if (!res.ok) { const body = await res.json().catch(() => ({})); console.debug('Tenant bootstrap failed:', body.error || res.status) }
-      } catch { /* backend unreachable */ }
+        await supabase.functions.invoke('bootstrap-tenant', { body: {} })
+      } catch { /* edge function unreachable - ok */ }
 
       navigate('/dashboard', { replace: true })
     } catch (err) {
