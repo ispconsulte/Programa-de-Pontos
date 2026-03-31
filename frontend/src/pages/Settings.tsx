@@ -185,7 +185,7 @@ export default function SettingsPage() {
                         <CardTitle>Integração IXCSoft</CardTitle>
                         <CardDescription className="mt-1">
                           {settings?.ixc_configured
-                            ? `Conectado a ${settings.ixcConnection?.ixc_base_url}`
+                            ? `Conectado a ${settings.ixcConnection?.ixc_base_url || ixcBaseUrl || 'IXCSoft'}`
                             : 'Preencha os dados para ativar a integração.'}
                         </CardDescription>
                       </div>
