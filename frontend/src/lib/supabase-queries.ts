@@ -36,12 +36,6 @@ export interface ReceivableRow {
   payload: Record<string, unknown>
   created_at: string
   campanha_cliente_id: string | null
-  pontuacao_campanha_clientes?: {
-    nome_cliente: string
-    documento: string | null
-    email: string | null
-    telefone: string | null
-  } | null
 }
 
 export interface ReceivablesResult {
@@ -69,8 +63,7 @@ export async function fetchReceivables(opts: {
     .select(
       `id, fatura_id, ixc_cliente_id, ixc_contrato_id, competencia,
        data_pagamento, valor_pago, pontos_gerados, status_processamento,
-       payload, created_at, campanha_cliente_id,
-       pontuacao_campanha_clientes(nome_cliente, documento, email, telefone)`,
+       payload, created_at, campanha_cliente_id`,
       { count: 'exact' }
     )
     .eq('tenant_id', tenantId)
@@ -108,8 +101,7 @@ export async function fetchReceivableById(
     .select(
       `id, fatura_id, ixc_cliente_id, ixc_contrato_id, competencia,
        data_pagamento, valor_pago, pontos_gerados, status_processamento,
-       payload, created_at, campanha_cliente_id,
-       pontuacao_campanha_clientes(nome_cliente, documento, email, telefone)`
+       payload, created_at, campanha_cliente_id`
     )
     .eq('tenant_id', tenantId)
     .eq('id', id)

@@ -143,15 +143,15 @@ function normalizeOverviewItem(row: Record<string, unknown>): ClienteEmDiaOvervi
 function normalizeHistoricoItem(row: Record<string, unknown>): ClienteEmDiaHistoricoItem {
   return {
     id: String(row.id),
-    campanhaClienteId: String(row.campanha_cliente_id),
-    tipoMovimentacao: String(row.tipo_movimentacao) as ClienteEmDiaHistoricoItem['tipoMovimentacao'],
-    origem: String(row.origem ?? ''),
-    descricao: String(row.descricao ?? ''),
-    pontosMovimentados: Number(row.pontos_movimentados ?? 0),
-    saldoApos: typeof row.saldo_apos === 'number' ? row.saldo_apos : row.saldo_apos === null ? null : Number(row.saldo_apos ?? 0),
-    referenciaExterna: typeof row.referencia_externa === 'string' ? row.referencia_externa : null,
+    campanhaClienteId: String(row.ixc_cliente_id ?? ''),
+    tipoMovimentacao: String(row.tipo_evento ?? 'credito') as ClienteEmDiaHistoricoItem['tipoMovimentacao'],
+    origem: String(row.criado_por ?? 'sistema'),
+    descricao: String(row.descricao ?? row.tipo_evento ?? ''),
+    pontosMovimentados: Number(row.pontos ?? 0),
+    saldoApos: null,
+    referenciaExterna: typeof row.ixc_fatura_id === 'string' ? row.ixc_fatura_id : null,
     createdAt: String(row.created_at ?? ''),
-    payload: asRecord(row.payload),
+    payload: {},
   }
 }
 
@@ -177,26 +177,22 @@ function normalizeRewardItem(row: Record<string, unknown>): ClienteEmDiaRewardIt
 
 function normalizeRedemptionItem(row: Record<string, unknown>): ClienteEmDiaRedemptionItem {
   const fallbackTimestamp =
-    typeof row.solicitado_em === 'string'
-      ? row.solicitado_em
-      : typeof row.created_at === 'string'
-        ? row.created_at
-        : ''
+    typeof row.created_at === 'string' ? row.created_at : ''
 
   return {
     id: String(row.id),
-    campanhaClienteId: String(row.campanha_cliente_id),
-    catalogoBrindeId: String(row.catalogo_brinde_id),
-    status: String(row.status ?? 'pendente') as ClienteEmDiaRedemptionItem['status'],
-    pontosResgatados: Number(row.pontos_resgatados ?? 0),
+    campanhaClienteId: String(row.ixc_cliente_id ?? ''),
+    catalogoBrindeId: String(row.brinde_id ?? ''),
+    status: String(row.status_resgate ?? 'pendente') as ClienteEmDiaRedemptionItem['status'],
+    pontosResgatados: Number(row.pontos_utilizados ?? 0),
     observacoes: typeof row.observacoes === 'string' ? row.observacoes : null,
     solicitadoEm: fallbackTimestamp,
-    aprovadoEm: typeof row.aprovado_em === 'string' ? row.aprovado_em : null,
-    entregueEm: typeof row.entregue_em === 'string' ? row.entregue_em : null,
-    canceladoEm: typeof row.cancelado_em === 'string' ? row.cancelado_em : null,
+    aprovadoEm: null,
+    entregueEm: typeof row.data_entrega === 'string' ? row.data_entrega : null,
+    canceladoEm: null,
     createdAt: String(row.created_at ?? ''),
     updatedAt: String(row.updated_at ?? ''),
-    metadata: asRecord(row.metadata),
+    metadata: {},
   }
 }
 
@@ -252,7 +248,7 @@ export function useClienteEmDia(options: UseClienteEmDiaOptions = {}): UseClient
           .order('created_at', { ascending: false })
 
         if (options.redemptionsCustomerId) {
-          query = query.eq('campanha_cliente_id', options.redemptionsCustomerId)
+          query = query.eq('ixc_cliente_id', options.redemptionsCustomerId)
         }
 
         return query
@@ -345,12 +341,12 @@ export function useClienteEmDia(options: UseClienteEmDiaOptions = {}): UseClient
         db
           .from('pontuacao_historico')
           .select('*')
-          .eq('campanha_cliente_id', customer.id)
+          .eq('ixc_cliente_id', customer.ixcClienteId)
           .order('created_at', { ascending: false }),
         db
           .from('pontuacao_resgates')
           .select('*')
-          .eq('campanha_cliente_id', customer.id)
+          .eq('ixc_cliente_id', customer.ixcClienteId)
           .order('created_at', { ascending: false }),
       ])
 
