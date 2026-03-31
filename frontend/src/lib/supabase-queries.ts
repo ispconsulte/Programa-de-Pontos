@@ -64,7 +64,7 @@ export async function fetchReceivables(opts: {
   const from = (page - 1) * limit
   const to = from + limit - 1
 
-  let query = supabase
+  let query = (supabase as any)
     .from('pontuacao_faturas_processadas')
     .select(
       `id, fatura_id, ixc_cliente_id, ixc_contrato_id, competencia,
