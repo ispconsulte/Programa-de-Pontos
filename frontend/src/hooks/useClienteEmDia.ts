@@ -177,26 +177,22 @@ function normalizeRewardItem(row: Record<string, unknown>): ClienteEmDiaRewardIt
 
 function normalizeRedemptionItem(row: Record<string, unknown>): ClienteEmDiaRedemptionItem {
   const fallbackTimestamp =
-    typeof row.solicitado_em === 'string'
-      ? row.solicitado_em
-      : typeof row.created_at === 'string'
-        ? row.created_at
-        : ''
+    typeof row.created_at === 'string' ? row.created_at : ''
 
   return {
     id: String(row.id),
-    campanhaClienteId: String(row.campanha_cliente_id),
-    catalogoBrindeId: String(row.catalogo_brinde_id),
-    status: String(row.status ?? 'pendente') as ClienteEmDiaRedemptionItem['status'],
-    pontosResgatados: Number(row.pontos_resgatados ?? 0),
+    campanhaClienteId: String(row.ixc_cliente_id ?? ''),
+    catalogoBrindeId: String(row.brinde_id ?? ''),
+    status: String(row.status_resgate ?? 'pendente') as ClienteEmDiaRedemptionItem['status'],
+    pontosResgatados: Number(row.pontos_utilizados ?? 0),
     observacoes: typeof row.observacoes === 'string' ? row.observacoes : null,
     solicitadoEm: fallbackTimestamp,
-    aprovadoEm: typeof row.aprovado_em === 'string' ? row.aprovado_em : null,
-    entregueEm: typeof row.entregue_em === 'string' ? row.entregue_em : null,
-    canceladoEm: typeof row.cancelado_em === 'string' ? row.cancelado_em : null,
+    aprovadoEm: null,
+    entregueEm: typeof row.data_entrega === 'string' ? row.data_entrega : null,
+    canceladoEm: null,
     createdAt: String(row.created_at ?? ''),
     updatedAt: String(row.updated_at ?? ''),
-    metadata: asRecord(row.metadata),
+    metadata: {},
   }
 }
 
