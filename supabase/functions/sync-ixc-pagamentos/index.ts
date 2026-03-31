@@ -375,31 +375,20 @@ async function fetchIxcRecord<T>(
   return await response.json()
 }
 
-async function getAuthenticatedUser(supabase: AnySupabase, request: Request): Promise<UserRow> {
+async function getAuthenticatedUser(supabase: AnySupabase, request: Request, parsedBody: SyncRequest): Promise<UserRow> {
   // Support cron secret
   const cronSecret = request.headers.get('x-cron-secret')
   const expectedCronSecret = Deno.env.get('CRON_SHARED_SECRET')
   if (cronSecret && expectedCronSecret && cronSecret === expectedCronSecret) {
-    const body = (await request.clone().json().catch(() => ({}))) as SyncRequest
-    if (!body.tenantId) {
+    if (!parsedBody.tenantId) {
       throw new Error('tenantId is required for scheduled sync')
     }
-
-    return {
-      id: null,
-      tenant_id: body.tenantId,
-      role: 'system',
-    }
+    return { id: null, tenant_id: parsedBody.tenantId, role: 'system' }
   }
 
   // Allow system invocation via body.tenantId (for cron, admin tools, testing)
-  const body = (await request.clone().json().catch(() => ({}))) as SyncRequest
-  if (body.tenantId) {
-    return {
-      id: null,
-      tenant_id: body.tenantId,
-      role: 'system',
-    }
+  if (parsedBody.tenantId) {
+    return { id: null, tenant_id: parsedBody.tenantId, role: 'system' }
   }
 
   const authHeader = request.headers.get('Authorization')
