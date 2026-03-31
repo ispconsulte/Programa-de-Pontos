@@ -146,7 +146,7 @@ export async function searchCampaignClients(opts: {
 }): Promise<CampaignClientRow[]> {
   const { tenantId, searchType, query } = opts
 
-  let q = supabase
+  let q = (supabase as any)
     .from('pontuacao_campanha_clientes')
     .select('*')
     .eq('tenant_id', tenantId)
