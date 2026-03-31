@@ -143,15 +143,15 @@ function normalizeOverviewItem(row: Record<string, unknown>): ClienteEmDiaOvervi
 function normalizeHistoricoItem(row: Record<string, unknown>): ClienteEmDiaHistoricoItem {
   return {
     id: String(row.id),
-    campanhaClienteId: String(row.campanha_cliente_id),
-    tipoMovimentacao: String(row.tipo_movimentacao) as ClienteEmDiaHistoricoItem['tipoMovimentacao'],
-    origem: String(row.origem ?? ''),
-    descricao: String(row.descricao ?? ''),
-    pontosMovimentados: Number(row.pontos_movimentados ?? 0),
-    saldoApos: typeof row.saldo_apos === 'number' ? row.saldo_apos : row.saldo_apos === null ? null : Number(row.saldo_apos ?? 0),
-    referenciaExterna: typeof row.referencia_externa === 'string' ? row.referencia_externa : null,
+    campanhaClienteId: String(row.ixc_cliente_id ?? ''),
+    tipoMovimentacao: String(row.tipo_evento ?? 'credito') as ClienteEmDiaHistoricoItem['tipoMovimentacao'],
+    origem: String(row.criado_por ?? 'sistema'),
+    descricao: String(row.descricao ?? row.tipo_evento ?? ''),
+    pontosMovimentados: Number(row.pontos ?? 0),
+    saldoApos: null,
+    referenciaExterna: typeof row.ixc_fatura_id === 'string' ? row.ixc_fatura_id : null,
     createdAt: String(row.created_at ?? ''),
-    payload: asRecord(row.payload),
+    payload: {},
   }
 }
 
