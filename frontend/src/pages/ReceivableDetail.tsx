@@ -87,7 +87,7 @@ export default function ReceivableDetailPage() {
   const campaignPoints = shaped ? getPaymentScore(shaped) : 0
   const campaignBehavior = shaped ? getPaymentBehaviorLabel(shaped) : 'Não encontrado'
   const campaignRule = getCampaignRuleLabel(campaignPoints)
-  const cliente = row?.pontuacao_campanha_clientes
+  const cliente = null as { nome_cliente?: string; documento?: string | null; email?: string | null; telefone?: string | null } | null
   const payload = (row?.payload ?? {}) as Record<string, unknown>
 
   return (

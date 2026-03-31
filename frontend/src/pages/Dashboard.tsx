@@ -30,7 +30,7 @@ function toReceivableShape(row: ReceivableRow) {
   return {
     id: row.id,
     id_cliente: row.ixc_cliente_id,
-    cliente_nome: row.pontuacao_campanha_clientes?.nome_cliente ?? null,
+    cliente_nome: null,
     data_vencimento: (payload.competencia as string | undefined) ?? row.competencia ?? '',
     data_pagamento: row.data_pagamento ?? null,
     valor: row.valor_pago ?? 0,
