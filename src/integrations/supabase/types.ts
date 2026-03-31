@@ -447,11 +447,13 @@ export type Database = {
           mensagem: string | null
           payload: Json | null
           pontos_atribuidos: number
+          referencia: string | null
           registros_processados: number
           status: string | null
           sync_at: string
           tenant_id: string | null
           tipo: string | null
+          tipo_sync: string | null
         }
         Insert: {
           erro_detalhes?: string | null
@@ -462,11 +464,13 @@ export type Database = {
           mensagem?: string | null
           payload?: Json | null
           pontos_atribuidos?: number
+          referencia?: string | null
           registros_processados?: number
           status?: string | null
           sync_at?: string
           tenant_id?: string | null
           tipo?: string | null
+          tipo_sync?: string | null
         }
         Update: {
           erro_detalhes?: string | null
@@ -477,11 +481,13 @@ export type Database = {
           mensagem?: string | null
           payload?: Json | null
           pontos_atribuidos?: number
+          referencia?: string | null
           registros_processados?: number
           status?: string | null
           sync_at?: string
           tenant_id?: string | null
           tipo?: string | null
+          tipo_sync?: string | null
         }
         Relationships: [
           {
