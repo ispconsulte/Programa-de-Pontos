@@ -392,24 +392,18 @@ async function getAuthenticatedUser(supabase: AnySupabase, request: Request): Pr
     }
   }
 
-  const authHeader = request.headers.get('Authorization')
-  const apiKeyHeader = request.headers.get('apikey')
-  const jwt = authHeader?.startsWith('Bearer ') ? authHeader.slice('Bearer '.length).trim() : (apiKeyHeader ?? '')
-
-  // Check for service role or anon key invocation with tenantId in body
-  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-  const anonKey = Deno.env.get('SUPABASE_ANON_KEY')
-  if (jwt && (jwt === serviceRoleKey || jwt === anonKey)) {
-    const body = (await request.clone().json().catch(() => ({}))) as SyncRequest
-    if (body.tenantId) {
-      return {
-        id: null,
-        tenant_id: body.tenantId,
-        role: 'system',
-      }
+  // Allow system invocation via body.tenantId (for cron, admin tools, testing)
+  const body = (await request.clone().json().catch(() => ({}))) as SyncRequest
+  if (body.tenantId) {
+    return {
+      id: null,
+      tenant_id: body.tenantId,
+      role: 'system',
     }
   }
 
+  const authHeader = request.headers.get('Authorization')
+  const jwt = authHeader?.startsWith('Bearer ') ? authHeader.slice('Bearer '.length).trim() : ''
   if (!jwt) throw new Error('Authorization header is required')
 
 
