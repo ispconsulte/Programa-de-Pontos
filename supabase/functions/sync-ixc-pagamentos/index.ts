@@ -627,6 +627,8 @@ Deno.serve(async (request) => {
 
     const connection = await loadIxcConnection(supabase, user.tenant_id, body.ixcConnectionId)
     const ixcToken = await decryptIxcToken(connection.ixc_token_enc, connection.ixc_token_iv)
+    console.log(`[DEBUG] IXC user: ${connection.ixc_user}, token preview: ${ixcToken.substring(0, 8)}...${ixcToken.substring(ixcToken.length - 4)}, token length: ${ixcToken.length}, base_url: ${connection.ixc_base_url}`)
+    console.log(`[DEBUG] Auth header: Basic ${btoa(`${connection.ixc_user}:${ixcToken}`).substring(0, 20)}...`)
 
     const { data: syncLog, error: syncLogError } = await supabase
       .from('pontuacao_sync_log')
