@@ -335,10 +335,13 @@ async function fetchIxcList<T>(
   payload: Record<string, string>,
 ): Promise<IxcListResponse<T>> {
   const baseUrl = connection.ixc_base_url.replace(/\/$/, '')
-  const response = await fetch(`${baseUrl}/webservice/v1/${endpoint}`, {
+  const authString = `${connection.ixc_user}:${token}`
+  const authB64 = btoa(authString)
+  const url = `${baseUrl}/webservice/v1/${endpoint}`
+  const response = await fetch(url, {
     method: 'POST',
     headers: {
-      Authorization: `Basic ${btoa(`${connection.ixc_user}:${token}`)}`,
+      Authorization: `Basic ${authB64}`,
       ixcsoft: 'listar',
       'Content-Type': 'application/json',
     },
@@ -346,7 +349,8 @@ async function fetchIxcList<T>(
   })
 
   if (!response.ok) {
-    throw new Error(`IXC list failed for ${endpoint}: ${response.status}`)
+    const body = await response.text().catch(() => '')
+    throw new Error(`IXC list failed for ${endpoint}: ${response.status} | user=${connection.ixc_user} | token_preview=${token.substring(0,6)}...${token.substring(token.length-4)} | token_len=${token.length} | url=${url} | response=${body.substring(0,200)}`)
   }
 
   return await response.json()
