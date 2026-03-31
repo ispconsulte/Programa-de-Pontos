@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import logoBonifica from '@/assets/logo-bonifica.png'
 
-const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/+$/, '')
+
 
 export default function LoginPage() {
   const navigate = useNavigate()
