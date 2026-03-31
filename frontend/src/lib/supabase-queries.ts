@@ -103,7 +103,7 @@ export async function fetchReceivableById(
   tenantId: string,
   id: string
 ): Promise<ReceivableRow | null> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('pontuacao_faturas_processadas')
     .select(
       `id, fatura_id, ixc_cliente_id, ixc_contrato_id, competencia,
