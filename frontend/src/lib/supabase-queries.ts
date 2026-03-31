@@ -64,7 +64,7 @@ export async function fetchReceivables(opts: {
   const from = (page - 1) * limit
   const to = from + limit - 1
 
-  let query = supabase
+  let query = (supabase as any)
     .from('pontuacao_faturas_processadas')
     .select(
       `id, fatura_id, ixc_cliente_id, ixc_contrato_id, competencia,
@@ -103,7 +103,7 @@ export async function fetchReceivableById(
   tenantId: string,
   id: string
 ): Promise<ReceivableRow | null> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('pontuacao_faturas_processadas')
     .select(
       `id, fatura_id, ixc_cliente_id, ixc_contrato_id, competencia,
@@ -146,7 +146,7 @@ export async function searchCampaignClients(opts: {
 }): Promise<CampaignClientRow[]> {
   const { tenantId, searchType, query } = opts
 
-  let q = supabase
+  let q = (supabase as any)
     .from('pontuacao_campanha_clientes')
     .select('*')
     .eq('tenant_id', tenantId)
@@ -169,7 +169,7 @@ export async function fetchCampaignClientById(
   tenantId: string,
   id: string
 ): Promise<CampaignClientRow | null> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('pontuacao_campanha_clientes')
     .select('*')
     .eq('tenant_id', tenantId)
@@ -184,7 +184,7 @@ export async function fetchCampaignClientFaturas(
   tenantId: string,
   campanha_cliente_id: string
 ): Promise<ReceivableRow[]> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('pontuacao_faturas_processadas')
     .select('id, fatura_id, ixc_contrato_id, competencia, data_pagamento, valor_pago, pontos_gerados, status_processamento, created_at')
     .eq('tenant_id', tenantId)
@@ -316,7 +316,7 @@ export async function saveTenantSettings(
       insertData.ixc_token_iv = '\\x00' // IV dummy devido à obrigação de formato
     }
 
-    const { error: insertError } = await supabase.from('ixc_connections').insert(insertData)
+    const { error: insertError } = await (supabase as any).from('ixc_connections').insert(insertData)
     if (insertError) throw new Error(insertError.message)
   }
 }

@@ -45,15 +45,7 @@ export type Database = {
           tenant_id?: string
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "audit_logs_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       campaign_events: {
         Row: {
@@ -107,22 +99,7 @@ export type Database = {
           source_reference_type?: string | null
           tenant_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "campaign_events_ixc_connection_id_fkey"
-            columns: ["ixc_connection_id"]
-            isOneToOne: false
-            referencedRelation: "ixc_connections"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "campaign_events_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       ixc_connections: {
         Row: {
@@ -161,69 +138,96 @@ export type Database = {
           tenant_id?: string
           updated_at?: string
         }
+        Relationships: []
+      }
+      pontuacao_campanha_clientes: {
+        Row: {
+          auth_user_id: string | null
+          created_at: string
+          data_entrada_campanha: string
+          documento: string | null
+          email: string | null
+          email_cliente: string | null
+          fidelidade_fim_anterior: string | null
+          id: string
+          ixc_cliente_id: string
+          ixc_contrato_id: string | null
+          metadata: Json
+          nome_cliente: string | null
+          pontos_acumulados: number
+          pontos_disponiveis: number | null
+          pontos_resgatados: number
+          status: string
+          status_campanha: string
+          telefone: string | null
+          telefone_cliente: string | null
+          tenant_id: string | null
+          ultima_sincronizacao_em: string | null
+          ultimo_plano_id: string | null
+          ultimo_resgate: string | null
+          updated_at: string
+        }
+        Insert: {
+          auth_user_id?: string | null
+          created_at?: string
+          data_entrada_campanha?: string
+          documento?: string | null
+          email?: string | null
+          email_cliente?: string | null
+          fidelidade_fim_anterior?: string | null
+          id?: string
+          ixc_cliente_id: string
+          ixc_contrato_id?: string | null
+          metadata?: Json
+          nome_cliente?: string | null
+          pontos_acumulados?: number
+          pontos_disponiveis?: number | null
+          pontos_resgatados?: number
+          status?: string
+          status_campanha?: string
+          telefone?: string | null
+          telefone_cliente?: string | null
+          tenant_id?: string | null
+          ultima_sincronizacao_em?: string | null
+          ultimo_plano_id?: string | null
+          ultimo_resgate?: string | null
+          updated_at?: string
+        }
+        Update: {
+          auth_user_id?: string | null
+          created_at?: string
+          data_entrada_campanha?: string
+          documento?: string | null
+          email?: string | null
+          email_cliente?: string | null
+          fidelidade_fim_anterior?: string | null
+          id?: string
+          ixc_cliente_id?: string
+          ixc_contrato_id?: string | null
+          metadata?: Json
+          nome_cliente?: string | null
+          pontos_acumulados?: number
+          pontos_disponiveis?: number | null
+          pontos_resgatados?: number
+          status?: string
+          status_campanha?: string
+          telefone?: string | null
+          telefone_cliente?: string | null
+          tenant_id?: string | null
+          ultima_sincronizacao_em?: string | null
+          ultimo_plano_id?: string | null
+          ultimo_resgate?: string | null
+          updated_at?: string
+        }
         Relationships: [
           {
-            foreignKeyName: "ixc_connections_tenant_id_fkey"
+            foreignKeyName: "pontuacao_campanha_clientes_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
-      }
-      pontuacao_campanha_clientes: {
-        Row: {
-          created_at: string
-          data_entrada_campanha: string
-          email_cliente: string | null
-          fidelidade_fim_anterior: string | null
-          id: string
-          ixc_cliente_id: string
-          nome_cliente: string | null
-          pontos_acumulados: number
-          pontos_disponiveis: number | null
-          pontos_resgatados: number
-          status_campanha: string
-          telefone_cliente: string | null
-          ultimo_plano_id: string | null
-          ultimo_resgate: string | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          data_entrada_campanha?: string
-          email_cliente?: string | null
-          fidelidade_fim_anterior?: string | null
-          id?: string
-          ixc_cliente_id: string
-          nome_cliente?: string | null
-          pontos_acumulados?: number
-          pontos_disponiveis?: number | null
-          pontos_resgatados?: number
-          status_campanha?: string
-          telefone_cliente?: string | null
-          ultimo_plano_id?: string | null
-          ultimo_resgate?: string | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          data_entrada_campanha?: string
-          email_cliente?: string | null
-          fidelidade_fim_anterior?: string | null
-          id?: string
-          ixc_cliente_id?: string
-          nome_cliente?: string | null
-          pontos_acumulados?: number
-          pontos_disponiveis?: number | null
-          pontos_resgatados?: number
-          status_campanha?: string
-          telefone_cliente?: string | null
-          ultimo_plano_id?: string | null
-          ultimo_resgate?: string | null
-          updated_at?: string
-        }
-        Relationships: []
       }
       pontuacao_catalogo_brindes: {
         Row: {
@@ -263,24 +267,77 @@ export type Database = {
       }
       pontuacao_faturas_processadas: {
         Row: {
+          campanha_cliente_id: string | null
+          competencia: string | null
+          created_at: string
+          data_pagamento: string | null
           data_processada: string
+          fatura_id: string | null
+          hash_processamento: string | null
+          id: string | null
           ixc_cliente_id: string | null
+          ixc_contrato_id: string | null
           ixc_fatura_id: string
+          payload: Json
           pontos_atribuidos: number
+          pontos_gerados: number
+          status_processamento: string
+          sync_log_id: string | null
+          tenant_id: string | null
+          updated_at: string
+          valor_pago: number | null
         }
         Insert: {
+          campanha_cliente_id?: string | null
+          competencia?: string | null
+          created_at?: string
+          data_pagamento?: string | null
           data_processada?: string
+          fatura_id?: string | null
+          hash_processamento?: string | null
+          id?: string | null
           ixc_cliente_id?: string | null
+          ixc_contrato_id?: string | null
           ixc_fatura_id: string
+          payload?: Json
           pontos_atribuidos: number
+          pontos_gerados?: number
+          status_processamento?: string
+          sync_log_id?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+          valor_pago?: number | null
         }
         Update: {
+          campanha_cliente_id?: string | null
+          competencia?: string | null
+          created_at?: string
+          data_pagamento?: string | null
           data_processada?: string
+          fatura_id?: string | null
+          hash_processamento?: string | null
+          id?: string | null
           ixc_cliente_id?: string | null
+          ixc_contrato_id?: string | null
           ixc_fatura_id?: string
+          payload?: Json
           pontos_atribuidos?: number
+          pontos_gerados?: number
+          status_processamento?: string
+          sync_log_id?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+          valor_pago?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pontuacao_faturas_processadas_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pontuacao_historico: {
         Row: {
@@ -319,15 +376,7 @@ export type Database = {
           referencia_mes?: number | null
           tipo_evento?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "pontuacao_historico_ixc_cliente_id_fkey"
-            columns: ["ixc_cliente_id"]
-            isOneToOne: false
-            referencedRelation: "pontuacao_campanha_clientes"
-            referencedColumns: ["ixc_cliente_id"]
-          },
-        ]
+        Relationships: []
       }
       pontuacao_resgates: {
         Row: {
@@ -372,22 +421,7 @@ export type Database = {
           status_resgate?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "pontuacao_resgates_brinde_id_fkey"
-            columns: ["brinde_id"]
-            isOneToOne: false
-            referencedRelation: "pontuacao_catalogo_brindes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "pontuacao_resgates_ixc_cliente_id_fkey"
-            columns: ["ixc_cliente_id"]
-            isOneToOne: false
-            referencedRelation: "pontuacao_campanha_clientes"
-            referencedColumns: ["ixc_cliente_id"]
-          },
-        ]
+        Relationships: []
       }
       pontuacao_sync_log: {
         Row: {
@@ -459,22 +493,7 @@ export type Database = {
           status?: string
           tenant_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "reward_redemptions_ixc_connection_id_fkey"
-            columns: ["ixc_connection_id"]
-            isOneToOne: false
-            referencedRelation: "ixc_connections"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reward_redemptions_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       tenants: {
         Row: {
@@ -534,15 +553,7 @@ export type Database = {
           role?: string
           tenant_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "users_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {

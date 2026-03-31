@@ -150,7 +150,7 @@ export default function ReceivableDetailPage() {
                       <Field label="Pagamento">{formatDate(row.data_pagamento)}</Field>
                       <Field label="Valor recebido"><span className="text-emerald-400">{formatBRL(row.valor_pago)}</span></Field>
                       <Field label="Status">{statusBadge(row.status_processamento)}</Field>
-                      <Field label="Categoria IXC">{formatText(payload['categoria_ixc'])}</Field>
+                      <Field label="Categoria IXC">{formatText(payload['categoria_ixc'] as string | null | undefined)}</Field>
                     </div>
                   </CardContent>
                 </Card>
