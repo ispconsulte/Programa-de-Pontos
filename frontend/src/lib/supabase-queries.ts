@@ -36,12 +36,6 @@ export interface ReceivableRow {
   payload: Record<string, unknown>
   created_at: string
   campanha_cliente_id: string | null
-  pontuacao_campanha_clientes?: {
-    nome_cliente: string
-    documento: string | null
-    email: string | null
-    telefone: string | null
-  } | null
 }
 
 export interface ReceivablesResult {
