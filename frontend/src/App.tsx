@@ -34,6 +34,7 @@ function App() {
         <Routes>
           <Route path="/" element={<RootPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
           
           <Route path="/portal" element={<PortalAccessPage />} />
           <Route path="/portal/meus-pontos" element={<PortalPointsPage />} />
