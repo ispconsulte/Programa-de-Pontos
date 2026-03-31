@@ -169,7 +169,7 @@ export async function fetchCampaignClientById(
   tenantId: string,
   id: string
 ): Promise<CampaignClientRow | null> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('pontuacao_campanha_clientes')
     .select('*')
     .eq('tenant_id', tenantId)
