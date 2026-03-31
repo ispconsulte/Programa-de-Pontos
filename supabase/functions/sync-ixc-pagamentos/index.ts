@@ -393,7 +393,8 @@ async function getAuthenticatedUser(supabase: AnySupabase, request: Request): Pr
   }
 
   const authHeader = request.headers.get('Authorization')
-  const jwt = authHeader?.startsWith('Bearer ') ? authHeader.slice('Bearer '.length).trim() : ''
+  const apiKeyHeader = request.headers.get('apikey')
+  const jwt = authHeader?.startsWith('Bearer ') ? authHeader.slice('Bearer '.length).trim() : (apiKeyHeader ?? '')
 
   // Check for service role or anon key invocation with tenantId in body
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
