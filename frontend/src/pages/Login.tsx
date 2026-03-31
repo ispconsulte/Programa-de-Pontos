@@ -172,6 +172,14 @@ export default function LoginPage() {
 
           </div>
 
+          {/* Register link */}
+          <p className="mt-6 text-center text-[13px] text-muted-foreground/60">
+            Não tem conta?{' '}
+            <Link to="/register" className="text-primary hover:text-primary/80 transition-colors font-medium">
+              Criar conta
+            </Link>
+          </p>
+
         </div>
       </div>
     </div>
