@@ -341,12 +341,12 @@ export function useClienteEmDia(options: UseClienteEmDiaOptions = {}): UseClient
         db
           .from('pontuacao_historico')
           .select('*')
-          .eq('campanha_cliente_id', customer.id)
+          .eq('ixc_cliente_id', customer.ixcClienteId)
           .order('created_at', { ascending: false }),
         db
           .from('pontuacao_resgates')
           .select('*')
-          .eq('campanha_cliente_id', customer.id)
+          .eq('ixc_cliente_id', customer.ixcClienteId)
           .order('created_at', { ascending: false }),
       ])
 
