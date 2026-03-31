@@ -8,8 +8,8 @@ import PageHeader from '@/components/PageHeader'
 import Spinner from '@/components/Spinner'
 import { statusBadge } from '@/components/Badge'
 import Pagination from '@/components/Pagination'
-import { apiFetch, getApiErrorMessage, getDisplayError } from '@/lib/api-client'
 import { getPaymentBehaviorLabel, getPaymentScore, toNumber } from '@/lib/receivables-utils'
+import { fetchReceivables, getCurrentTenantId, type ReceivableRow } from '@/lib/supabase-queries'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
@@ -29,30 +29,25 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 
-interface Receivable {
-  id: string | number
-  id_cliente: string | number
-  cliente_nome?: string | null
-  data_vencimento: string
-  data_pagamento?: string | null
-  valor: string | number
-  valor_recebido: string | number
-  status: string
-  categoria: string
-  categoria_codigo?: string
-}
-
-interface ReceivablesResponse {
-  data: Receivable[]
-  total: number
-  page: number
-  limit: number
-  totalPages?: number
-  pagination?: {
-    total?: number
-    totalPages?: number
+/* ── Adapter: DB row → UI shape ── */
+function toShape(row: ReceivableRow) {
+  const payload = (row.payload ?? {}) as Record<string, unknown>
+  return {
+    id: row.id,
+    id_cliente: row.ixc_cliente_id,
+    cliente_nome: row.pontuacao_campanha_clientes?.nome_cliente ?? null,
+    data_vencimento: (payload.competencia as string | undefined) ?? row.competencia ?? '',
+    data_pagamento: row.data_pagamento ?? null,
+    valor: row.valor_pago ?? 0,
+    valor_recebido: row.valor_pago ?? 0,
+    status: row.status_processamento,
+    categoria: row.status_processamento,
+    categoria_codigo: row.status_processamento,
+    pontos_gerados: row.pontos_gerados,
   }
 }
+
+type Receivable = ReturnType<typeof toShape>
 
 interface AppliedFilters {
   category: string
@@ -79,9 +74,7 @@ function formatDate(dateStr: string): string {
 function formatText(value: string | number | null | undefined): string {
   if (value === null || value === undefined) return 'Não encontrado'
   const text = String(value).trim()
-  if (!text || text === '-' || text.toLowerCase() === 'undefined' || text.toLowerCase() === 'null') {
-    return 'Não encontrado'
-  }
+  if (!text || text === '-' || text.toLowerCase() === 'undefined' || text.toLowerCase() === 'null') return 'Não encontrado'
   return text
 }
 
@@ -93,10 +86,9 @@ function formatClientLabel(receivable: Receivable): string {
 
 const CATEGORIES = [
   { value: 'all', label: 'Todas' },
-  { value: 'received', label: 'Recebido' },
-  { value: 'renegotiated', label: 'Renegociado' },
-  { value: 'open', label: 'Aberto' },
-  { value: 'cancelled', label: 'Cancelado' },
+  { value: 'processado', label: 'Processado' },
+  { value: 'ignorado', label: 'Ignorado' },
+  { value: 'erro', label: 'Erro' },
 ]
 
 const PAGE_SIZES = [10, 25, 50]
@@ -120,24 +112,15 @@ function toComparableDate(value?: string | null) {
 function sortReceivables(items: Receivable[], sortBy: SortOption) {
   return [...items].sort((a, b) => {
     switch (sortBy) {
-      case 'due_asc':
-        return toComparableDate(a.data_vencimento) - toComparableDate(b.data_vencimento)
-      case 'due_desc':
-        return toComparableDate(b.data_vencimento) - toComparableDate(a.data_vencimento)
-      case 'payment_asc':
-        return toComparableDate(a.data_pagamento) - toComparableDate(b.data_pagamento)
-      case 'payment_desc':
-        return toComparableDate(b.data_pagamento) - toComparableDate(a.data_pagamento)
-      case 'received_asc':
-        return (toNumber(a.valor_recebido) ?? 0) - (toNumber(b.valor_recebido) ?? 0)
-      case 'received_desc':
-        return (toNumber(b.valor_recebido) ?? 0) - (toNumber(a.valor_recebido) ?? 0)
-      case 'points_asc':
-        return getPaymentScore(a) - getPaymentScore(b)
-      case 'points_desc':
-        return getPaymentScore(b) - getPaymentScore(a)
-      default:
-        return 0
+      case 'due_asc': return toComparableDate(a.data_vencimento) - toComparableDate(b.data_vencimento)
+      case 'due_desc': return toComparableDate(b.data_vencimento) - toComparableDate(a.data_vencimento)
+      case 'payment_asc': return toComparableDate(a.data_pagamento) - toComparableDate(b.data_pagamento)
+      case 'payment_desc': return toComparableDate(b.data_pagamento) - toComparableDate(a.data_pagamento)
+      case 'received_asc': return (toNumber(a.valor_recebido) ?? 0) - (toNumber(b.valor_recebido) ?? 0)
+      case 'received_desc': return (toNumber(b.valor_recebido) ?? 0) - (toNumber(a.valor_recebido) ?? 0)
+      case 'points_asc': return getPaymentScore(a) - getPaymentScore(b)
+      case 'points_desc': return getPaymentScore(b) - getPaymentScore(a)
+      default: return 0
     }
   })
 }
@@ -151,52 +134,45 @@ export default function ReceivablesPage() {
   const [category, setCategory] = useState('all')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
-  const [appliedFilters, setAppliedFilters] = useState<AppliedFilters>({
-    category: 'all',
-    dateFrom: '',
-    dateTo: '',
-  })
+  const [appliedFilters, setAppliedFilters] = useState<AppliedFilters>({ category: 'all', dateFrom: '', dateTo: '' })
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState<SortOption>('due_desc')
 
-  const fetchReceivables = useCallback(async () => {
+  const fetchReceivablesData = useCallback(async () => {
     setLoading(true)
     setError('')
     try {
-      const params = new URLSearchParams()
-      params.set('page', String(page))
-      params.set('limit', String(limit))
-      if (appliedFilters.category && appliedFilters.category !== 'all') params.set('category', appliedFilters.category)
-      if (appliedFilters.dateFrom) params.set('dateFrom', appliedFilters.dateFrom)
-      if (appliedFilters.dateTo) params.set('dateTo', appliedFilters.dateTo)
-
-      const res = await apiFetch(`/receivables?${params.toString()}`)
-      if (!res.ok) {
-        setError(await getApiErrorMessage(res, 'Erro ao carregar recebimentos.'))
-        setReceivables([])
+      const tenantId = await getCurrentTenantId()
+      if (!tenantId) {
+        setError('Usuário não associado a um tenant.')
         return
       }
 
-      const json: ReceivablesResponse = await res.json()
-      setReceivables(json.data || [])
-      const computedTotal = json.total ?? json.pagination?.total ?? 0
-      setTotal(computedTotal)
-      setTotalPages(json.totalPages || json.pagination?.totalPages || Math.max(1, Math.ceil(computedTotal / limit)))
+      const result = await fetchReceivables({
+        tenantId,
+        page,
+        limit,
+        category: appliedFilters.category !== 'all' ? appliedFilters.category : undefined,
+        dateFrom: appliedFilters.dateFrom || undefined,
+        dateTo: appliedFilters.dateTo || undefined,
+      })
+
+      setReceivables(result.data.map(toShape))
+      setTotal(result.total)
+      setTotalPages(result.totalPages)
     } catch (err) {
-      setError(getDisplayError(err, 'Erro ao carregar recebimentos.'))
+      setError(err instanceof Error ? err.message : 'Erro ao carregar recebimentos.')
       setReceivables([])
     } finally {
       setLoading(false)
     }
   }, [page, limit, appliedFilters])
 
-  const [throttledFetch, refreshBusy] = useThrottledAction(fetchReceivables)
+  const [throttledFetch, refreshBusy] = useThrottledAction(fetchReceivablesData)
 
-  useEffect(() => {
-    void fetchReceivables()
-  }, [fetchReceivables])
+  useEffect(() => { void fetchReceivablesData() }, [fetchReceivablesData])
 
   const handleFilterApply = () => {
     setPage(1)
@@ -208,8 +184,8 @@ export default function ReceivablesPage() {
       const term = search.trim().toLowerCase()
       if (!term) return true
       return [item.cliente_nome, item.id_cliente, item.id, getPaymentBehaviorLabel(item)]
-        .map((value) => String(value ?? '').toLowerCase())
-        .some((value) => value.includes(term))
+        .map((v) => String(v ?? '').toLowerCase())
+        .some((v) => v.includes(term))
     }),
     sortBy
   )
@@ -227,17 +203,12 @@ export default function ReceivablesPage() {
           icon={Coins}
           title="Pontuação"
           subtitle="Recebimentos e bônus"
-          actions={
-            <span className="text-xs text-muted-foreground">
-              {loading ? 'Carregando...' : `${total} registros`}
-            </span>
-          }
+          actions={<span className="text-xs text-muted-foreground">{loading ? 'Carregando...' : `${total} registros`}</span>}
         />
 
         <div className="space-y-5">
           <Card>
             <CardContent className="p-4 sm:p-5">
-              {/* Row 1: Main filters */}
               <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Situação</label>
@@ -250,24 +221,20 @@ export default function ReceivablesPage() {
                     </SelectContent>
                   </Select>
                 </div>
-
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">De</label>
                   <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
                 </div>
-
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Até</label>
                   <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
                 </div>
-
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Buscar</label>
                   <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Nome ou ID" />
                 </div>
               </div>
 
-              {/* Row 2: Sort, page size, actions */}
               <div className="mt-3 sm:mt-4 flex flex-wrap items-end gap-3 sm:gap-4">
                 <div className="w-full sm:w-auto sm:min-w-[200px] space-y-1.5">
                   <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Ordenar</label>
@@ -280,7 +247,6 @@ export default function ReceivablesPage() {
                     </SelectContent>
                   </Select>
                 </div>
-
                 <div className="w-20 space-y-1.5">
                   <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Exibir</label>
                   <Select value={String(limit)} onValueChange={(value) => { setLimit(Number(value)); setPage(1) }}>
@@ -292,7 +258,6 @@ export default function ReceivablesPage() {
                     </SelectContent>
                   </Select>
                 </div>
-
                 <div className="flex items-center gap-2 ml-auto">
                   <Button onClick={handleFilterApply} className="min-h-[2.75rem]">
                     <Search className="h-3.5 w-3.5" />
@@ -309,18 +274,14 @@ export default function ReceivablesPage() {
           <Card>
             <CardContent className="p-0">
               {loading ? (
-                <div className="flex items-center justify-center py-16">
-                  <Spinner size="md" />
-                </div>
+                <div className="flex items-center justify-center py-16"><Spinner size="md" /></div>
               ) : error ? (
                 <div className="m-5 rounded-xl border border-destructive/20 bg-destructive/[0.06] px-4 py-3">
                   <div className="flex items-center gap-2">
                     <ShieldAlert className="h-4 w-4 flex-shrink-0 text-destructive" />
                     <p className="text-sm text-foreground">{error}</p>
                   </div>
-                  <Button variant="outline" size="sm" className="mt-3" onClick={() => void fetchReceivables()}>
-                    Tentar novamente
-                  </Button>
+                  <Button variant="outline" size="sm" className="mt-3" onClick={() => void fetchReceivablesData()}>Tentar novamente</Button>
                 </div>
               ) : receivables.length === 0 ? (
                 <div className="py-16 text-center">
@@ -345,11 +306,11 @@ export default function ReceivablesPage() {
 
                   <div className="grid gap-2 p-4 md:hidden">
                     {visibleReceivables.map((item) => (
-                      <Link key={item.id} to={`/receivables/${item.id}`} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 transition-all duration-200 hover:bg-[hsl(var(--muted))] hover:border-[hsl(var(--border))]">
+                      <Link key={item.id} to={`/receivables/${item.id}`} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 transition-all duration-200 hover:bg-[hsl(var(--muted))]">
                         <div className="flex items-start justify-between">
                           <div>
                             <p className="text-sm font-medium text-foreground">{formatClientLabel(item)}</p>
-                            <p className="mt-1 text-xs text-muted-foreground">Recebimento #{item.id}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">Fatura #{item.id.slice(0, 8)}</p>
                           </div>
                           <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
                         </div>
@@ -371,12 +332,11 @@ export default function ReceivablesPage() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Cliente</TableHead>
-                          <TableHead>Recebimento</TableHead>
+                          <TableHead>Fatura ID</TableHead>
                           <TableHead>Faixa</TableHead>
                           <TableHead className="text-right">Pontos</TableHead>
                           <TableHead>Vencimento</TableHead>
                           <TableHead>Pago em</TableHead>
-                          <TableHead className="text-right">Valor</TableHead>
                           <TableHead className="text-right">Recebido</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead className="text-right" />
@@ -388,21 +348,18 @@ export default function ReceivablesPage() {
                             <TableCell className="text-muted-foreground">
                               <div>
                                 <p className="font-medium text-foreground">{formatClientLabel(item)}</p>
-                                <p className="mt-1 text-xs text-muted-foreground">Cliente #{formatText(item.id_cliente)}</p>
+                                <p className="mt-1 text-xs text-muted-foreground">IXC #{formatText(item.id_cliente)}</p>
                               </div>
                             </TableCell>
-                            <TableCell className="font-mono text-xs text-foreground">{item.id}</TableCell>
+                            <TableCell className="font-mono text-xs text-foreground">{item.id.slice(0, 8)}…</TableCell>
                             <TableCell className="text-muted-foreground">{getPaymentBehaviorLabel(item)}</TableCell>
                             <TableCell className="text-right font-semibold text-emerald-400">+{getPaymentScore(item)}</TableCell>
                             <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(item.data_vencimento)}</TableCell>
                             <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(item.data_pagamento ?? '')}</TableCell>
-                            <TableCell className="whitespace-nowrap text-right font-medium text-foreground">{formatBRL(item.valor)}</TableCell>
                             <TableCell className="whitespace-nowrap text-right text-emerald-400">{formatBRL(item.valor_recebido)}</TableCell>
                             <TableCell>{statusBadge(item.status)}</TableCell>
                             <TableCell className="text-right">
-                              <Link to={`/receivables/${item.id}`} className="text-sm text-primary transition-colors hover:text-primary/80">
-                                Detalhe
-                              </Link>
+                              <Link to={`/receivables/${item.id}`} className="text-sm text-primary transition-colors hover:text-primary/80">Detalhe</Link>
                             </TableCell>
                           </TableRow>
                         ))}

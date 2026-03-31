@@ -9,12 +9,13 @@ MicroSaaS multi-tenant de integração com o ERP IXCSoft. Na Fase 1 o produto ex
 ## Escopo da fase 1
 
 **IN**
-- Cadastro e autenticação de tenants
+- Cadastro e autenticação de tenants (Usuário novo cria novo tenant, e convida usuários para seu tenant)
 - Proxy seguro para IXC com credenciais por tenant
 - Endpoint: contas a receber (fn_areceber) com validação de recebimento real
 - Endpoint: contratos (cliente_contrato) com cascata de IDs
 - Endpoint: clientes (busca por ID, CPF/CNPJ e nome)
 - Audit log imutável por tenant
+- Todos endpoins devem ser usadoso pela edge fuction do supabase para rodar diariamente sincornização dos dados
 
 **OUT**
 - UI/Dashboard front-end
@@ -41,7 +42,13 @@ Se os três estiverem vazios, é cobrança avulsa sem contrato — vincular apen
 
 ## Arquitetura
 
-### Stack
+### Stack para V1
+- Node.js 20 + TypeScript (strict mode)
+- Vitest + supertest para testes
+- Supabase para auth, banco de dados scripts de sync via Edge Functions
+
+
+### Stack para V2
 - Node.js 20 + TypeScript (strict mode)
 - Fastify com @fastify/jwt, @fastify/rate-limit, @fastify/helmet
 - PostgreSQL com Row Level Security por tenant_id

@@ -1,7 +1,6 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getCachedAccessToken, isAuthenticatedAsync } from '@/lib/auth-client'
-import { isSupabaseConfigured } from '@/lib/supabase-client'
+import { isSupabaseConfigured, supabase } from '@/lib/supabase-client'
 import Spinner from '@/components/Spinner'
 
 export default function RootPage() {
@@ -14,18 +13,8 @@ export default function RootPage() {
     }
 
     const routeBySession = async () => {
-      const cachedToken = getCachedAccessToken()
-      if (cachedToken) {
-        navigate('/dashboard', { replace: true })
-        return
-      }
-      if (cachedToken === null) {
-        navigate('/login', { replace: true })
-        return
-      }
-
-      const authenticated = await isAuthenticatedAsync()
-      if (authenticated) {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
         navigate('/dashboard', { replace: true })
       } else {
         navigate('/login', { replace: true })

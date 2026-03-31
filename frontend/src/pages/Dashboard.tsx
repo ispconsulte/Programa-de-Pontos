@@ -20,34 +20,27 @@ import AlertBanner from '@/components/AlertBanner'
 import Spinner from '@/components/Spinner'
 import EmptyState from '@/components/EmptyState'
 import { categoryBadge } from '@/components/Badge'
-import { apiFetch, getApiErrorMessage, getDisplayError } from '@/lib/api-client'
 import { getPaymentBehaviorLabel, getPaymentScore } from '@/lib/receivables-utils'
 import { Button } from '@/components/ui/button'
+import { fetchReceivables, getCurrentTenantId, type ReceivableRow } from '@/lib/supabase-queries'
 
-/* ── Types ── */
-interface Receivable {
-  id: string | number
-  id_cliente: string | number
-  cliente_nome?: string | null
-  data_vencimento: string
-  data_pagamento?: string | null
-  valor: string | number
-  valor_recebido: string | number
-  categoria: string
-  categoria_codigo?: string
-}
-
-interface ReceivablesResponse {
-  data: Receivable[]
-  total?: number
-  page?: number
-  limit?: number
-  summary?: {
-    totalReceived?: number
-    totalRenegotiated?: number
-    totalAmount?: string | number
+/* ── Adapt DB row to the shape the existing UI helpers expect ── */
+function toReceivableShape(row: ReceivableRow) {
+  const payload = (row.payload ?? {}) as Record<string, unknown>
+  return {
+    id: row.id,
+    id_cliente: row.ixc_cliente_id,
+    cliente_nome: row.pontuacao_campanha_clientes?.nome_cliente ?? null,
+    data_vencimento: (payload.competencia as string | undefined) ?? row.competencia ?? '',
+    data_pagamento: row.data_pagamento ?? null,
+    valor: row.valor_pago ?? 0,
+    valor_recebido: row.valor_pago ?? 0,
+    categoria: row.status_processamento,
+    categoria_codigo: row.status_processamento,
   }
 }
+
+type Receivable = ReturnType<typeof toReceivableShape>
 
 /* ── Helpers ── */
 function formatBRL(value: string | number | undefined): string {
@@ -133,20 +126,31 @@ export default function DashboardPage() {
     setLoading(true)
     setError('')
     try {
-      const res = await apiFetch('/receivables?page=1&limit=8')
-      if (!res.ok) {
-        setError(await getApiErrorMessage(res, 'Erro ao carregar dados.'))
+      const tenantId = await getCurrentTenantId()
+      if (!tenantId) {
+        setError('Usuário não associado a um tenant. Faça login novamente.')
         return
       }
-      const json: ReceivablesResponse = await res.json()
-      const items = json.data || []
-      const summary = json.summary
-      setReceivables(items)
-      setTotalReceived(Number(summary?.totalReceived || 0))
-      setTotalRenegotiated(Number(summary?.totalRenegotiated || 0))
-      setTotalAmount(Number(summary?.totalAmount || 0))
+
+      const result = await fetchReceivables({
+        tenantId,
+        page: 1,
+        limit: 8,
+        category: 'processado',
+      })
+
+      const shaped = result.data.map(toReceivableShape)
+      setReceivables(shaped)
+
+      const received = result.total
+      const renegotiated = 0
+      const amount = shaped.reduce((sum, r) => sum + Number(r.valor_recebido || 0), 0)
+
+      setTotalReceived(received)
+      setTotalRenegotiated(renegotiated)
+      setTotalAmount(amount)
     } catch (err) {
-      setError(getDisplayError(err, 'Erro ao carregar dados.'))
+      setError(err instanceof Error ? err.message : 'Erro ao carregar dados.')
     } finally {
       setLoading(false)
     }
@@ -201,7 +205,6 @@ export default function DashboardPage() {
 
           {/* ── Recent payments section ── */}
           <section className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
-            {/* Section header */}
             <div className="flex flex-col gap-3 border-b border-[hsl(var(--border))] p-5 sm:flex-row sm:items-center sm:justify-between lg:p-6">
               <div>
                 <h2 className="text-sm font-semibold text-foreground">Últimos pagamentos pontuados</h2>
@@ -217,7 +220,6 @@ export default function DashboardPage() {
               </Button>
             </div>
 
-            {/* Content area */}
             {loading ? (
               <div className="flex items-center justify-center py-20">
                 <Spinner size="md" />
@@ -232,41 +234,18 @@ export default function DashboardPage() {
               </div>
             ) : (
               <>
-                {/* Score distribution strip */}
                 <div className="grid gap-3 border-b border-[hsl(var(--border))] px-5 py-4 sm:grid-cols-3 lg:px-6">
-                  <ScoreSummaryCard
-                    icon={Zap}
-                    label="Pagamentos antecipados"
-                    value={scoreSummary.five}
-                    color="bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))]"
-                  />
-                  <ScoreSummaryCard
-                    icon={CalendarCheck}
-                    label="Pagamentos no vencimento"
-                    value={scoreSummary.four}
-                    color="bg-primary/10 text-primary"
-                  />
-                  <ScoreSummaryCard
-                    icon={Clock}
-                    label="Pagamentos após o vencimento"
-                    value={scoreSummary.two}
-                    color="bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))]"
-                  />
+                  <ScoreSummaryCard icon={Zap} label="Pagamentos antecipados" value={scoreSummary.five} color="bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))]" />
+                  <ScoreSummaryCard icon={CalendarCheck} label="Pagamentos no vencimento" value={scoreSummary.four} color="bg-primary/10 text-primary" />
+                  <ScoreSummaryCard icon={Clock} label="Pagamentos após o vencimento" value={scoreSummary.two} color="bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))]" />
                 </div>
 
-                {/* ── Mobile list ── */}
                 <div className="divide-y divide-[hsl(var(--border))] md:hidden">
                   {receivables.map((item) => (
-                    <Link
-                      key={item.id}
-                      to={`/receivables/${item.id}`}
-                      className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-[hsl(var(--muted))]"
-                    >
+                    <Link key={item.id} to={`/receivables/${item.id}`} className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-[hsl(var(--muted))]">
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-foreground">{formatClientName(item)}</p>
-                        <p className="mt-0.5 text-xs text-muted-foreground">
-                          {formatDate(item.data_vencimento)} · {formatBRL(item.valor_recebido)}
-                        </p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">{formatDate(item.data_vencimento)} · {formatBRL(item.valor_recebido)}</p>
                       </div>
                       <div className="flex items-center gap-2.5">
                         <ScorePill score={getPaymentScore(item)} />
@@ -276,7 +255,6 @@ export default function DashboardPage() {
                   ))}
                 </div>
 
-                {/* ── Desktop table ── */}
                 <div className="hidden md:block">
                   <table className="w-full text-sm">
                     <thead>
@@ -295,22 +273,15 @@ export default function DashboardPage() {
                         <tr key={item.id} className="transition-colors hover:bg-[hsl(var(--muted))]">
                           <td className="px-5 py-3.5 lg:px-6">
                             <p className="font-medium text-foreground">{formatClientName(item)}</p>
-                            <p className="mt-0.5 font-mono text-[11px] text-muted-foreground/70">#{item.id}</p>
+                            <p className="mt-0.5 font-mono text-[11px] text-muted-foreground/70">#{item.id_cliente}</p>
                           </td>
-                          <td className="px-3 py-3.5">
-                            {categoryBadge(getPaymentBehaviorLabel(item))}
-                          </td>
-                          <td className="px-3 py-3.5 text-center">
-                            <ScorePill score={getPaymentScore(item)} />
-                          </td>
+                          <td className="px-3 py-3.5">{categoryBadge(getPaymentBehaviorLabel(item))}</td>
+                          <td className="px-3 py-3.5 text-center"><ScorePill score={getPaymentScore(item)} /></td>
                           <td className="px-3 py-3.5 text-muted-foreground">{formatDate(item.data_vencimento)}</td>
                           <td className="px-3 py-3.5 text-muted-foreground">{formatDate(item.data_pagamento ?? '')}</td>
                           <td className="px-3 py-3.5 text-right font-medium text-[hsl(var(--success))]">{formatBRL(item.valor_recebido)}</td>
                           <td className="px-5 py-3.5 text-right lg:px-6">
-                            <Link
-                              to={`/receivables/${item.id}`}
-                              className="inline-flex items-center gap-1 text-[13px] text-primary transition-colors hover:text-primary/80"
-                            >
+                            <Link to={`/receivables/${item.id}`} className="inline-flex items-center gap-1 text-[13px] text-primary transition-colors hover:text-primary/80">
                               Detalhe
                               <ArrowRight className="h-3 w-3" />
                             </Link>

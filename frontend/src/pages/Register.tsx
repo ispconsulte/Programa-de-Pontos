@@ -7,8 +7,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/+$/, '')
-
 export default function RegisterPage() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
@@ -34,36 +32,30 @@ export default function RegisterPage() {
 
     setLoading(true)
     try {
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-      })
+      // 1. Criar usuário no Supabase Auth
+      const { data, error: signUpError } = await supabase.auth.signUp({ email, password })
       if (signUpError) {
         setError(signUpError.message || 'Erro ao criar conta.')
         return
       }
 
+      // 2. Se tiver sessão, chamar a Edge Function bootstrap-tenant
+      //    que cria o registro na tabela tenants e users
       if (data.session?.access_token) {
-        const bootstrapRes = await fetch(`${BASE_URL}/auth/register`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${data.session.access_token}`,
-          },
-          body: JSON.stringify({}),
+        const { error: bootstrapError } = await supabase.functions.invoke('bootstrap-tenant', {
+          body: {},
         })
 
-        if (!bootstrapRes.ok) {
-          const bootstrapData = await bootstrapRes.json().catch(() => ({}))
-          setError(bootstrapData.error || 'Conta criada, mas falhou ao iniciar o tenant.')
+        if (bootstrapError) {
+          setError('Conta criada, mas falhou ao iniciar o tenant. Contate o suporte.')
           return
         }
       }
 
       await supabase.auth.signOut()
       navigate('/login?registered=1')
-    } catch {
-      setError('Erro de conexão. Verifique se o servidor está em execução.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro de conexão.')
     } finally {
       setLoading(false)
     }
@@ -107,7 +99,7 @@ export default function RegisterPage() {
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e) => { setEmail(e.target.value); setFieldErrors(p => ({ ...p, email: undefined })) }}
+                onChange={(e) => { setEmail(e.target.value); setFieldErrors((p) => ({ ...p, email: undefined })) }}
                 placeholder="admin@empresa.com"
                 autoComplete="email"
                 className={fieldErrors.email ? 'border-destructive/50' : ''}
@@ -122,7 +114,7 @@ export default function RegisterPage() {
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
-                  onChange={(e) => { setPassword(e.target.value); setFieldErrors(p => ({ ...p, password: undefined })) }}
+                  onChange={(e) => { setPassword(e.target.value); setFieldErrors((p) => ({ ...p, password: undefined })) }}
                   placeholder="Mínimo de 8 caracteres"
                   autoComplete="new-password"
                   className={`pr-10 ${fieldErrors.password ? 'border-destructive/50' : ''}`}

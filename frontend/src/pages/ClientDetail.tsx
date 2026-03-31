@@ -6,76 +6,28 @@ import ProtectedRoute from '@/components/ProtectedRoute'
 import PageHeader from '@/components/PageHeader'
 import Spinner from '@/components/Spinner'
 import { statusBadge } from '@/components/Badge'
-import { apiFetch, getApiErrorMessage, getDisplayError } from '@/lib/api-client'
+import {
+  fetchCampaignClientById,
+  fetchCampaignClientFaturas,
+  getCurrentTenantId,
+  type CampaignClientRow,
+  type ReceivableRow,
+} from '@/lib/supabase-queries'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 
-interface Contract {
-  id: string | number
-  plano?: string
-  status?: string
-  situacao_financeira?: string
-  situacao_financeira_contrato?: string
-  data_ativacao?: string
-  pago_ate?: string
-  [key: string]: unknown
-}
-
-interface ClientDetail {
-  id: string | number
-  nome?: string
-  razao?: string
-  cpf_cnpj?: string
-  email?: string
-  telefone?: string
-  celular?: string
-  endereco?: string
-  numero?: string
-  complemento?: string
-  bairro?: string
-  cidade?: string
-  estado?: string
-  cep?: string
-  ativo?: string | boolean
-  status?: string
-  contratos?: Contract[]
-  contracts?: Contract[]
-  [key: string]: unknown
-}
-
-interface ClientResponse {
-  data?: ClientDetail
-  cliente?: ClientDetail
-  contratos?: Contract[]
-  contracts?: Contract[]
-  [key: string]: unknown
-}
-
-function formatDate(dateStr: string | undefined): string {
+function formatDate(dateStr: string | undefined | null): string {
   if (!dateStr) return '-'
   const d = new Date(dateStr + (dateStr.includes('T') ? '' : 'T00:00:00'))
   return d.toLocaleDateString('pt-BR')
 }
 
-function buildAddress(client: ClientDetail): string {
-  const parts = [
-    client.endereco,
-    client.numero ? `n ${client.numero}` : null,
-    client.complemento,
-    client.bairro,
-    client.cidade,
-    client.estado,
-    client.cep,
-  ].filter(Boolean)
-  return parts.join(', ') || '-'
+function formatBRL(value: number | null | undefined): string {
+  if (value === null || value === undefined) return '-'
+  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -91,28 +43,28 @@ export default function ClientDetailPage() {
   const { id } = useParams<{ id: string }>()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [client, setClient] = useState<ClientDetail | null>(null)
-  const [contracts, setContracts] = useState<Contract[]>([])
+  const [client, setClient] = useState<CampaignClientRow | null>(null)
+  const [faturas, setFaturas] = useState<ReceivableRow[]>([])
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
       setError('')
       try {
-        const res = await apiFetch(`/clients/${id}`)
-        if (!res.ok) {
-          setError(await getApiErrorMessage(res, 'Cliente não encontrado.'))
-          return
-        }
+        const tenantId = await getCurrentTenantId()
+        if (!tenantId) { setError('Usuário não associado a um tenant.'); return }
+        if (!id) { setError('ID inválido.'); return }
 
-        const json: ClientResponse = await res.json()
-        const currentClient = json.data || json.cliente || (json as unknown as ClientDetail)
-        const currentContracts = currentClient.contratos || currentClient.contracts || json.contratos || json.contracts || []
+        const [clientData, faturasData] = await Promise.all([
+          fetchCampaignClientById(tenantId, id),
+          fetchCampaignClientFaturas(tenantId, id),
+        ])
 
-        setClient(currentClient)
-        setContracts(currentContracts as Contract[])
+        if (!clientData) { setError('Cliente não encontrado.'); return }
+        setClient(clientData)
+        setFaturas(faturasData)
       } catch (err) {
-        setError(getDisplayError(err, 'Erro ao carregar cliente.'))
+        setError(err instanceof Error ? err.message : 'Erro ao carregar cliente.')
       } finally {
         setLoading(false)
       }
@@ -121,27 +73,18 @@ export default function ClientDetailPage() {
     if (id) void fetchData()
   }, [id])
 
-  const clientName = client?.nome || client?.razao || 'Cliente'
-  const clientPhone = client?.telefone || client?.celular || '-'
-  const clientStatus = client?.ativo ?? client?.status ?? '-'
-
   return (
     <ProtectedRoute>
       <Layout>
         <div className="mx-auto max-w-[1600px]">
           <div className="mb-6">
             <Button variant="outline" size="sm" asChild>
-              <Link to="/clients">
-                <ArrowLeft className="h-3.5 w-3.5" />
-                Voltar
-              </Link>
+              <Link to="/clients"><ArrowLeft className="h-3.5 w-3.5" />Voltar</Link>
             </Button>
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center py-16">
-              <Spinner size="lg" />
-            </div>
+            <div className="flex items-center justify-center py-16"><Spinner size="lg" /></div>
           ) : error ? (
             <div className="rounded-xl border border-destructive/20 bg-destructive/[0.06] px-4 py-3">
               <div className="flex items-center gap-2">
@@ -153,40 +96,44 @@ export default function ClientDetailPage() {
             <div className="space-y-6">
               <PageHeader
                 icon={Users}
-                title={clientName}
-                subtitle={`ID #${client.id}`}
-                actions={statusBadge(String(clientStatus))}
+                title={client.nome_cliente}
+                subtitle={`IXC #${client.ixc_cliente_id}`}
+                actions={statusBadge(client.status)}
               />
 
               <div className="grid gap-5 lg:grid-cols-2">
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Informações</CardTitle>
-                  </CardHeader>
+                  <CardHeader><CardTitle>Informações</CardTitle></CardHeader>
                   <CardContent>
                     <div className="grid gap-5 sm:grid-cols-2">
-                      <Field label="Nome">{clientName}</Field>
+                      <Field label="Nome">{client.nome_cliente}</Field>
                       <Field label="Email">{client.email || '-'}</Field>
-                      <Field label="Telefone">{clientPhone}</Field>
-                      <Field label="CPF/CNPJ">{client.cpf_cnpj || '-'}</Field>
-                      <div className="sm:col-span-2">
-                        <Field label="Endereço">{buildAddress(client)}</Field>
-                      </div>
+                      <Field label="Telefone">{client.telefone || '-'}</Field>
+                      <Field label="CPF/CNPJ">{client.documento || '-'}</Field>
+                      <Field label="ID IXC">{client.ixc_cliente_id}</Field>
+                      <Field label="Contrato IXC">{client.ixc_contrato_id || '-'}</Field>
                     </div>
                   </CardContent>
                 </Card>
 
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Resumo</CardTitle>
-                  </CardHeader>
+                  <CardHeader><CardTitle>Pontuação</CardTitle></CardHeader>
                   <CardContent>
-                    <div className="grid gap-5 sm:grid-cols-2">
-                      <Field label="Contratos">
-                        <span className="text-lg font-bold">{contracts.length}</span>
+                    <div className="grid gap-5 sm:grid-cols-3">
+                      <Field label="Acumulados">
+                        <span className="text-2xl font-bold text-emerald-400">{client.pontos_acumulados}</span>
                       </Field>
-                      <Field label="Status">
-                        {statusBadge(String(clientStatus))}
+                      <Field label="Resgatados">
+                        <span className="text-2xl font-bold text-amber-400">{client.pontos_resgatados}</span>
+                      </Field>
+                      <Field label="Disponíveis">
+                        <span className="text-2xl font-bold text-primary">{client.pontos_disponiveis ?? 0}</span>
+                      </Field>
+                    </div>
+                    <div className="mt-5 grid gap-5 sm:grid-cols-2">
+                      <Field label="Status">{statusBadge(client.status)}</Field>
+                      <Field label="Faturas processadas">
+                        <span className="text-lg font-bold">{faturas.length}</span>
                       </Field>
                     </div>
                   </CardContent>
@@ -194,37 +141,35 @@ export default function ClientDetailPage() {
               </div>
 
               <Card>
-                <CardHeader>
-                  <CardTitle>Contratos</CardTitle>
-                </CardHeader>
+                <CardHeader><CardTitle>Faturas processadas</CardTitle></CardHeader>
                 <CardContent className="p-0">
-                  {contracts.length === 0 ? (
+                  {faturas.length === 0 ? (
                     <div className="py-16 text-center">
-                      <p className="text-sm text-muted-foreground">Nenhum contrato encontrado.</p>
+                      <p className="text-sm text-muted-foreground">Nenhuma fatura processada.</p>
                     </div>
                   ) : (
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>ID</TableHead>
-                          <TableHead>Plano</TableHead>
+                          <TableHead>Fatura IXC</TableHead>
+                          <TableHead>Contrato</TableHead>
+                          <TableHead>Vencimento</TableHead>
+                          <TableHead>Pagamento</TableHead>
+                          <TableHead className="text-right">Valor</TableHead>
+                          <TableHead className="text-right">Pontos</TableHead>
                           <TableHead>Status</TableHead>
-                          <TableHead>Situação financeira</TableHead>
-                          <TableHead>Ativação</TableHead>
-                          <TableHead>Pago até</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {contracts.map((contract, index) => (
-                          <TableRow key={contract.id ?? index}>
-                            <TableCell className="font-mono text-xs text-foreground">{contract.id ?? '-'}</TableCell>
-                            <TableCell className="text-slate-300">{contract.plano || '-'}</TableCell>
-                            <TableCell>{contract.status ? statusBadge(contract.status) : '-'}</TableCell>
-                            <TableCell className="text-slate-300">
-                              {contract.situacao_financeira || contract.situacao_financeira_contrato || '-'}
-                            </TableCell>
-                            <TableCell className="whitespace-nowrap text-slate-300">{formatDate(contract.data_ativacao)}</TableCell>
-                            <TableCell className="whitespace-nowrap text-slate-300">{formatDate(contract.pago_ate)}</TableCell>
+                        {faturas.map((fatura) => (
+                          <TableRow key={fatura.id}>
+                            <TableCell className="font-mono text-xs text-foreground">{fatura.fatura_id}</TableCell>
+                            <TableCell className="text-slate-300">{fatura.ixc_contrato_id || '-'}</TableCell>
+                            <TableCell className="whitespace-nowrap text-slate-300">{formatDate(fatura.competencia)}</TableCell>
+                            <TableCell className="whitespace-nowrap text-slate-300">{formatDate(fatura.data_pagamento)}</TableCell>
+                            <TableCell className="text-right text-emerald-400">{formatBRL(fatura.valor_pago)}</TableCell>
+                            <TableCell className="text-right font-semibold text-emerald-400">+{fatura.pontos_gerados}</TableCell>
+                            <TableCell>{statusBadge(fatura.status_processamento)}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>

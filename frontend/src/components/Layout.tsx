@@ -20,7 +20,6 @@ import {
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import logoBonifica from '@/assets/logo-bonifica.png'
-import { logout } from '@/lib/auth-client'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase-client'
 
@@ -376,10 +375,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </nav>
 
-        {/* Footer: logout */}
         <div className={cn('flex-shrink-0 border-t border-sidebar-border py-3', collapsed ? 'px-2' : 'px-3')}>
           <button
-            onClick={() => logout()}
+            onClick={() => supabase.auth.signOut()}
             title={collapsed ? 'Sair' : undefined}
             className={cn(
               'group flex w-full items-center rounded-xl text-[13px] font-medium text-muted-foreground transition-all duration-200 hover:bg-destructive/[0.08] hover:text-destructive',
@@ -506,7 +504,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <div className="border-t border-border p-1.5">
                     <button
                       onClick={() => {
-                        logout()
+                        void supabase.auth.signOut()
                         setUserMenuOpen(false)
                       }}
                       className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-destructive/[0.08] hover:text-destructive"

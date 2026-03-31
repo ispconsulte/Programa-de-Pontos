@@ -3,20 +3,13 @@ import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import PageHeader from '@/components/PageHeader'
 import AlertBanner from '@/components/AlertBanner'
-import { apiFetch, getApiErrorMessage, getDisplayError } from '@/lib/api-client'
+import { fetchTenantSettings, saveTenantSettings, getCurrentTenantId, type TenantSettings } from '@/lib/supabase-queries'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Building2, Plug, Save, Settings, Wifi, WifiOff } from 'lucide-react'
 import Spinner from '@/components/Spinner'
-
-interface TenantSettings {
-  name: string
-  ixc_base_url: string | null
-  ixc_user: string | null
-  ixc_configured: boolean
-}
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<TenantSettings | null>(null)
@@ -35,19 +28,18 @@ export default function SettingsPage() {
       setLoading(true)
       setError('')
       try {
-        const res = await apiFetch('/settings')
-        if (!res.ok) {
-          setError(await getApiErrorMessage(res, 'Não foi possível carregar as configurações.'))
-          return
-        }
+        const tenantId = await getCurrentTenantId()
+        if (!tenantId) { setError('Usuário não associado a um tenant.'); return }
 
-        const data: TenantSettings = await res.json()
+        const data = await fetchTenantSettings(tenantId)
+        if (!data) { setError('Configurações não encontradas.'); return }
+
         setSettings(data)
         setTenantName(data.name ?? '')
-        setIxcBaseUrl(data.ixc_base_url ?? '')
-        setIxcUser(data.ixc_user ?? '')
+        setIxcBaseUrl(data.ixcConnection?.ixc_base_url ?? '')
+        setIxcUser(data.ixcConnection?.ixc_user ?? '')
       } catch (err) {
-        setError(getDisplayError(err, 'Não foi possível carregar as configurações.'))
+        setError(err instanceof Error ? err.message : 'Não foi possível carregar as configurações.')
       } finally {
         setLoading(false)
       }
@@ -74,25 +66,34 @@ export default function SettingsPage() {
 
     setSaving(true)
     try {
-      const body: Record<string, string> = { ixcBaseUrl, ixcUser, ixcToken }
-      if (tenantName.trim()) body.tenantName = tenantName
+      const tenantId = await getCurrentTenantId()
+      if (!tenantId) { setError('Usuário não associado a um tenant.'); return }
 
-      const res = await apiFetch('/settings', {
-        method: 'PUT',
-        body: JSON.stringify(body),
+      await saveTenantSettings(tenantId, {
+        tenantName: tenantName.trim() || undefined,
+        ixcBaseUrl,
+        ixcUser,
+        ixcToken: ixcToken || undefined,
+        connectionId: settings?.ixcConnection?.id ?? null,
       })
-
-      if (!res.ok) {
-        setError(await getApiErrorMessage(res, 'Erro ao salvar configurações.'))
-        return
-      }
 
       setSuccess(true)
       setIxcToken('')
-      setSettings((prev) => prev ? { ...prev, ixc_configured: true, ixc_base_url: ixcBaseUrl, ixc_user: ixcUser } : prev)
+      setSettings((prev) =>
+        prev
+          ? {
+              ...prev,
+              ixc_configured: true,
+              name: tenantName || prev.name,
+              ixcConnection: prev.ixcConnection
+                ? { ...prev.ixcConnection, ixc_base_url: ixcBaseUrl, ixc_user: ixcUser }
+                : null,
+            }
+          : prev
+      )
       setTimeout(() => setSuccess(false), 4000)
     } catch (err) {
-      setError(getDisplayError(err, 'Erro ao salvar configurações.'))
+      setError(err instanceof Error ? err.message : 'Erro ao salvar configurações.')
     } finally {
       setSaving(false)
     }
@@ -101,17 +102,11 @@ export default function SettingsPage() {
   return (
     <ProtectedRoute>
       <Layout>
-        <PageHeader
-          icon={Settings}
-          title="Ajustes"
-          subtitle="Configurações e integrações"
-        />
+        <PageHeader icon={Settings} title="Ajustes" subtitle="Configurações e integrações" />
 
         <div className="space-y-6">
           {loading ? (
-            <div className="flex justify-center py-16">
-              <Spinner />
-            </div>
+            <div className="flex justify-center py-16"><Spinner /></div>
           ) : (
             <div className="grid gap-6 xl:grid-cols-[280px_1fr]">
               <div className="space-y-3">
@@ -125,15 +120,9 @@ export default function SettingsPage() {
                       <p className="truncate text-sm font-medium text-foreground">IXCSoft</p>
                       <div className="mt-0.5 flex items-center gap-1.5">
                         {settings?.ixc_configured ? (
-                          <>
-                            <Wifi className="h-3 w-3 text-emerald-400" />
-                            <span className="text-[11px] text-emerald-400">Conectado</span>
-                          </>
+                          <><Wifi className="h-3 w-3 text-emerald-400" /><span className="text-[11px] text-emerald-400">Conectado</span></>
                         ) : (
-                          <>
-                            <WifiOff className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-[11px] text-muted-foreground">Não configurado</span>
-                          </>
+                          <><WifiOff className="h-3 w-3 text-muted-foreground" /><span className="text-[11px] text-muted-foreground">Não configurado</span></>
                         )}
                       </div>
                     </div>
@@ -150,9 +139,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <CardTitle>Base ativa</CardTitle>
-                        <CardDescription className="mt-1">
-                          Selecione a base IXC que será utilizada nas operações.
-                        </CardDescription>
+                        <CardDescription className="mt-1">Selecione a base IXC que será utilizada nas operações.</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
@@ -166,22 +153,16 @@ export default function SettingsPage() {
                             <WifiOff className="h-4 w-4 text-muted-foreground" />
                           )}
                           <div>
-                            <p className="text-sm font-medium text-foreground">
-                              {tenantName || 'Base principal'}
-                            </p>
+                            <p className="text-sm font-medium text-foreground">{tenantName || 'Base principal'}</p>
                             <p className="text-xs text-muted-foreground">
-                              {settings?.ixc_configured ? settings.ixc_base_url : 'Não configurada'}
+                              {settings?.ixc_configured ? settings.ixcConnection?.ixc_base_url : 'Não configurada'}
                             </p>
                           </div>
                         </div>
-                        <span className="rounded-md border border-primary/20 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-                          Ativa
-                        </span>
+                        <span className="rounded-md border border-primary/20 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">Ativa</span>
                       </div>
                     </div>
-                    <p className="mt-3 text-xs text-muted-foreground">
-                      Bases adicionais poderão ser cadastradas e alternadas pelo administrador.
-                    </p>
+                    <p className="mt-3 text-xs text-muted-foreground">Bases adicionais poderão ser cadastradas e alternadas pelo administrador.</p>
                   </CardContent>
                 </Card>
 
@@ -199,7 +180,7 @@ export default function SettingsPage() {
                         <CardTitle>Integração IXCSoft</CardTitle>
                         <CardDescription className="mt-1">
                           {settings?.ixc_configured
-                            ? `Conectado a ${settings.ixc_base_url}`
+                            ? `Conectado a ${settings.ixcConnection?.ixc_base_url}`
                             : 'Preencha os dados para ativar a integração.'}
                         </CardDescription>
                       </div>
@@ -215,7 +196,6 @@ export default function SettingsPage() {
                           <Label htmlFor="tenantName" className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Nome da empresa</Label>
                           <Input id="tenantName" value={tenantName} onChange={(e) => setTenantName(e.target.value)} placeholder="Minha Telecom Ltda." />
                         </div>
-
                         <div className="space-y-2">
                           <Label htmlFor="ixcUser" className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Usuário IXC</Label>
                           <Input
@@ -261,12 +241,7 @@ export default function SettingsPage() {
                       </div>
 
                       <div className="flex justify-end border-t border-[hsl(var(--border))] pt-5">
-                        <Button
-                          type="submit"
-                          disabled={saving}
-                          size="lg"
-                          className="min-w-[200px] text-[13px] font-semibold tracking-wide"
-                        >
+                        <Button type="submit" disabled={saving} size="lg" className="min-w-[200px] text-[13px] font-semibold tracking-wide">
                           {saving ? <Spinner size="sm" /> : <Save className="h-4 w-4" />}
                           {saving ? 'Salvando...' : 'Salvar configurações'}
                         </Button>

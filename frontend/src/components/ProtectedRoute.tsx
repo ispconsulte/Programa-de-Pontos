@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase-client'
-import { getAccessToken, getCachedAccessToken } from '@/lib/auth-client'
 import Spinner from './Spinner'
 
 interface ProtectedRouteProps {
@@ -10,16 +9,16 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const navigate = useNavigate()
-  const [checking, setChecking] = useState(() => getCachedAccessToken() === undefined)
+  const [checking, setChecking] = useState(true)
 
   useEffect(() => {
     let mounted = true
 
     const validateSession = async () => {
-      const token = await getAccessToken()
+      const { data: { session }, error } = await supabase.auth.getSession()
       if (!mounted) return
 
-      if (!token) {
+      if (error || !session) {
         navigate('/login', { replace: true })
         return
       }
