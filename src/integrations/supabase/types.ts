@@ -331,6 +331,20 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_faturas_campanha_cliente"
+            columns: ["campanha_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "pontuacao_campanha_clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_faturas_tenant"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "pontuacao_faturas_processadas_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
