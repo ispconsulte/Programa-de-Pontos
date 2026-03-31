@@ -3,7 +3,8 @@ import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import PageHeader from '@/components/PageHeader'
 import AlertBanner from '@/components/AlertBanner'
-import { fetchTenantSettings, saveTenantSettings, getCurrentTenantId, type TenantSettings } from '@/lib/supabase-queries'
+import { supabase } from '@/lib/supabase-client'
+import { fetchTenantSettings, getCurrentTenantId, type TenantSettings } from '@/lib/supabase-queries'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -69,12 +70,16 @@ export default function SettingsPage() {
       const tenantId = await getCurrentTenantId()
       if (!tenantId) { setError('Usuário não associado a um tenant.'); return }
 
-      await saveTenantSettings(tenantId, {
-        tenantName: tenantName.trim() || undefined,
-        ixcBaseUrl,
-        ixcUser,
-        ixcToken: ixcToken || undefined,
-        connectionId: settings?.ixcConnection?.id ?? null,
+      await supabase.functions.invoke('save-ixc-connection', {
+        body: {
+          tenantName: tenantName.trim() || undefined,
+          ixcBaseUrl,
+          ixcUser,
+          ixcToken: ixcToken || undefined,
+          connectionId: settings?.ixcConnection?.id ?? null,
+        },
+      }).then(({ error: fnError }) => {
+        if (fnError) throw new Error(fnError.message || 'Erro ao salvar configurações.')
       })
 
       setSuccess(true)
