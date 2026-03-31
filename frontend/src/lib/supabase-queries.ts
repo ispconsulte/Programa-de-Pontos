@@ -316,7 +316,7 @@ export async function saveTenantSettings(
       insertData.ixc_token_iv = '\\x00' // IV dummy devido à obrigação de formato
     }
 
-    const { error: insertError } = await supabase.from('ixc_connections').insert(insertData)
+    const { error: insertError } = await (supabase as any).from('ixc_connections').insert(insertData)
     if (insertError) throw new Error(insertError.message)
   }
 }

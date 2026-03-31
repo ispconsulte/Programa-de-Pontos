@@ -263,7 +263,7 @@ async function decryptIxcToken(encValue: string | Uint8Array | number[], ivValue
   const decrypted = await crypto.subtle.decrypt(
     { name: 'AES-GCM', iv: parseBytea(ivValue) as unknown as BufferSource },
     key,
-    parseBytea(encValue),
+    parseBytea(encValue) as unknown as BufferSource,
   )
   return new TextDecoder().decode(decrypted)
 }
