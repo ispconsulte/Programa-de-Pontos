@@ -440,32 +440,58 @@ export type Database = {
       pontuacao_sync_log: {
         Row: {
           erro_detalhes: string | null
+          finalizado_em: string | null
           id: string
+          iniciado_em: string | null
+          ixc_connection_id: string | null
+          mensagem: string | null
+          payload: Json | null
           pontos_atribuidos: number
           registros_processados: number
           status: string | null
           sync_at: string
+          tenant_id: string | null
           tipo: string | null
         }
         Insert: {
           erro_detalhes?: string | null
+          finalizado_em?: string | null
           id?: string
+          iniciado_em?: string | null
+          ixc_connection_id?: string | null
+          mensagem?: string | null
+          payload?: Json | null
           pontos_atribuidos?: number
           registros_processados?: number
           status?: string | null
           sync_at?: string
+          tenant_id?: string | null
           tipo?: string | null
         }
         Update: {
           erro_detalhes?: string | null
+          finalizado_em?: string | null
           id?: string
+          iniciado_em?: string | null
+          ixc_connection_id?: string | null
+          mensagem?: string | null
+          payload?: Json | null
           pontos_atribuidos?: number
           registros_processados?: number
           status?: string | null
           sync_at?: string
+          tenant_id?: string | null
           tipo?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pontuacao_sync_log_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reward_redemptions: {
         Row: {
