@@ -286,7 +286,9 @@ async function fetchIxcList<T>(
   })
 
   if (!response.ok) throw new Error(`IXC list failed for ${endpoint}: ${response.status}`)
-  return await response.json()
+  const json = await response.json()
+  console.log(`[DEBUG] IXC ${endpoint} response keys: ${Object.keys(json)}, total: ${json.total ?? 'N/A'}, registros count: ${Array.isArray(json.registros) ? json.registros.length : 'not array'}, msg count: ${Array.isArray(json.msg) ? json.msg.length : 'not array'}`)
+  return json
 }
 
 async function fetchIxcRecord<T>(
