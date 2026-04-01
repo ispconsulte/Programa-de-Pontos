@@ -353,7 +353,9 @@ async function fetchIxcList<T>(
     throw new Error(`IXC list failed for ${endpoint}: ${response.status} | user=${connection.ixc_user} | token_preview=${token.substring(0,6)}...${token.substring(token.length-4)} | token_len=${token.length} | url=${url} | response=${body.substring(0,200)}`)
   }
 
-  return await response.json()
+  const json = await response.json()
+  console.log(`[DEBUG] IXC ${endpoint} response keys: ${Object.keys(json)}, total: ${json.total ?? 'N/A'}, registros: ${Array.isArray(json.registros) ? json.registros.length : typeof json.registros}, msg: ${Array.isArray(json.msg) ? json.msg.length : typeof json.msg}`)
+  return json
 }
 
 async function fetchIxcRecord<T>(
