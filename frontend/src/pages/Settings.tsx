@@ -1,4 +1,5 @@
 import { useState, useEffect, FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import PageHeader from '@/components/PageHeader'
@@ -133,6 +134,9 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 </div>
+                <Button asChild variant="outline" className="w-full justify-start">
+                  <Link to="/settings/campaigns">Campanhas e regras de pontos</Link>
+                </Button>
               </div>
 
               <div className="space-y-5">

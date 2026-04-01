@@ -126,14 +126,23 @@ interface SyncCounters {
   pointsGranted: number
 }
 
+interface CampaignScoringRules {
+  campaignId: string | null
+  campaignName: string
+  thresholdEarlyDays: number
+  pointsEarly: number
+  pointsOnDue: number
+  pointsLate: number
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-const MAX_PAGE_SIZE = 50
-const MAX_PAGES = 5
+const MAX_PAGE_SIZE = 100
+const DEFAULT_PAGE_SIZE = 100
 const PROCESSING_LOCK_MINUTES = 15
 const SYNC_TYPE = 'sync_ixc_pagamentos'
 const HISTORY_ORIGIN = 'sync_ixc_pagamentos'
@@ -195,11 +204,8 @@ function parseRequestDateBoundary(value: string | undefined, boundary: 'start' |
 }
 
 function getPaymentDate(receivable: FnAreceberItem): string | null {
-  return (
-    normalizeIsoDate(receivable.pagamento_data) ??
-    normalizeIsoDate(receivable.baixa_data) ??
-    normalizeIsoDate(receivable.ultima_atualizacao)
-  )
+  // Business rule: consider only payment date for window filtering.
+  return normalizeIsoDate(receivable.pagamento_data)
 }
 
 function getDueDate(receivable: FnAreceberItem): string | null {
@@ -250,28 +256,34 @@ function normalizeCustomerCampaignStatus(customerActive?: string | null): 'ativo
   return 'inativo'
 }
 
-function calculatePoints(paymentDateIso: string, dueDateIso: string): number {
+function getDaysDiff(paymentDateIso: string, dueDateIso: string): number | null {
   const paymentDate = normalizeDateOnly(paymentDateIso)
   const dueDate = normalizeDateOnly(dueDateIso)
-  if (!paymentDate || !dueDate) return 0
+  if (!paymentDate || !dueDate) return null
 
   const paymentMs = Date.parse(`${paymentDate}T00:00:00.000Z`)
   const dueMs = Date.parse(`${dueDate}T00:00:00.000Z`)
-  const diffDays = Math.floor((dueMs - paymentMs) / 86_400_000)
+  return Math.floor((dueMs - paymentMs) / 86_400_000)
+}
 
-  if (diffDays >= 3) return 5
-  if (diffDays >= 0) return 4
-  return 2
+function resolveScoringRule(paymentDateIso: string, dueDateIso: string, rules: CampaignScoringRules): 'antecipado' | 'no_vencimento' | 'apos_vencimento' {
+  const diffDays = getDaysDiff(paymentDateIso, dueDateIso)
+  if (diffDays === null) return 'no_vencimento'
+  if (diffDays >= rules.thresholdEarlyDays) return 'antecipado'
+  if (diffDays >= 0) return 'no_vencimento'
+  return 'apos_vencimento'
+}
+
+function calculatePoints(paymentDateIso: string, dueDateIso: string, rules: CampaignScoringRules): number {
+  const rule = resolveScoringRule(paymentDateIso, dueDateIso, rules)
+  if (rule === 'antecipado') return rules.pointsEarly
+  if (rule === 'no_vencimento') return rules.pointsOnDue
+  return rules.pointsLate
 }
 
 function resolveTipoEvento(paymentDateIso: string, dueDateIso: string): string {
-  const paymentDate = normalizeDateOnly(paymentDateIso)
-  const dueDate = normalizeDateOnly(dueDateIso)
-  if (!paymentDate || !dueDate) return 'pagamento_no_dia'
-
-  const paymentMs = Date.parse(`${paymentDate}T00:00:00.000Z`)
-  const dueMs = Date.parse(`${dueDate}T00:00:00.000Z`)
-  const diffDays = Math.floor((dueMs - paymentMs) / 86_400_000)
+  const diffDays = getDaysDiff(paymentDateIso, dueDateIso)
+  if (diffDays === null) return 'pagamento_no_dia'
 
   if (diffDays >= 3) return 'pagamento_antecipado'
   if (diffDays >= 0) return 'pagamento_no_dia'
@@ -284,20 +296,73 @@ function describePoints(points: number, paymentDateIso: string, dueDateIso: stri
   return `Pagamento IXC pontuado com ${points} pontos (${paymentDate} / vencimento ${dueDate})`
 }
 
+async function loadCampaignScoringRules(
+  supabase: AnySupabase,
+  tenantId: string,
+): Promise<CampaignScoringRules> {
+  const fallback: CampaignScoringRules = {
+    campaignId: null,
+    campaignName: 'Regra padrão',
+    thresholdEarlyDays: 3,
+    pointsEarly: 5,
+    pointsOnDue: 4,
+    pointsLate: 2,
+  }
+
+  const { data: activeCampaign, error: campaignError } = await supabase
+    .from('pontuacao_campanhas')
+    .select('id, nome')
+    .eq('tenant_id', tenantId)
+    .eq('ativa', true)
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (campaignError) throw new Error(campaignError.message)
+  if (!activeCampaign?.id) return fallback
+
+  const { data: ruleRows, error: rulesError } = await supabase
+    .from('pontuacao_campanha_regras')
+    .select('regra_codigo, dias_antecedencia_min, pontos, ativo')
+    .eq('tenant_id', tenantId)
+    .eq('campanha_id', activeCampaign.id)
+    .eq('ativo', true)
+
+  if (rulesError) throw new Error(rulesError.message)
+
+  const rulesByCode = new Map<string, { dias: number | null; pontos: number }>()
+  for (const row of ruleRows ?? []) {
+    const code = normalizeText(row.regra_codigo)
+    if (!code) continue
+    const points = Number(row.pontos)
+    if (!Number.isFinite(points)) continue
+    let days: number | null = null
+    if (row.dias_antecedencia_min !== null && row.dias_antecedencia_min !== undefined) {
+      const parsedDays = Number(row.dias_antecedencia_min)
+      days = Number.isFinite(parsedDays) ? parsedDays : null
+    }
+    rulesByCode.set(code, { dias: days, pontos: points })
+  }
+
+  return {
+    campaignId: String(activeCampaign.id),
+    campaignName: normalizeText(activeCampaign.nome) ?? fallback.campaignName,
+    thresholdEarlyDays: rulesByCode.get('antecipado')?.dias ?? fallback.thresholdEarlyDays,
+    pointsEarly: rulesByCode.get('antecipado')?.pontos ?? fallback.pointsEarly,
+    pointsOnDue: rulesByCode.get('no_vencimento')?.pontos ?? fallback.pointsOnDue,
+    pointsLate: rulesByCode.get('apos_vencimento')?.pontos ?? fallback.pointsLate,
+  }
+}
+
 function inRequestedRange(paymentDateIso: string | null, dateFromIso: string | null, dateToIso: string | null): boolean {
-  if (!paymentDateIso) return false
-  const paymentMs = Date.parse(paymentDateIso)
-  if (Number.isNaN(paymentMs)) return false
+  const paymentDate = normalizeDateOnly(paymentDateIso)
+  if (!paymentDate) return false
 
-  if (dateFromIso) {
-    const fromMs = Date.parse(dateFromIso)
-    if (!Number.isNaN(fromMs) && paymentMs < fromMs) return false
-  }
+  const fromDate = normalizeDateOnly(dateFromIso)
+  if (fromDate && paymentDate < fromDate) return false
 
-  if (dateToIso) {
-    const toMs = Date.parse(dateToIso)
-    if (!Number.isNaN(toMs) && paymentMs > toMs) return false
-  }
+  const toDate = normalizeDateOnly(dateToIso)
+  if (toDate && paymentDate > toDate) return false
 
   return true
 }
@@ -383,6 +448,38 @@ async function fetchIxcList<T>(
   return json
 }
 
+async function fetchReceivablesPage(
+  connection: IxcConnectionRow,
+  ixcToken: string,
+  currentPage: number,
+  pageSize: number,
+  dateFromIso: string | null,
+): Promise<IxcListResponse<FnAreceberItem>> {
+  const fromDate = normalizeDateOnly(dateFromIso)
+  const basePayload = {
+    qtype: fromDate ? 'fn_areceber.pagamento_data' : 'fn_areceber.status',
+    query: fromDate ?? 'R',
+    oper: fromDate ? '>=' : '=',
+    page: String(currentPage),
+    rp: String(pageSize),
+    sortorder: 'desc',
+  }
+
+  try {
+    // Use stable ordering by ID to avoid pagination duplicates/skips.
+    return await fetchIxcList<FnAreceberItem>(connection, ixcToken, 'fn_areceber', {
+      ...basePayload,
+      sortname: fromDate ? 'fn_areceber.pagamento_data' : 'fn_areceber.id',
+    })
+  } catch (error) {
+    console.warn(`[WARN] fallback to pagamento_data ordering on page ${currentPage}: ${(error as Error).message}`)
+    return await fetchIxcList<FnAreceberItem>(connection, ixcToken, 'fn_areceber', {
+      ...basePayload,
+      sortname: 'fn_areceber.pagamento_data',
+    })
+  }
+}
+
 async function fetchIxcRecord<T>(
   connection: IxcConnectionRow,
   token: string,
@@ -429,6 +526,46 @@ async function fetchIxcCustomerById(
   }
 
   return customer
+}
+
+async function hasMirroredCustomer(
+  supabase: AnySupabase,
+  tenantId: string,
+  customerId: string,
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('ixc_clientes')
+    .select('id')
+    .eq('tenant_id', tenantId)
+    .eq('ixc_cliente_id', customerId)
+    .maybeSingle()
+
+  if (error) throw new Error(error.message)
+  return Boolean(data?.id)
+}
+
+async function upsertMirroredCustomer(
+  supabase: AnySupabase,
+  tenantId: string,
+  customer: ClienteItem,
+) {
+  const row = {
+    tenant_id: tenantId,
+    ixc_cliente_id: customer.id,
+    nome: resolveCustomerName(customer),
+    documento: normalizeText(customer.cnpj_cpf),
+    email: resolveCustomerEmail(customer),
+    telefone: resolveCustomerPhone(customer),
+    ativo: normalizeText(customer.ativo),
+    ultima_atualizacao_ixc: normalizeIsoDate(customer.ultima_atualizacao),
+    payload_raw: customer as unknown as Json,
+  }
+
+  const { error } = await supabase
+    .from('ixc_clientes')
+    .upsert(row, { onConflict: 'tenant_id,ixc_cliente_id' })
+
+  if (error) throw new Error(error.message)
 }
 
 async function getAuthenticatedUser(supabase: AnySupabase, request: Request, parsedBody: SyncRequest): Promise<UserRow> {
@@ -695,14 +832,14 @@ Deno.serve(async (request) => {
     const body = (await request.json().catch(() => ({}))) as SyncRequest
     const user = await getAuthenticatedUser(supabase, request, body)
     const page = Math.max(1, Number(body.page ?? 1))
-    const pageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, Number(body.pageSize ?? 20)))
-    const maxPages = Math.min(MAX_PAGES, Math.max(1, Number(body.maxPages ?? 1)))
+    const pageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, Number(body.pageSize ?? DEFAULT_PAGE_SIZE)))
     const dateFromIso = parseRequestDateBoundary(body.dateFrom, 'start')
     const dateToIso = parseRequestDateBoundary(body.dateTo, 'end')
     const dryRun = Boolean(body.dryRun)
 
     const connection = await loadIxcConnection(supabase, user.tenant_id, body.ixcConnectionId)
     const ixcToken = await decryptIxcToken(connection.ixc_token_enc, connection.ixc_token_iv)
+    const scoringRules = await loadCampaignScoringRules(supabase, user.tenant_id)
     console.log(`[DEBUG] IXC user: ${connection.ixc_user}, token preview: ${ixcToken.substring(0, 8)}...${ixcToken.substring(ixcToken.length - 4)}, token length: ${ixcToken.length}, base_url: ${connection.ixc_base_url}`)
     console.log(`[DEBUG] Auth header: Basic ${btoa(`${connection.ixc_user}:${ixcToken}`).substring(0, 20)}...`)
 
@@ -717,11 +854,19 @@ Deno.serve(async (request) => {
         payload: {
           page,
           pageSize,
-          maxPages,
+          maxPages: null,
           dateFrom: dateFromIso,
           dateTo: dateToIso,
           dryRun,
           ixcConnectionId: connection.id,
+          campaignId: scoringRules.campaignId,
+          campaignName: scoringRules.campaignName,
+          scoringRules: {
+            thresholdEarlyDays: scoringRules.thresholdEarlyDays,
+            pointsEarly: scoringRules.pointsEarly,
+            pointsOnDue: scoringRules.pointsOnDue,
+            pointsLate: scoringRules.pointsLate,
+          },
           execution_id: Deno.env.get('SB_EXECUTION_ID') ?? null,
         },
       })
@@ -742,21 +887,35 @@ Deno.serve(async (request) => {
     }
 
     const pageResults: FnAreceberItem[] = []
-    for (let pageOffset = 0; pageOffset < maxPages; pageOffset += 1) {
-      const currentPage = page + pageOffset
-      const response = await fetchIxcList<FnAreceberItem>(connection, ixcToken, 'fn_areceber', {
-        qtype: 'fn_areceber.status',
-        query: 'R',
-        oper: '=',
-        page: String(currentPage),
-        rp: String(pageSize),
-        sortname: 'fn_areceber.data_vencimento',
-        sortorder: 'desc',
-      })
+    const seenPageFingerprints = new Set<string>()
+    let ixcTotalRows: number | null = null
+    for (let currentPage = page; ; currentPage += 1) {
+      const response = await fetchReceivablesPage(connection, ixcToken, currentPage, pageSize, dateFromIso)
 
       const rows = response.msg ?? response.registros ?? []
       if (rows.length === 0) break
+
+      if (ixcTotalRows === null && response.total !== undefined && response.total !== null) {
+        const parsedTotal = Number(response.total)
+        if (Number.isFinite(parsedTotal) && parsedTotal >= 0) {
+          ixcTotalRows = parsedTotal
+        }
+      }
+
+      const fingerprint = rows.map((row) => String(row.id)).join('|')
+      if (seenPageFingerprints.has(fingerprint)) {
+        console.warn(`[WARN] repeated page fingerprint detected at page ${currentPage}; stopping pagination to avoid infinite loop`)
+        break
+      }
+      seenPageFingerprints.add(fingerprint)
+
       pageResults.push(...rows)
+
+      if (ixcTotalRows !== null) {
+        const fetchedByPagination = (currentPage - page + 1) * pageSize
+        if (fetchedByPagination >= ixcTotalRows) break
+      }
+
       if (rows.length < pageSize) break
     }
 
@@ -770,6 +929,9 @@ Deno.serve(async (request) => {
     counters.eligible = eligibleReceivables.length
 
     const details: Array<Record<string, Json>> = []
+    const campaignCustomerCache = new Map<string, CampaignCustomerSummaryRow | null>()
+    const ixcMirrorPresenceCache = new Map<string, boolean>()
+    const fetchedCustomerCache = new Map<string, ClienteItem>()
 
     for (const receivable of eligibleReceivables) {
       const paymentDateIso = getPaymentDate(receivable)
@@ -786,8 +948,46 @@ Deno.serve(async (request) => {
       }
 
       try {
-        const customer = await fetchIxcCustomerById(connection, ixcToken, receivable.id_cliente)
-        const existingCustomer = await loadExistingCampaignCustomer(supabase, user.tenant_id, customer.id)
+        const customerId = normalizeText(receivable.id_cliente) ?? ''
+        if (!customerId) {
+          counters.skipped += 1
+          details.push({
+            receivableId: receivable.id,
+            status: 'skipped',
+            reason: 'missing_customer_id',
+          })
+          continue
+        }
+
+        let existingCustomer = campaignCustomerCache.get(customerId)
+        if (existingCustomer === undefined) {
+          existingCustomer = await loadExistingCampaignCustomer(supabase, user.tenant_id, customerId)
+          campaignCustomerCache.set(customerId, existingCustomer)
+        }
+
+        let hasIxcMirror = ixcMirrorPresenceCache.get(customerId)
+        if (hasIxcMirror === undefined) {
+          hasIxcMirror = await hasMirroredCustomer(supabase, user.tenant_id, customerId)
+          ixcMirrorPresenceCache.set(customerId, hasIxcMirror)
+        }
+
+        let customer: ClienteItem | null = null
+
+        // Fetch IXC customer at most once per customer in this execution.
+        // Required when customer is missing in local mirror or campaign customer table.
+        if (!existingCustomer || !hasIxcMirror) {
+          customer = fetchedCustomerCache.get(customerId) ?? null
+          if (!customer) {
+            customer = await fetchIxcCustomerById(connection, ixcToken, customerId)
+            fetchedCustomerCache.set(customerId, customer)
+          }
+        }
+
+        if (!dryRun && customer && !hasIxcMirror) {
+          await upsertMirroredCustomer(supabase, user.tenant_id, customer)
+          hasIxcMirror = true
+          ixcMirrorPresenceCache.set(customerId, true)
+        }
 
         if (dryRun) {
           const existingInvoiceStatus = await loadExistingInvoiceStatus(supabase, user.tenant_id, receivable.id)
@@ -795,30 +995,30 @@ Deno.serve(async (request) => {
             counters.skipped += 1
             details.push({
               receivableId: receivable.id,
-              customerId: customer.id,
+              customerId,
               status: 'already_processed',
             })
             continue
           }
 
-          const campaignStatus = existingCustomer?.status ?? normalizeCustomerCampaignStatus(customer.ativo)
+          const campaignStatus = existingCustomer?.status ?? normalizeCustomerCampaignStatus(customer?.ativo)
           if (campaignStatus !== 'ativo') {
             counters.ignored += 1
             details.push({
               receivableId: receivable.id,
-              customerId: customer.id,
+              customerId,
               status: 'ignored',
               reason: 'status_campanha_inativo',
             })
             continue
           }
 
-          const points = calculatePoints(paymentDateIso, dueDateIso)
+          const points = calculatePoints(paymentDateIso, dueDateIso, scoringRules)
           if (points <= 0) {
             counters.ignored += 1
             details.push({
               receivableId: receivable.id,
-              customerId: customer.id,
+              customerId,
               status: 'ignored',
               reason: 'sem_regra_de_pontuacao',
             })
@@ -829,27 +1029,30 @@ Deno.serve(async (request) => {
           counters.pointsGranted += points
           details.push({
             receivableId: receivable.id,
-            customerId: customer.id,
+            customerId,
             status: 'dry_run',
             points,
           })
           continue
         }
 
-        const campaignCustomer = await upsertCampaignCustomer(
-          supabase,
-          user.tenant_id,
-          customer,
-          resolveContractId(receivable),
-          paymentDateIso,
-          existingCustomer,
-        )
+        const campaignCustomer = existingCustomer
+          ? existingCustomer
+          : await upsertCampaignCustomer(
+            supabase,
+            user.tenant_id,
+            customer!,
+            resolveContractId(receivable),
+            paymentDateIso,
+            null,
+          )
+        campaignCustomerCache.set(customerId, campaignCustomer as CampaignCustomerSummaryRow)
 
         const processingHash = await sha256([
           user.tenant_id,
           connection.id,
           receivable.id,
-          customer.id,
+          customerId,
           paymentDateIso,
           dueDateIso,
           normalizeText(receivable.valor_recebido) ?? '0',
@@ -869,7 +1072,7 @@ Deno.serve(async (request) => {
           counters.skipped += 1
           details.push({
             receivableId: receivable.id,
-            customerId: customer.id,
+            customerId,
             status: lock.action === 'locked' ? 'locked' : 'already_processed',
           })
           continue
@@ -896,14 +1099,15 @@ Deno.serve(async (request) => {
 
           details.push({
             receivableId: receivable.id,
-            customerId: customer.id,
+            customerId,
             status: 'ignored',
             reason: 'status_campanha_inativo',
           })
           continue
         }
 
-        const points = calculatePoints(paymentDateIso, dueDateIso)
+        const points = calculatePoints(paymentDateIso, dueDateIso, scoringRules)
+        const appliedRule = resolveScoringRule(paymentDateIso, dueDateIso, scoringRules)
         if (points <= 0) {
           counters.ignored += 1
 
@@ -924,7 +1128,7 @@ Deno.serve(async (request) => {
 
           details.push({
             receivableId: receivable.id,
-            customerId: customer.id,
+            customerId,
             status: 'ignored',
             reason: 'sem_regra_de_pontuacao',
           })
@@ -939,7 +1143,7 @@ Deno.serve(async (request) => {
           const { error: historyError } = await supabase
             .from('pontuacao_historico')
             .insert({
-              ixc_cliente_id: customer.id,
+              ixc_cliente_id: customerId,
               ixc_fatura_id: receivable.id,
               tipo_evento: resolveTipoEvento(paymentDateIso, dueDateIso),
               pontos: points,
@@ -955,18 +1159,22 @@ Deno.serve(async (request) => {
             .from('pontuacao_campanha_clientes')
             .update({
               ixc_contrato_id: resolveContractId(receivable),
-              nome_cliente: resolveCustomerName(customer),
-              documento: normalizeText(customer.cnpj_cpf),
-              email: resolveCustomerEmail(customer),
-              telefone: resolveCustomerPhone(customer),
               pontos_acumulados: nextAccumulatedPoints,
               ultima_sincronizacao_em: new Date().toISOString(),
               metadata: {
                 origem: 'ixc',
                 ultima_fatura_processada: receivable.id,
                 ultima_data_pagamento_ixc: paymentDateIso,
-                ultima_atualizacao_ixc: normalizeIsoDate(customer.ultima_atualizacao),
+                ultima_atualizacao_ixc: normalizeIsoDate(customer?.ultima_atualizacao),
               },
+              ...(customer
+                ? {
+                  nome_cliente: resolveCustomerName(customer),
+                  documento: normalizeText(customer.cnpj_cpf),
+                  email: resolveCustomerEmail(customer),
+                  telefone: resolveCustomerPhone(customer),
+                }
+                : {}),
             })
             .eq('id', campaignCustomer.id)
 
@@ -981,7 +1189,7 @@ Deno.serve(async (request) => {
               processing: false,
               paymentDateIso,
               dueDateIso,
-              regra: points === 5 ? 'antecipado_3_ou_mais' : points === 4 ? 'em_dia' : 'apos_vencimento',
+              regra: appliedRule,
             },
           })
         }
@@ -990,7 +1198,7 @@ Deno.serve(async (request) => {
         counters.pointsGranted += points
         details.push({
           receivableId: receivable.id,
-          customerId: customer.id,
+          customerId,
           status: dryRun ? 'dry_run' : 'processed',
           points,
         })
@@ -1012,9 +1220,18 @@ Deno.serve(async (request) => {
     const payload = {
       page,
       pageSize,
-      maxPages,
+      paginationMode: 'until_exhausted',
+      sourceTotalRows: ixcTotalRows,
       dateFrom: dateFromIso,
       dateTo: dateToIso,
+      campaignId: scoringRules.campaignId,
+      campaignName: scoringRules.campaignName,
+      scoringRules: {
+        thresholdEarlyDays: scoringRules.thresholdEarlyDays,
+        pointsEarly: scoringRules.pointsEarly,
+        pointsOnDue: scoringRules.pointsOnDue,
+        pointsLate: scoringRules.pointsLate,
+      },
       dryRun,
       fetched: counters.fetched,
       eligible: counters.eligible,

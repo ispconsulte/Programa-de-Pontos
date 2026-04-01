@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useThrottledAction } from '@/hooks/useThrottledAction'
 import { Link } from 'react-router-dom'
 import {
@@ -6,13 +6,12 @@ import {
   Coins,
   LayoutDashboard,
   RefreshCw,
-  TrendingUp,
   Wallet,
   Zap,
   Clock,
   CalendarCheck,
 } from 'lucide-react'
-import Layout from '@/components/Layout'
+import Layout, { DASHBOARD_CLIENT_SEARCH_EVENT, type DashboardSearchType as HeaderSearchType } from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import PageHeader from '@/components/PageHeader'
 import StatCard from '@/components/StatCard'
@@ -20,69 +19,89 @@ import AlertBanner from '@/components/AlertBanner'
 import Spinner from '@/components/Spinner'
 import EmptyState from '@/components/EmptyState'
 import { categoryBadge } from '@/components/Badge'
-import { getPaymentBehaviorLabel, getPaymentScore } from '@/lib/receivables-utils'
 import { Button } from '@/components/ui/button'
-import { fetchReceivables, getCurrentTenantId, type ReceivableRow } from '@/lib/supabase-queries'
+import {
+  fetchDashboardHistory,
+  fetchDashboardMetrics,
+  getCurrentTenantId,
+  type DashboardHistoryRow,
+} from '@/lib/supabase-queries'
 
-/* ── Adapt DB row to the shape the existing UI helpers expect ── */
-function toReceivableShape(row: ReceivableRow) {
-  const payload = (row.payload ?? {}) as Record<string, unknown>
-  return {
-    id: row.id,
-    id_cliente: row.ixc_cliente_id,
-    cliente_nome: null as string | null,
-    data_vencimento: (payload.competencia as string | undefined) ?? row.competencia ?? '',
-    data_pagamento: row.data_pagamento ?? null,
-    valor: row.valor_pago ?? 0,
-    valor_recebido: row.valor_pago ?? 0,
-    categoria: row.status_processamento,
-    categoria_codigo: row.status_processamento,
-  }
+type Classification = 'antecipado' | 'vencimento' | 'atraso' | 'indefinido'
+
+interface DashboardRow extends DashboardHistoryRow {
+  deltaVencimento: number | null
+  classificacao: Classification
 }
 
-type Receivable = ReturnType<typeof toReceivableShape>
-
-/* ── Helpers ── */
-function formatBRL(value: string | number | undefined): string {
-  if (value === undefined || value === null) return 'R$ 0,00'
-  const num = typeof value === 'string' ? parseFloat(value) : value
-  if (isNaN(num)) return 'R$ 0,00'
-  return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-}
-
-function formatDate(dateStr: string): string {
-  if (!dateStr) return '—'
-  const d = new Date(dateStr + (dateStr.includes('T') ? '' : 'T00:00:00'))
-  return d.toLocaleDateString('pt-BR')
-}
-
-function formatCount(value: number): string {
+function formatPoints(value: number): string {
   return value.toLocaleString('pt-BR')
 }
 
-function formatClientName(receivable: Receivable): string {
-  const name = receivable.cliente_nome?.trim()
-  if (name) return name
-  return `Cliente #${receivable.id_cliente}`
+function formatDate(value: string | null | undefined): string {
+  if (!value) return '—'
+  const date = toLocalDate(value)
+  if (!date) return '—'
+  return date.toLocaleDateString('pt-BR')
 }
 
-/* ── Score pill component ── */
-function ScorePill({ score }: { score: number }) {
-  const colors =
-    score >= 5
-      ? 'bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))]'
-      : score >= 4
-        ? 'bg-primary/10 text-primary'
-        : 'bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning))]'
-
-  return (
-    <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold ${colors}`}>
-      +{score}
-    </span>
-  )
+function formatBRL(value: number): string {
+  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
-/* ── Score summary mini-card ── */
+function toLocalDate(value?: string | null): Date | null {
+  if (!value) return null
+  const fromNative = new Date(value)
+  if (!Number.isNaN(fromNative.getTime())) {
+    return new Date(fromNative.getFullYear(), fromNative.getMonth(), fromNative.getDate())
+  }
+
+  const dateOnly = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (!dateOnly) return null
+
+  const y = Number(dateOnly[1])
+  const m = Number(dateOnly[2]) - 1
+  const d = Number(dateOnly[3])
+  const fallback = new Date(y, m, d)
+  return Number.isNaN(fallback.getTime()) ? null : fallback
+}
+
+function getDeltaVencimento(pagamento: string | null, vencimento: string | null): number | null {
+  const paymentDate = toLocalDate(pagamento)
+  const dueDate = toLocalDate(vencimento)
+  if (!paymentDate || !dueDate) return null
+  return Math.round((dueDate.getTime() - paymentDate.getTime()) / 86_400_000)
+}
+
+function classifyByDates(delta: number | null): Classification {
+  if (delta === null) return 'indefinido'
+  if (delta > 0) return 'antecipado'
+  if (delta === 0) return 'vencimento'
+  return 'atraso'
+}
+
+function classificationLabel(value: Classification): string {
+  if (value === 'antecipado') return 'Pagamento antecipado'
+  if (value === 'vencimento') return 'Pagamento no vencimento'
+  if (value === 'atraso') return 'Pagamento após o vencimento'
+  return 'Classificação indisponível'
+}
+
+function formatDelta(delta: number | null): string {
+  if (delta === null) return '—'
+  if (delta > 0) return `+${delta}`
+  return `${delta}`
+}
+
+function monthDateRange(): { from: string; to: string; label: string } {
+  const now = new Date()
+  const first = new Date(now.getFullYear(), now.getMonth(), 1)
+  const last = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+  const from = first.toISOString().slice(0, 10)
+  const to = last.toISOString().slice(0, 10)
+  return { from, to, label: 'Mês atual' }
+}
+
 function ScoreSummaryCard({
   icon: Icon,
   label,
@@ -100,31 +119,36 @@ function ScoreSummaryCard({
         <Icon className="h-3.5 w-3.5" />
       </div>
       <div className="min-w-0">
-        <p className="text-lg font-semibold text-foreground">{formatCount(value)}</p>
+        <p className="text-lg font-semibold text-foreground">{formatPoints(value)}</p>
         <p className="truncate text-[11px] text-muted-foreground">{label}</p>
       </div>
     </div>
   )
 }
 
-/* ── Page ── */
 export default function DashboardPage() {
-  const [receivables, setReceivables] = useState<Receivable[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [totalReceived, setTotalReceived] = useState(0)
-  const [totalRenegotiated, setTotalRenegotiated] = useState(0)
-  const [totalAmount, setTotalAmount] = useState(0)
+  const [metrics, setMetrics] = useState({
+    totalPoints: 0,
+    redemptionsCount: 0,
+    redeemedPoints: 0,
+  })
+  const [rows, setRows] = useState<DashboardRow[]>([])
+  const [summary, setSummary] = useState({
+    antecipado: 0,
+    vencimento: 0,
+    atraso: 0,
+  })
+  const [searchType, setSearchType] = useState<HeaderSearchType>('name')
+  const [searchQuery, setSearchQuery] = useState('')
 
-  const scoreSummary = {
-    five: receivables.filter((r) => getPaymentScore(r) === 5).length,
-    four: receivables.filter((r) => getPaymentScore(r) === 4).length,
-    two: receivables.filter((r) => getPaymentScore(r) === 2).length,
-  }
+  const period = useMemo(() => monthDateRange(), [])
 
   const fetchData = useCallback(async () => {
     setLoading(true)
     setError('')
+
     try {
       const tenantId = await getCurrentTenantId()
       if (!tenantId) {
@@ -132,31 +156,64 @@ export default function DashboardPage() {
         return
       }
 
-      const result = await fetchReceivables({
-        tenantId,
-        page: 1,
-        limit: 8,
-        category: 'processado',
+      const [metricData, fullPeriodRows, latestRows] = await Promise.all([
+        fetchDashboardMetrics({ tenantId, dateFrom: period.from, dateTo: period.to }),
+        fetchDashboardHistory({ tenantId, dateFrom: period.from, dateTo: period.to, limit: 10000 }),
+        fetchDashboardHistory({
+          tenantId,
+          dateFrom: period.from,
+          dateTo: period.to,
+          limit: 8,
+          searchType,
+          searchQuery,
+        }),
+      ])
+
+      const classifiedFull = fullPeriodRows.map((row) => {
+        const delta = getDeltaVencimento(row.data_pagamento, row.data_vencimento)
+        const classificacao = classifyByDates(delta)
+        return { ...row, deltaVencimento: delta, classificacao }
       })
 
-      const shaped = result.data.map(toReceivableShape)
-      setReceivables(shaped)
+      const classifiedLatest = latestRows.map((row) => {
+        const delta = getDeltaVencimento(row.data_pagamento, row.data_vencimento)
+        const classificacao = classifyByDates(delta)
+        return { ...row, deltaVencimento: delta, classificacao }
+      })
 
-      const received = result.total
-      const renegotiated = 0
-      const amount = shaped.reduce((sum, r) => sum + Number(r.valor_recebido || 0), 0)
-
-      setTotalReceived(received)
-      setTotalRenegotiated(renegotiated)
-      setTotalAmount(amount)
+      setMetrics(metricData)
+      setRows(classifiedLatest)
+      setSummary({
+        antecipado: classifiedFull
+          .filter((r) => r.classificacao === 'antecipado')
+          .reduce((sum, row) => sum + Number(row.pontos_gerados || 0), 0),
+        vencimento: classifiedFull
+          .filter((r) => r.classificacao === 'vencimento')
+          .reduce((sum, row) => sum + Number(row.pontos_gerados || 0), 0),
+        atraso: classifiedFull
+          .filter((r) => r.classificacao === 'atraso')
+          .reduce((sum, row) => sum + Number(row.pontos_gerados || 0), 0),
+      })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar dados.')
+      setError(err instanceof Error ? err.message : 'Erro ao carregar dados do dashboard.')
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [period.from, period.to, searchType, searchQuery])
 
   const [throttledFetch, refreshBusy] = useThrottledAction(fetchData)
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<{ searchType: HeaderSearchType; query: string }>).detail
+      if (!detail) return
+      setSearchType(detail.searchType)
+      setSearchQuery(detail.query ?? '')
+    }
+
+    window.addEventListener(DASHBOARD_CLIENT_SEARCH_EVENT, handler)
+    return () => window.removeEventListener(DASHBOARD_CLIENT_SEARCH_EVENT, handler)
+  }, [])
 
   useEffect(() => {
     void fetchData()
@@ -168,7 +225,7 @@ export default function DashboardPage() {
         <PageHeader
           icon={LayoutDashboard}
           title="Painel"
-          subtitle="Visão geral da operação"
+          subtitle="Visão geral da pontuação"
           actions={
             <Button variant="outline" size="sm" disabled={refreshBusy} onClick={() => void throttledFetch()}>
               <RefreshCw className={`h-3.5 w-3.5 transition-transform ${refreshBusy ? 'animate-spin' : ''}`} />
@@ -178,38 +235,39 @@ export default function DashboardPage() {
         />
 
         <div className="page-stack">
-          {/* ── Top stat cards ── */}
           <div className="grid gap-4 sm:grid-cols-3 [&>*]:h-full">
             <StatCard
-              label="Recebimentos pagos"
-              value={formatCount(totalReceived)}
+              label="Pontuação geral acumulada"
+              value={formatPoints(metrics.totalPoints)}
+              helper={period.label}
               icon={Coins}
               iconColor="text-[hsl(var(--success))]"
               iconBg="bg-[hsl(var(--success)/0.1)]"
             />
             <StatCard
-              label="Renegociações"
-              value={formatCount(totalRenegotiated)}
+              label="Resgates no período"
+              value={formatPoints(metrics.redemptionsCount)}
+              helper={period.label}
               icon={Wallet}
               iconColor="text-[hsl(var(--warning))]"
               iconBg="bg-[hsl(var(--warning)/0.1)]"
             />
             <StatCard
-              label="Volume total"
-              value={formatBRL(totalAmount)}
-              icon={TrendingUp}
+              label="Pontos resgatados no período"
+              value={formatPoints(metrics.redeemedPoints)}
+              helper={period.label}
+              icon={Zap}
               iconColor="text-primary"
               iconBg="bg-primary/10"
             />
           </div>
 
-          {/* ── Recent payments section ── */}
           <section className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
             <div className="flex flex-col gap-3 border-b border-[hsl(var(--border))] p-5 sm:flex-row sm:items-center sm:justify-between lg:p-6">
               <div>
-                <h2 className="text-sm font-semibold text-foreground">Últimos pagamentos pontuados</h2>
+                <h2 className="text-sm font-semibold text-foreground">Últimos registros de pontuação</h2>
                 <p className="mt-0.5 text-[13px] text-muted-foreground">
-                  Pagamentos recentes classificados conforme a regra da campanha.
+                  Histórico recente de pontuação gerada no período selecionado.
                 </p>
               </div>
               <Button asChild variant="outline" size="sm" className="w-fit">
@@ -228,69 +286,71 @@ export default function DashboardPage() {
               <div className="p-5">
                 <AlertBanner variant="error" message={error} actionLabel="Tentar novamente" onAction={() => void fetchData()} />
               </div>
-            ) : receivables.length === 0 ? (
-              <div className="p-5">
-                <EmptyState icon={<Coins className="h-5 w-5" />} title="Nenhum recebimento" description="Nenhum recebimento encontrado ainda." />
-              </div>
             ) : (
               <>
                 <div className="grid gap-3 border-b border-[hsl(var(--border))] px-5 py-4 sm:grid-cols-3 lg:px-6">
-                  <ScoreSummaryCard icon={Zap} label="Pagamentos antecipados" value={scoreSummary.five} color="bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))]" />
-                  <ScoreSummaryCard icon={CalendarCheck} label="Pagamentos no vencimento" value={scoreSummary.four} color="bg-primary/10 text-primary" />
-                  <ScoreSummaryCard icon={Clock} label="Pagamentos após o vencimento" value={scoreSummary.two} color="bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))]" />
+                  <ScoreSummaryCard icon={Zap} label="Pagamentos antecipados" value={summary.antecipado} color="bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))]" />
+                  <ScoreSummaryCard icon={CalendarCheck} label="Pagamentos no vencimento" value={summary.vencimento} color="bg-primary/10 text-primary" />
+                  <ScoreSummaryCard icon={Clock} label="Pagamentos após o vencimento" value={summary.atraso} color="bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))]" />
                 </div>
 
-                <div className="divide-y divide-[hsl(var(--border))] md:hidden">
-                  {receivables.map((item) => (
-                    <Link key={item.id} to={`/receivables/${item.id}`} className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-[hsl(var(--muted))]">
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-foreground">{formatClientName(item)}</p>
-                        <p className="mt-0.5 text-xs text-muted-foreground">{formatDate(item.data_vencimento)} · {formatBRL(item.valor_recebido)}</p>
-                      </div>
-                      <div className="flex items-center gap-2.5">
-                        <ScorePill score={getPaymentScore(item)} />
-                        <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/50" />
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-
-                <div className="hidden md:block">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-[hsl(var(--border))]">
-                        <th className="px-5 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground lg:px-6">Cliente</th>
-                        <th className="px-3 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Classificação</th>
-                        <th className="px-3 py-3 text-center text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Pontos</th>
-                        <th className="px-3 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Vencimento</th>
-                        <th className="px-3 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Pago em</th>
-                        <th className="px-3 py-3 text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Valor pago</th>
-                        <th className="px-5 py-3 lg:px-6"><span className="sr-only">Ações</span></th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[hsl(var(--border))]">
-                      {receivables.map((item) => (
-                        <tr key={item.id} className="transition-colors hover:bg-[hsl(var(--muted))]">
-                          <td className="px-5 py-3.5 lg:px-6">
-                            <p className="font-medium text-foreground">{formatClientName(item)}</p>
-                            <p className="mt-0.5 font-mono text-[11px] text-muted-foreground/70">#{item.id_cliente}</p>
-                          </td>
-                          <td className="px-3 py-3.5">{categoryBadge(getPaymentBehaviorLabel(item))}</td>
-                          <td className="px-3 py-3.5 text-center"><ScorePill score={getPaymentScore(item)} /></td>
-                          <td className="px-3 py-3.5 text-muted-foreground">{formatDate(item.data_vencimento)}</td>
-                          <td className="px-3 py-3.5 text-muted-foreground">{formatDate(item.data_pagamento ?? '')}</td>
-                          <td className="px-3 py-3.5 text-right font-medium text-[hsl(var(--success))]">{formatBRL(item.valor_recebido)}</td>
-                          <td className="px-5 py-3.5 text-right lg:px-6">
-                            <Link to={`/receivables/${item.id}`} className="inline-flex items-center gap-1 text-[13px] text-primary transition-colors hover:text-primary/80">
-                              Detalhe
-                              <ArrowRight className="h-3 w-3" />
-                            </Link>
-                          </td>
-                        </tr>
+                {rows.length === 0 ? (
+                  <div className="p-5">
+                    <EmptyState icon={<Coins className="h-5 w-5" />} title="Nenhum registro" description="Não há registros de pontuação para o período e filtros atuais." />
+                  </div>
+                ) : (
+                  <>
+                    <div className="divide-y divide-[hsl(var(--border))] md:hidden">
+                      {rows.map((item) => (
+                        <Link key={item.id} to={`/receivables/${item.id}`} className="block px-5 py-3.5 transition-colors hover:bg-[hsl(var(--muted))]">
+                          <p className="truncate text-sm font-medium text-foreground">{item.cliente_nome?.trim() || `Cliente #${item.ixc_cliente_id}`}</p>
+                          <p className="mt-0.5 text-xs text-muted-foreground">
+                            {classificationLabel(item.classificacao)} · {formatDelta(item.deltaVencimento)} · +{formatPoints(item.pontos_gerados)} pts
+                          </p>
+                        </Link>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
+                    </div>
+
+                    <div className="hidden md:block">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-[hsl(var(--border))]">
+                            <th className="px-5 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground lg:px-6">Cliente</th>
+                            <th className="px-3 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Classificação</th>
+                            <th className="px-3 py-3 text-center text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Pontos</th>
+                            <th className="px-3 py-3 text-center text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Δ vencimento</th>
+                            <th className="px-3 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Vencimento</th>
+                            <th className="px-3 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Pago em</th>
+                            <th className="px-3 py-3 text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Valor pago</th>
+                            <th className="px-5 py-3 lg:px-6"><span className="sr-only">Ações</span></th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[hsl(var(--border))]">
+                          {rows.map((item) => (
+                            <tr key={item.id} className="transition-colors hover:bg-[hsl(var(--muted))]">
+                              <td className="px-5 py-3 lg:px-6">
+                                <p className="font-medium text-foreground">{item.cliente_nome?.trim() || `Cliente #${item.ixc_cliente_id}`}</p>
+                                <p className="mt-0.5 font-mono text-[11px] text-muted-foreground/70">#{item.ixc_cliente_id}</p>
+                              </td>
+                              <td className="px-3 py-3">{categoryBadge(classificationLabel(item.classificacao))}</td>
+                              <td className="px-3 py-3 text-center font-semibold text-foreground">+{formatPoints(item.pontos_gerados)}</td>
+                              <td className="px-3 py-3 text-center font-mono text-xs text-muted-foreground">{formatDelta(item.deltaVencimento)}</td>
+                              <td className="px-3 py-3 text-muted-foreground">{formatDate(item.data_vencimento)}</td>
+                              <td className="px-3 py-3 text-muted-foreground">{formatDate(item.data_pagamento)}</td>
+                              <td className="px-3 py-3 text-right font-medium text-[hsl(var(--success))]">{formatBRL(item.valor_pago)}</td>
+                              <td className="px-5 py-3 text-right lg:px-6">
+                                <Link to={`/receivables/${item.id}`} className="inline-flex items-center gap-1 text-[13px] text-primary transition-colors hover:text-primary/80">
+                                  Detalhe
+                                  <ArrowRight className="h-3 w-3" />
+                                </Link>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
               </>
             )}
           </section>

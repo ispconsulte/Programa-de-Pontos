@@ -312,3 +312,349 @@ export async function saveTenantSettings(
     if (insertError) throw new Error(insertError.message)
   }
 }
+
+// ── Campanhas (regras de pontuação) ─────────────────────────────────────────
+
+export interface CampaignRuleSettings {
+  campaignId: string | null
+  campaignName: string
+  active: boolean
+  thresholdEarlyDays: number
+  pointsEarly: number
+  pointsOnDue: number
+  pointsLate: number
+}
+
+export async function fetchActiveCampaignRuleSettings(tenantId: string): Promise<CampaignRuleSettings> {
+  const defaults: CampaignRuleSettings = {
+    campaignId: null,
+    campaignName: 'Campanha padrão',
+    active: true,
+    thresholdEarlyDays: 3,
+    pointsEarly: 5,
+    pointsOnDue: 4,
+    pointsLate: 2,
+  }
+
+  const { data: campaign, error: campaignError } = await (supabase as any)
+    .from('pontuacao_campanhas')
+    .select('id, nome, ativa')
+    .eq('tenant_id', tenantId)
+    .eq('ativa', true)
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (campaignError) throw new Error(campaignError.message)
+  if (!campaign) return defaults
+
+  const { data: rules, error: rulesError } = await (supabase as any)
+    .from('pontuacao_campanha_regras')
+    .select('regra_codigo, dias_antecedencia_min, pontos, ativo')
+    .eq('tenant_id', tenantId)
+    .eq('campanha_id', campaign.id)
+    .eq('ativo', true)
+
+  if (rulesError) throw new Error(rulesError.message)
+
+  const byCode = new Map<string, { points: number; days: number | null }>()
+  for (const row of rules ?? []) {
+    const code = String(row.regra_codigo ?? '')
+    if (!code) continue
+    byCode.set(code, {
+      points: Number(row.pontos ?? 0),
+      days: row.dias_antecedencia_min === null || row.dias_antecedencia_min === undefined
+        ? null
+        : Number(row.dias_antecedencia_min),
+    })
+  }
+
+  return {
+    campaignId: String(campaign.id),
+    campaignName: String(campaign.nome ?? defaults.campaignName),
+    active: Boolean(campaign.ativa),
+    thresholdEarlyDays: byCode.get('antecipado')?.days ?? defaults.thresholdEarlyDays,
+    pointsEarly: byCode.get('antecipado')?.points ?? defaults.pointsEarly,
+    pointsOnDue: byCode.get('no_vencimento')?.points ?? defaults.pointsOnDue,
+    pointsLate: byCode.get('apos_vencimento')?.points ?? defaults.pointsLate,
+  }
+}
+
+export async function saveCampaignRuleSettings(
+  tenantId: string,
+  settings: CampaignRuleSettings,
+): Promise<void> {
+  const campaignPayload = {
+    tenant_id: tenantId,
+    nome: settings.campaignName.trim() || 'Campanha padrão',
+    ativa: true,
+  }
+
+  let campaignId = settings.campaignId
+  if (campaignId) {
+    const { error } = await (supabase as any)
+      .from('pontuacao_campanhas')
+      .update(campaignPayload)
+      .eq('id', campaignId)
+      .eq('tenant_id', tenantId)
+    if (error) throw new Error(error.message)
+  } else {
+    const { data, error } = await (supabase as any)
+      .from('pontuacao_campanhas')
+      .insert(campaignPayload)
+      .select('id')
+      .single()
+    if (error) throw new Error(error.message)
+    campaignId = String(data.id)
+  }
+
+  // Keep a single active campaign per tenant.
+  const { error: deactivateError } = await (supabase as any)
+    .from('pontuacao_campanhas')
+    .update({ ativa: false })
+    .eq('tenant_id', tenantId)
+    .neq('id', campaignId)
+  if (deactivateError) throw new Error(deactivateError.message)
+
+  const rules = [
+    {
+      tenant_id: tenantId,
+      campanha_id: campaignId,
+      regra_codigo: 'antecipado',
+      dias_antecedencia_min: Math.max(0, Number(settings.thresholdEarlyDays)),
+      pontos: Math.max(0, Number(settings.pointsEarly)),
+      ativo: true,
+    },
+    {
+      tenant_id: tenantId,
+      campanha_id: campaignId,
+      regra_codigo: 'no_vencimento',
+      dias_antecedencia_min: null,
+      pontos: Math.max(0, Number(settings.pointsOnDue)),
+      ativo: true,
+    },
+    {
+      tenant_id: tenantId,
+      campanha_id: campaignId,
+      regra_codigo: 'apos_vencimento',
+      dias_antecedencia_min: null,
+      pontos: Math.max(0, Number(settings.pointsLate)),
+      ativo: true,
+    },
+  ]
+
+  const { error: rulesError } = await (supabase as any)
+    .from('pontuacao_campanha_regras')
+    .upsert(rules, { onConflict: 'campanha_id,regra_codigo' })
+
+  if (rulesError) throw new Error(rulesError.message)
+}
+
+// ── Dashboard (pontuação) ────────────────────────────────────────────────────
+
+export type DashboardSearchType = 'name' | 'cpfCnpj' | 'id'
+
+export interface DashboardMetrics {
+  totalPoints: number
+  redemptionsCount: number
+  redeemedPoints: number
+}
+
+export interface DashboardHistoryRow {
+  id: string
+  ixc_cliente_id: string
+  cliente_nome: string | null
+  documento: string | null
+  data_vencimento: string | null
+  data_pagamento: string | null
+  valor_pago: number
+  pontos_gerados: number
+}
+
+function normalizeDoc(value: string | null | undefined): string {
+  return String(value ?? '').replace(/\D/g, '')
+}
+
+async function fetchClientBasicMap(
+  tenantId: string,
+  customerIds: string[],
+): Promise<Map<string, { nome: string | null; documento: string | null }>> {
+  const map = new Map<string, { nome: string | null; documento: string | null }>()
+  if (customerIds.length === 0) return map
+
+  const { data, error } = await (supabase as any)
+    .from('pontuacao_campanha_clientes')
+    .select('ixc_cliente_id, nome_cliente, documento')
+    .eq('tenant_id', tenantId)
+    .in('ixc_cliente_id', customerIds)
+
+  if (error) throw new Error(error.message)
+
+  for (const row of data ?? []) {
+    map.set(String(row.ixc_cliente_id), {
+      nome: row.nome_cliente ? String(row.nome_cliente) : null,
+      documento: row.documento ? String(row.documento) : null,
+    })
+  }
+  return map
+}
+
+async function resolveCustomerIdsBySearch(
+  tenantId: string,
+  searchType: DashboardSearchType,
+  searchQuery: string,
+): Promise<string[]> {
+  const trimmed = searchQuery.trim()
+  if (!trimmed) return []
+
+  if (searchType === 'id') return [trimmed]
+
+  if (searchType === 'name') {
+    const { data, error } = await (supabase as any)
+      .from('pontuacao_campanha_clientes')
+      .select('ixc_cliente_id')
+      .eq('tenant_id', tenantId)
+      .ilike('nome_cliente', `%${trimmed}%`)
+      .limit(200)
+    if (error) throw new Error(error.message)
+    return Array.from(new Set((data ?? []).map((row: any) => String(row.ixc_cliente_id))))
+  }
+
+  const normalized = normalizeDoc(trimmed)
+  if (!normalized) return []
+
+  const { data, error } = await (supabase as any)
+    .from('pontuacao_campanha_clientes')
+    .select('ixc_cliente_id, documento')
+    .eq('tenant_id', tenantId)
+    .limit(5000)
+  if (error) throw new Error(error.message)
+
+  return Array.from(
+    new Set(
+      (data ?? [])
+        .filter((row: any) => normalizeDoc(row.documento).includes(normalized))
+        .map((row: any) => String(row.ixc_cliente_id)),
+    ),
+  )
+}
+
+export async function fetchDashboardMetrics(opts: {
+  tenantId: string
+  dateFrom: string
+  dateTo: string
+}): Promise<DashboardMetrics> {
+  const { tenantId, dateFrom, dateTo } = opts
+
+  const { data: pointsRows, error: pointsError } = await (supabase as any)
+    .from('pontuacao_faturas_processadas')
+    .select('pontos_gerados')
+    .eq('tenant_id', tenantId)
+    .eq('status_processamento', 'processado')
+    .gte('data_pagamento', `${dateFrom}T00:00:00.000Z`)
+    .lte('data_pagamento', `${dateTo}T23:59:59.999Z`)
+    .limit(10000)
+  if (pointsError) throw new Error(pointsError.message)
+
+  let redemptionRows: any[] = []
+
+  const rewardAttempt = await (supabase as any)
+    .from('reward_redemptions')
+    .select('id, points_spent, status, created_at')
+    .eq('tenant_id', tenantId)
+    .gte('created_at', `${dateFrom}T00:00:00.000Z`)
+    .lte('created_at', `${dateTo}T23:59:59.999Z`)
+    .limit(10000)
+
+  if (!rewardAttempt.error) {
+    redemptionRows = (rewardAttempt.data ?? []).filter((row: any) => {
+      const status = String(row.status ?? '').toLowerCase()
+      return status !== 'cancelado' && status !== 'cancelled'
+    })
+  } else {
+    const legacyAttempt = await (supabase as any)
+      .from('pontuacao_resgates')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .gte('solicitado_em', `${dateFrom}T00:00:00.000Z`)
+      .lte('solicitado_em', `${dateTo}T23:59:59.999Z`)
+      .limit(10000)
+
+    if (legacyAttempt.error) throw new Error(legacyAttempt.error.message)
+
+    redemptionRows = (legacyAttempt.data ?? []).filter((row: any) => {
+      const status = String(row.status ?? '').toLowerCase()
+      return status !== 'cancelado' && status !== 'cancelled'
+    })
+  }
+
+  return {
+    totalPoints: (pointsRows ?? []).reduce((sum: number, row: any) => sum + Number(row.pontos_gerados ?? 0), 0),
+    redemptionsCount: redemptionRows.length,
+    redeemedPoints: redemptionRows.reduce(
+      (sum: number, row: any) => sum + Number(row.points_spent ?? row.pontos_resgatados ?? 0),
+      0,
+    ),
+  }
+}
+
+export async function fetchDashboardHistory(opts: {
+  tenantId: string
+  dateFrom: string
+  dateTo: string
+  limit?: number
+  searchType?: DashboardSearchType
+  searchQuery?: string
+}): Promise<DashboardHistoryRow[]> {
+  const { tenantId, dateFrom, dateTo } = opts
+  const limit = Math.max(1, Math.min(50, Number(opts.limit ?? 8)))
+  const searchType = opts.searchType ?? 'name'
+  const searchQuery = opts.searchQuery?.trim() ?? ''
+
+  let allowedCustomerIds: string[] | null = null
+  if (searchQuery) {
+    allowedCustomerIds = await resolveCustomerIdsBySearch(tenantId, searchType, searchQuery)
+    if (allowedCustomerIds.length === 0) return []
+  }
+
+  let query = (supabase as any)
+    .from('pontuacao_faturas_processadas')
+    .select('id, ixc_cliente_id, competencia, data_pagamento, valor_pago, pontos_gerados, payload')
+    .eq('tenant_id', tenantId)
+    .eq('status_processamento', 'processado')
+    .gte('data_pagamento', `${dateFrom}T00:00:00.000Z`)
+    .lte('data_pagamento', `${dateTo}T23:59:59.999Z`)
+    .order('data_pagamento', { ascending: false })
+    .limit(limit)
+
+  if (allowedCustomerIds && allowedCustomerIds.length > 0) {
+    query = query.in('ixc_cliente_id', allowedCustomerIds)
+  }
+
+  const { data, error } = await query
+  if (error) throw new Error(error.message)
+
+  const rows = data ?? []
+  const customerIds: string[] = Array.from(new Set(rows.map((row: any) => String(row.ixc_cliente_id))))
+  const customerMap = await fetchClientBasicMap(tenantId, customerIds)
+
+  return rows.map((row: any) => {
+    const customerId = String(row.ixc_cliente_id)
+    const customer = customerMap.get(customerId)
+    const payload = (row.payload ?? {}) as Record<string, unknown>
+    const dueDate = typeof payload.dueDateIso === 'string'
+      ? payload.dueDateIso
+      : row.competencia
+
+    return {
+      id: String(row.id),
+      ixc_cliente_id: customerId,
+      cliente_nome: customer?.nome ?? null,
+      documento: customer?.documento ?? null,
+      data_vencimento: dueDate ? String(dueDate) : null,
+      data_pagamento: row.data_pagamento ? String(row.data_pagamento) : null,
+      valor_pago: Number(row.valor_pago ?? 0),
+      pontos_gerados: Number(row.pontos_gerados ?? 0),
+    }
+  })
+}

@@ -23,6 +23,9 @@ import logoBonifica from '@/assets/logo-bonifica.png'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase-client'
 
+export type DashboardSearchType = 'name' | 'cpfCnpj' | 'id'
+export const DASHBOARD_CLIENT_SEARCH_EVENT = 'dashboard:client-search'
+
 /* ─── Nav data ─── */
 interface NavItem {
   href: string
@@ -59,7 +62,15 @@ const navSections: NavSection[] = [
   },
   {
     label: 'CONFIGURAÇÕES',
-    items: [{ href: '/settings', label: 'Configurações', icon: Settings }],
+    items: [{
+      href: '/settings',
+      label: 'Configurações',
+      icon: Settings,
+      children: [
+        { href: '/settings', label: 'Integrações' },
+        { href: '/settings/campaigns', label: 'Campanhas' },
+      ],
+    }],
   },
 ]
 
@@ -70,10 +81,12 @@ const pageTitles: Record<string, string> = {
   '/cliente-em-dia/resgates': 'Resgates',
   '/receivables': 'Pontuação',
   '/settings': 'Configurações',
+  '/settings/campaigns': 'Campanhas',
 }
 
 function getPageTitle(pathname: string): string {
-  for (const [path, title] of Object.entries(pageTitles)) {
+  const entries = Object.entries(pageTitles).sort((a, b) => b[0].length - a[0].length)
+  for (const [path, title] of entries) {
     if (pathname === path || pathname.startsWith(path + '/')) return title
   }
   return 'Painel'
@@ -224,6 +237,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   /* Profile */
   const [profile, setProfile] = useState({ name: 'Usuário', email: 'Sem e-mail' })
+  const [headerSearchType, setHeaderSearchType] = useState<DashboardSearchType>('name')
+  const [headerSearchValue, setHeaderSearchValue] = useState('')
 
   const toggleCollapse = () => {
     setCollapsed((prev) => {
@@ -293,6 +308,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   }
 
   const initial = profile.name.trim().charAt(0).toUpperCase() || 'U'
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      window.dispatchEvent(new CustomEvent(DASHBOARD_CLIENT_SEARCH_EVENT, {
+        detail: {
+          searchType: headerSearchType,
+          query: headerSearchValue,
+        },
+      }))
+    }, 280)
+
+    return () => window.clearTimeout(timer)
+  }, [headerSearchType, headerSearchValue])
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">
@@ -427,13 +455,26 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
           {/* Center: search bar */}
           <div className="mx-auto hidden max-w-sm flex-1 px-4 lg:block">
-            <label className="flex items-center gap-2.5 rounded-lg border border-border bg-surface-2 px-3 py-[7px] transition-colors focus-within:border-primary/30 focus-within:bg-surface-3">
-              <Search className="h-3.5 w-3.5 text-muted-foreground/40" />
-              <input
-                placeholder="Buscar páginas, clientes..."
-                className="w-full bg-transparent text-[12.5px] text-foreground outline-none placeholder:text-muted-foreground/50"
-              />
-            </label>
+            <div className="flex items-center gap-2">
+              <select
+                value={headerSearchType}
+                onChange={(e) => setHeaderSearchType(e.target.value as DashboardSearchType)}
+                className="h-9 rounded-lg border border-border bg-surface-2 px-2.5 text-[11px] text-muted-foreground outline-none transition-colors focus:border-primary/40"
+              >
+                <option value="name">Nome</option>
+                <option value="cpfCnpj">CPF/CNPJ</option>
+                <option value="id">ID</option>
+              </select>
+              <label className="flex flex-1 items-center gap-2 rounded-lg border border-border bg-surface-2 px-3 py-[7px] transition-colors focus-within:border-primary/30 focus-within:bg-surface-3">
+                <Search className="h-3.5 w-3.5 text-muted-foreground/40" />
+                <input
+                  value={headerSearchValue}
+                  onChange={(e) => setHeaderSearchValue(e.target.value)}
+                  placeholder="Buscar clientes"
+                  className="w-full bg-transparent text-[12.5px] text-foreground outline-none placeholder:text-muted-foreground/50"
+                />
+              </label>
+            </div>
           </div>
 
           {/* Right: actions */}
