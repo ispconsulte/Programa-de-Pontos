@@ -101,6 +101,14 @@ interface CampaignCustomerSummaryRow {
   pontos_resgatados: number
 }
 
+function toStoredCampaignStatus(status: string | null | undefined): 'ativo' | 'suspenso' | 'bloqueado' | 'encerrado' {
+  const normalized = normalizeText(status)?.toLowerCase()
+  if (normalized === 'ativo') return 'ativo'
+  if (normalized === 'bloqueado') return 'bloqueado'
+  if (normalized === 'encerrado') return 'encerrado'
+  return 'suspenso'
+}
+
 interface IxcListResponse<T> {
   msg?: T[]
   registros?: T[]
@@ -498,7 +506,7 @@ async function upsertCampaignCustomer(
     email: resolveCustomerEmail(customer),
     telefone: resolveCustomerPhone(customer),
     status: derivedStatus,
-    status_campanha: derivedStatus,
+    status_campanha: toStoredCampaignStatus(derivedStatus),
     ultima_sincronizacao_em: new Date().toISOString(),
     metadata,
   }
@@ -542,7 +550,7 @@ async function acquireInvoiceLock(
     .from('pontuacao_faturas_processadas')
     .select('id, status_processamento, payload, created_at, updated_at')
     .eq('tenant_id', tenantId)
-    .eq('fatura_id', receivable.id)
+    .or(`ixc_fatura_id.eq.${receivable.id},fatura_id.eq.${receivable.id}`)
     .maybeSingle()
 
   if (existingError) throw new Error(existingError.message)
@@ -571,6 +579,7 @@ async function acquireInvoiceLock(
     tenant_id: tenantId,
     campanha_cliente_id: campaignCustomerId,
     sync_log_id: syncLogId,
+    ixc_fatura_id: receivable.id,
     ixc_cliente_id: receivable.id_cliente,
     ixc_contrato_id: resolveContractId(receivable),
     fatura_id: receivable.id,
@@ -645,7 +654,7 @@ async function loadExistingInvoiceStatus(
     .from('pontuacao_faturas_processadas')
     .select('status_processamento')
     .eq('tenant_id', tenantId)
-    .eq('fatura_id', receivableId)
+    .or(`ixc_fatura_id.eq.${receivableId},fatura_id.eq.${receivableId}`)
     .maybeSingle()
 
   if (error) throw new Error(error.message)
