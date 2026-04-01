@@ -941,7 +941,7 @@ Deno.serve(async (request) => {
             .insert({
               ixc_cliente_id: customer.id,
               ixc_fatura_id: receivable.id,
-              tipo_evento: 'pagamento_pontuado',
+              tipo_evento: resolveTipoEvento(paymentDateIso, dueDateIso),
               pontos: points,
               descricao: describePoints(points, paymentDateIso, dueDateIso),
               criado_por: 'sync_ixc_pagamentos',
