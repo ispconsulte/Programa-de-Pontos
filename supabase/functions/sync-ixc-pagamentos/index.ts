@@ -354,7 +354,10 @@ async function fetchIxcList<T>(
   }
 
   const json = await response.json()
-  console.log(`[DEBUG] IXC ${endpoint} response keys: ${Object.keys(json)}, total: ${json.total ?? 'N/A'}, registros: ${Array.isArray(json.registros) ? json.registros.length : typeof json.registros}, msg: ${Array.isArray(json.msg) ? json.msg.length : typeof json.msg}`)
+  console.log(`[DEBUG] IXC ${endpoint} raw response: ${JSON.stringify(json).substring(0, 500)}`)
+  if (json.type === 'error' || (json.type && !json.registros && !json.msg)) {
+    throw new Error(`IXC API error for ${endpoint}: ${json.message ?? JSON.stringify(json)}`)
+  }
   return json
 }
 
