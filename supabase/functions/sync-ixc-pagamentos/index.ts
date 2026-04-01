@@ -454,8 +454,9 @@ async function upsertCampaignCustomer(
   customer: ClienteItem,
   contractId: string | null,
   paymentDateIso: string | null,
-  existingStatus?: string | null,
+  existingCustomer?: CampaignCustomerSummaryRow | null,
 ) {
+  const derivedStatus = existingCustomer?.status ?? normalizeCustomerCampaignStatus(customer.ativo)
   const metadata = {
     origem: 'ixc',
     filial_id: normalizeText(customer.filial_id),
@@ -471,14 +472,32 @@ async function upsertCampaignCustomer(
     documento: normalizeText(customer.cnpj_cpf),
     email: resolveCustomerEmail(customer),
     telefone: resolveCustomerPhone(customer),
-    status: existingStatus ?? normalizeCustomerCampaignStatus(customer.ativo),
+    status: derivedStatus,
+    status_campanha: derivedStatus,
     ultima_sincronizacao_em: new Date().toISOString(),
     metadata,
   }
 
+  if (existingCustomer?.id) {
+    const { data, error } = await supabase
+      .from('pontuacao_campanha_clientes')
+      .update(row)
+      .eq('id', existingCustomer.id)
+      .select('id, tenant_id, ixc_cliente_id, status, pontos_acumulados, pontos_resgatados')
+      .single()
+
+    if (error) throw new Error(error.message)
+    return data
+  }
+
   const { data, error } = await supabase
     .from('pontuacao_campanha_clientes')
-    .upsert(row, { onConflict: 'tenant_id,ixc_cliente_id' })
+    .insert({
+      ...row,
+      pontos_acumulados: 0,
+      pontos_resgatados: 0,
+      pontos_disponiveis: 0,
+    })
     .select('id, tenant_id, ixc_cliente_id, status, pontos_acumulados, pontos_resgatados')
     .single()
 
@@ -775,7 +794,7 @@ Deno.serve(async (request) => {
           customer,
           resolveContractId(receivable),
           paymentDateIso,
-          existingCustomer?.status ?? null,
+          existingCustomer,
         )
 
         const processingHash = await sha256([
@@ -891,6 +910,7 @@ Deno.serve(async (request) => {
               email: resolveCustomerEmail(customer),
               telefone: resolveCustomerPhone(customer),
               pontos_acumulados: nextAccumulatedPoints,
+              pontos_disponiveis: Math.max(0, nextAccumulatedPoints - redeemedPoints),
               ultima_sincronizacao_em: new Date().toISOString(),
               metadata: {
                 origem: 'ixc',
