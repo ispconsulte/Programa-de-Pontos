@@ -264,6 +264,20 @@ function calculatePoints(paymentDateIso: string, dueDateIso: string): number {
   return 2
 }
 
+function resolveTipoEvento(paymentDateIso: string, dueDateIso: string): string {
+  const paymentDate = normalizeDateOnly(paymentDateIso)
+  const dueDate = normalizeDateOnly(dueDateIso)
+  if (!paymentDate || !dueDate) return 'pagamento_no_dia'
+
+  const paymentMs = Date.parse(`${paymentDate}T00:00:00.000Z`)
+  const dueMs = Date.parse(`${dueDate}T00:00:00.000Z`)
+  const diffDays = Math.floor((dueMs - paymentMs) / 86_400_000)
+
+  if (diffDays >= 3) return 'pagamento_antecipado'
+  if (diffDays >= 0) return 'pagamento_no_dia'
+  return 'pagamento_em_atraso'
+}
+
 function describePoints(points: number, paymentDateIso: string, dueDateIso: string): string {
   const paymentDate = normalizeDateOnly(paymentDateIso) ?? paymentDateIso
   const dueDate = normalizeDateOnly(dueDateIso) ?? dueDateIso
@@ -927,7 +941,7 @@ Deno.serve(async (request) => {
             .insert({
               ixc_cliente_id: customer.id,
               ixc_fatura_id: receivable.id,
-              tipo_evento: 'pagamento_pontuado',
+              tipo_evento: resolveTipoEvento(paymentDateIso, dueDateIso),
               pontos: points,
               descricao: describePoints(points, paymentDateIso, dueDateIso),
               criado_por: 'sync_ixc_pagamentos',
