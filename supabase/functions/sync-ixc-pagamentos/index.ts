@@ -496,7 +496,6 @@ async function upsertCampaignCustomer(
       ...row,
       pontos_acumulados: 0,
       pontos_resgatados: 0,
-      pontos_disponiveis: 0,
     })
     .select('id, tenant_id, ixc_cliente_id, status, pontos_acumulados, pontos_resgatados')
     .single()
@@ -910,7 +909,6 @@ Deno.serve(async (request) => {
               email: resolveCustomerEmail(customer),
               telefone: resolveCustomerPhone(customer),
               pontos_acumulados: nextAccumulatedPoints,
-              pontos_disponiveis: Math.max(0, nextAccumulatedPoints - redeemedPoints),
               ultima_sincronizacao_em: new Date().toISOString(),
               metadata: {
                 origem: 'ixc',
