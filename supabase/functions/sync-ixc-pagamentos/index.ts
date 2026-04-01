@@ -353,7 +353,12 @@ async function fetchIxcList<T>(
     throw new Error(`IXC list failed for ${endpoint}: ${response.status} | user=${connection.ixc_user} | token_preview=${token.substring(0,6)}...${token.substring(token.length-4)} | token_len=${token.length} | url=${url} | response=${body.substring(0,200)}`)
   }
 
-  return await response.json()
+  const json = await response.json()
+  console.log(`[DEBUG] IXC ${endpoint} raw response: ${JSON.stringify(json).substring(0, 500)}`)
+  if (json.type === 'error' || (json.type && !json.registros && !json.msg)) {
+    throw new Error(`IXC API error for ${endpoint}: ${json.message ?? JSON.stringify(json)}`)
+  }
+  return json
 }
 
 async function fetchIxcRecord<T>(
@@ -673,13 +678,13 @@ Deno.serve(async (request) => {
     for (let pageOffset = 0; pageOffset < maxPages; pageOffset += 1) {
       const currentPage = page + pageOffset
       const response = await fetchIxcList<FnAreceberItem>(connection, ixcToken, 'fn_areceber', {
-        qtype: 'fn_areceber.status',
-        query: 'R',
-        oper: '=',
+        qtype: 'id_carteira_cobranca',
+        query: '1',
+        oper: '>=',
         page: String(currentPage),
         rp: String(pageSize),
-        sortname: 'data_vencimento',
-        sortorder: 'asc',
+        sortname: 'fn_areceber.id',
+        sortorder: 'desc',
       })
 
       const rows = response.msg ?? response.registros ?? []

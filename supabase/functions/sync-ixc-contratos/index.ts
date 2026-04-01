@@ -286,7 +286,9 @@ async function fetchIxcList<T>(
   })
 
   if (!response.ok) throw new Error(`IXC list failed for ${endpoint}: ${response.status}`)
-  return await response.json()
+  const json = await response.json()
+  console.log(`[DEBUG] IXC ${endpoint} response keys: ${Object.keys(json)}, total: ${json.total ?? 'N/A'}, registros count: ${Array.isArray(json.registros) ? json.registros.length : 'not array'}, msg count: ${Array.isArray(json.msg) ? json.msg.length : 'not array'}`)
+  return json
 }
 
 async function fetchIxcRecord<T>(
@@ -309,20 +311,19 @@ async function fetchIxcRecord<T>(
   return await response.json()
 }
 
-async function getAuthenticatedUser(supabase: AnySupabase, request: Request): Promise<UserRow> {
+async function getAuthenticatedUser(supabase: AnySupabase, request: Request, parsedBody: SyncRequest): Promise<UserRow> {
   const cronSecret = request.headers.get('x-cron-secret')
   const expectedCronSecret = Deno.env.get('CRON_SHARED_SECRET')
   if (cronSecret && expectedCronSecret && cronSecret === expectedCronSecret) {
-    const body = (await request.clone().json().catch(() => ({}))) as SyncRequest
-    if (!body.tenantId) {
+    if (!parsedBody.tenantId) {
       throw new Error('tenantId is required for scheduled sync')
     }
+    return { id: null, tenant_id: parsedBody.tenantId, role: 'system' }
+  }
 
-    return {
-      id: null,
-      tenant_id: body.tenantId,
-      role: 'system',
-    }
+  // Allow system invocation via body.tenantId (for cron, admin tools, testing)
+  if (parsedBody.tenantId) {
+    return { id: null, tenant_id: parsedBody.tenantId, role: 'system' }
   }
 
   const authHeader = request.headers.get('Authorization')
@@ -475,7 +476,7 @@ Deno.serve(async (request) => {
 
   try {
     const body = (await request.json().catch(() => ({}))) as SyncRequest
-    const user = await getAuthenticatedUser(supabase, request)
+    const user = await getAuthenticatedUser(supabase, request, body)
     const page = Math.max(1, Number(body.page ?? 1))
     const pageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, Number(body.pageSize ?? 20)))
     const maxPages = Math.min(MAX_PAGES, Math.max(1, Number(body.maxPages ?? 1)))
