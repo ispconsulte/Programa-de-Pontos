@@ -101,6 +101,14 @@ interface CampaignCustomerSummaryRow {
   pontos_resgatados: number
 }
 
+function toStoredCampaignStatus(status: string | null | undefined): 'ativo' | 'suspenso' | 'bloqueado' | 'encerrado' {
+  const normalized = normalizeText(status)?.toLowerCase()
+  if (normalized === 'ativo') return 'ativo'
+  if (normalized === 'bloqueado') return 'bloqueado'
+  if (normalized === 'encerrado') return 'encerrado'
+  return 'suspenso'
+}
+
 interface IxcListResponse<T> {
   msg?: T[]
   registros?: T[]
@@ -384,6 +392,31 @@ async function fetchIxcRecord<T>(
   return await response.json()
 }
 
+async function fetchIxcCustomerById(
+  connection: IxcConnectionRow,
+  token: string,
+  customerId: string,
+): Promise<ClienteItem> {
+  const response = await fetchIxcList<ClienteItem>(connection, token, 'cliente', {
+    qtype: 'cliente.id',
+    query: customerId,
+    oper: '=',
+    page: '1',
+    rp: '1',
+    sortname: 'cliente.id',
+    sortorder: 'asc',
+  })
+
+  const rows = response.msg ?? response.registros ?? []
+  const customer = rows[0]
+
+  if (!customer?.id) {
+    throw new Error(`IXC customer not found for id ${customerId}`)
+  }
+
+  return customer
+}
+
 async function getAuthenticatedUser(supabase: AnySupabase, request: Request, parsedBody: SyncRequest): Promise<UserRow> {
   // Support cron secret
   const cronSecret = request.headers.get('x-cron-secret')
@@ -454,8 +487,9 @@ async function upsertCampaignCustomer(
   customer: ClienteItem,
   contractId: string | null,
   paymentDateIso: string | null,
-  existingStatus?: string | null,
+  existingCustomer?: CampaignCustomerSummaryRow | null,
 ) {
+  const derivedStatus = existingCustomer?.status ?? normalizeCustomerCampaignStatus(customer.ativo)
   const metadata = {
     origem: 'ixc',
     filial_id: normalizeText(customer.filial_id),
@@ -471,14 +505,31 @@ async function upsertCampaignCustomer(
     documento: normalizeText(customer.cnpj_cpf),
     email: resolveCustomerEmail(customer),
     telefone: resolveCustomerPhone(customer),
-    status: existingStatus ?? normalizeCustomerCampaignStatus(customer.ativo),
+    status: derivedStatus,
+    status_campanha: toStoredCampaignStatus(derivedStatus),
     ultima_sincronizacao_em: new Date().toISOString(),
     metadata,
   }
 
+  if (existingCustomer?.id) {
+    const { data, error } = await supabase
+      .from('pontuacao_campanha_clientes')
+      .update(row)
+      .eq('id', existingCustomer.id)
+      .select('id, tenant_id, ixc_cliente_id, status, pontos_acumulados, pontos_resgatados')
+      .single()
+
+    if (error) throw new Error(error.message)
+    return data
+  }
+
   const { data, error } = await supabase
     .from('pontuacao_campanha_clientes')
-    .upsert(row, { onConflict: 'tenant_id,ixc_cliente_id' })
+    .insert({
+      ...row,
+      pontos_acumulados: 0,
+      pontos_resgatados: 0,
+    })
     .select('id, tenant_id, ixc_cliente_id, status, pontos_acumulados, pontos_resgatados')
     .single()
 
@@ -499,7 +550,7 @@ async function acquireInvoiceLock(
     .from('pontuacao_faturas_processadas')
     .select('id, status_processamento, payload, created_at, updated_at')
     .eq('tenant_id', tenantId)
-    .eq('fatura_id', receivable.id)
+    .or(`ixc_fatura_id.eq.${receivable.id},fatura_id.eq.${receivable.id}`)
     .maybeSingle()
 
   if (existingError) throw new Error(existingError.message)
@@ -528,12 +579,14 @@ async function acquireInvoiceLock(
     tenant_id: tenantId,
     campanha_cliente_id: campaignCustomerId,
     sync_log_id: syncLogId,
+    ixc_fatura_id: receivable.id,
     ixc_cliente_id: receivable.id_cliente,
     ixc_contrato_id: resolveContractId(receivable),
     fatura_id: receivable.id,
     competencia: normalizeDateOnly(receivable.data_vencimento),
     data_pagamento: paymentDateIso,
     valor_pago: Number.parseFloat(normalizeText(receivable.valor_recebido) ?? '0'),
+    pontos_atribuidos: 0,
     pontos_gerados: 0,
     status_processamento: 'erro',
     hash_processamento: hash,
@@ -602,7 +655,7 @@ async function loadExistingInvoiceStatus(
     .from('pontuacao_faturas_processadas')
     .select('status_processamento')
     .eq('tenant_id', tenantId)
-    .eq('fatura_id', receivableId)
+    .or(`ixc_fatura_id.eq.${receivableId},fatura_id.eq.${receivableId}`)
     .maybeSingle()
 
   if (error) throw new Error(error.message)
@@ -719,7 +772,7 @@ Deno.serve(async (request) => {
       }
 
       try {
-        const customer = await fetchIxcRecord<ClienteItem>(connection, ixcToken, 'cliente', receivable.id_cliente)
+        const customer = await fetchIxcCustomerById(connection, ixcToken, receivable.id_cliente)
         const existingCustomer = await loadExistingCampaignCustomer(supabase, user.tenant_id, customer.id)
 
         if (dryRun) {
@@ -775,7 +828,7 @@ Deno.serve(async (request) => {
           customer,
           resolveContractId(receivable),
           paymentDateIso,
-          existingCustomer?.status ?? null,
+          existingCustomer,
         )
 
         const processingHash = await sha256([
@@ -814,6 +867,7 @@ Deno.serve(async (request) => {
           if (!dryRun) {
             await finalizeProcessedInvoice(supabase, lock.rowId, {
               campanha_cliente_id: campaignCustomer.id,
+              pontos_atribuidos: 0,
               pontos_gerados: 0,
               status_processamento: 'ignorado',
               payload: {
@@ -842,6 +896,7 @@ Deno.serve(async (request) => {
           if (!dryRun) {
             await finalizeProcessedInvoice(supabase, lock.rowId, {
               campanha_cliente_id: campaignCustomer.id,
+              pontos_atribuidos: 0,
               pontos_gerados: 0,
               status_processamento: 'ignorado',
               payload: {
@@ -905,6 +960,7 @@ Deno.serve(async (request) => {
 
           await finalizeProcessedInvoice(supabase, lock.rowId, {
             campanha_cliente_id: campaignCustomer.id,
+            pontos_atribuidos: points,
             pontos_gerados: points,
             status_processamento: 'processado',
             payload: {
