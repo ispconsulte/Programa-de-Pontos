@@ -541,16 +541,6 @@ Deno.serve(async (request) => {
           if (existingCampaignCustomer && existingCampaignCustomer.status !== derivedStatus) counters.statusUpdated += 1
         }
 
-        const profile = await ensureCustomerProfile(
-          supabase,
-          user.tenant_id,
-          connection.id,
-          customer,
-          primaryContract?.contractId ?? null,
-          metadata,
-          dryRun,
-        )
-
         const previousSnapshots =
           (existingCampaignCustomer?.metadata as Record<string, Json> | null)?.contratos_snapshot as Record<string, Json>[] | undefined
         const previousByContractId = new Map<string, Record<string, Json>>(
@@ -590,7 +580,6 @@ Deno.serve(async (request) => {
                   tenant_id: user.tenant_id,
                   ixc_connection_id: connection.id,
                   customer_id: customer.id,
-                  customer_profile_id: profile.profileId,
                   contract_id: contract.id,
                   event_type: 'upgrade',
                   event_source: 'ixc',
@@ -604,8 +593,6 @@ Deno.serve(async (request) => {
                     currentSnapshot,
                   },
                   created_by: user.id,
-                  description: 'Upgrade elegivel detectado via sync de contrato IXC',
-                  rule_code: 'upgrade_default',
                 })
 
               if (insertUpgradeError) throw new Error(insertUpgradeError.message)
@@ -641,7 +628,6 @@ Deno.serve(async (request) => {
                   tenant_id: user.tenant_id,
                   ixc_connection_id: connection.id,
                   customer_id: customer.id,
-                  customer_profile_id: profile.profileId,
                   contract_id: contract.id,
                   event_type: 'loyalty_renewal',
                   event_source: 'ixc',
@@ -655,8 +641,6 @@ Deno.serve(async (request) => {
                     currentSnapshot,
                   },
                   created_by: user.id,
-                  description: 'Renovacao de fidelidade detectada via sync de contrato IXC',
-                  rule_code: 'loyalty_renewal_default',
                 })
 
               if (insertRenewalError) throw new Error(insertRenewalError.message)
