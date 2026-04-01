@@ -586,6 +586,7 @@ async function acquireInvoiceLock(
     competencia: normalizeDateOnly(receivable.data_vencimento),
     data_pagamento: paymentDateIso,
     valor_pago: Number.parseFloat(normalizeText(receivable.valor_recebido) ?? '0'),
+    pontos_atribuidos: 0,
     pontos_gerados: 0,
     status_processamento: 'erro',
     hash_processamento: hash,
@@ -866,6 +867,7 @@ Deno.serve(async (request) => {
           if (!dryRun) {
             await finalizeProcessedInvoice(supabase, lock.rowId, {
               campanha_cliente_id: campaignCustomer.id,
+              pontos_atribuidos: 0,
               pontos_gerados: 0,
               status_processamento: 'ignorado',
               payload: {
@@ -894,6 +896,7 @@ Deno.serve(async (request) => {
           if (!dryRun) {
             await finalizeProcessedInvoice(supabase, lock.rowId, {
               campanha_cliente_id: campaignCustomer.id,
+              pontos_atribuidos: 0,
               pontos_gerados: 0,
               status_processamento: 'ignorado',
               payload: {
@@ -957,6 +960,7 @@ Deno.serve(async (request) => {
 
           await finalizeProcessedInvoice(supabase, lock.rowId, {
             campanha_cliente_id: campaignCustomer.id,
+            pontos_atribuidos: points,
             pontos_gerados: points,
             status_processamento: 'processado',
             payload: {
