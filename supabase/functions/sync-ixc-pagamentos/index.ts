@@ -384,6 +384,31 @@ async function fetchIxcRecord<T>(
   return await response.json()
 }
 
+async function fetchIxcCustomerById(
+  connection: IxcConnectionRow,
+  token: string,
+  customerId: string,
+): Promise<ClienteItem> {
+  const response = await fetchIxcList<ClienteItem>(connection, token, 'cliente', {
+    qtype: 'cliente.id',
+    query: customerId,
+    oper: '=',
+    page: '1',
+    rp: '1',
+    sortname: 'cliente.id',
+    sortorder: 'asc',
+  })
+
+  const rows = response.msg ?? response.registros ?? []
+  const customer = rows[0]
+
+  if (!customer?.id) {
+    throw new Error(`IXC customer not found for id ${customerId}`)
+  }
+
+  return customer
+}
+
 async function getAuthenticatedUser(supabase: AnySupabase, request: Request, parsedBody: SyncRequest): Promise<UserRow> {
   // Support cron secret
   const cronSecret = request.headers.get('x-cron-secret')
@@ -737,7 +762,7 @@ Deno.serve(async (request) => {
       }
 
       try {
-        const customer = await fetchIxcRecord<ClienteItem>(connection, ixcToken, 'cliente', receivable.id_cliente)
+        const customer = await fetchIxcCustomerById(connection, ixcToken, receivable.id_cliente)
         const existingCustomer = await loadExistingCampaignCustomer(supabase, user.tenant_id, customer.id)
 
         if (dryRun) {
