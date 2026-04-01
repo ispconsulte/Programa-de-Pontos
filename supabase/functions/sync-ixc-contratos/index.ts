@@ -474,7 +474,7 @@ Deno.serve(async (request) => {
 
   try {
     const body = (await request.json().catch(() => ({}))) as SyncRequest
-    const user = await getAuthenticatedUser(supabase, request)
+    const user = await getAuthenticatedUser(supabase, request, body)
     const page = Math.max(1, Number(body.page ?? 1))
     const pageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, Number(body.pageSize ?? 20)))
     const maxPages = Math.min(MAX_PAGES, Math.max(1, Number(body.maxPages ?? 1)))
