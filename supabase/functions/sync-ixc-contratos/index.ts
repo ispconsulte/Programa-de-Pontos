@@ -369,98 +369,7 @@ async function loadIxcConnection(
   return data as IxcConnectionRow
 }
 
-async function ensureCustomerProfile(
-  supabase: AnySupabase,
-  tenantId: string,
-  connectionId: string,
-  customer: ClienteItem,
-  contractId: string | null,
-  metadata: Record<string, Json>,
-  dryRun: boolean,
-) {
-  const { data: existingIdentity, error: identityError } = await supabase
-    .from('customer_identities')
-    .select('id, customer_profile_id')
-    .eq('tenant_id', tenantId)
-    .eq('source_type', 'ixc')
-    .eq('source_connection_id', connectionId)
-    .eq('external_customer_id', customer.id)
-    .maybeSingle()
-
-  if (identityError) throw new Error(identityError.message)
-
-  let profileId = existingIdentity?.customer_profile_id as string | undefined
-  if (!profileId) {
-    const reusableFilters = [
-      normalizeText(customer.cnpj_cpf) ? `document_number.eq.${normalizeText(customer.cnpj_cpf)}` : null,
-      normalizeCustomerEmail(customer) ? `email.eq.${normalizeCustomerEmail(customer)}` : null,
-      normalizeCustomerPhone(customer) ? `phone.eq.${normalizeCustomerPhone(customer)}` : null,
-    ].filter(Boolean) as string[]
-
-    if (reusableFilters.length > 0) {
-      const { data: reusableProfile, error: reusableError } = await supabase
-        .from('customer_profiles')
-        .select('id')
-        .eq('tenant_id', tenantId)
-        .or(reusableFilters.join(','))
-        .limit(1)
-        .maybeSingle()
-
-      if (reusableError && reusableError.code !== 'PGRST116') throw new Error(reusableError.message)
-      profileId = reusableProfile?.id as string | undefined
-    }
-  }
-
-  if (!profileId) {
-    if (dryRun) return { profileId: 'dry-run-profile' }
-
-    const { data: createdProfile, error: createProfileError } = await supabase
-      .from('customer_profiles')
-      .insert({
-        tenant_id: tenantId,
-        display_name: normalizeCustomerName(customer),
-        document_number: normalizeText(customer.cnpj_cpf),
-        email: normalizeCustomerEmail(customer),
-        phone: normalizeCustomerPhone(customer),
-        metadata,
-      })
-      .select('id')
-      .single()
-
-    if (createProfileError) throw new Error(createProfileError.message)
-    profileId = createdProfile.id as string
-  } else if (!dryRun) {
-    const { error: updateProfileError } = await supabase
-      .from('customer_profiles')
-      .update({
-        display_name: normalizeCustomerName(customer),
-        document_number: normalizeText(customer.cnpj_cpf),
-        email: normalizeCustomerEmail(customer),
-        phone: normalizeCustomerPhone(customer),
-        metadata,
-      })
-      .eq('id', profileId)
-
-    if (updateProfileError) throw new Error(updateProfileError.message)
-  }
-
-  if (dryRun) return { profileId }
-
-  const { error: upsertIdentityError } = await supabase
-    .from('customer_identities')
-    .upsert({
-      tenant_id: tenantId,
-      customer_profile_id: profileId,
-      source_type: 'ixc',
-      source_connection_id: connectionId,
-      external_customer_id: customer.id,
-      external_contract_id: contractId,
-      metadata,
-    }, { onConflict: 'tenant_id,source_type,source_connection_id,external_customer_id' })
-
-  if (upsertIdentityError) throw new Error(upsertIdentityError.message)
-  return { profileId }
-}
+// ensureCustomerProfile removed — tables customer_profiles/customer_identities do not exist yet
 
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') {
@@ -632,16 +541,6 @@ Deno.serve(async (request) => {
           if (existingCampaignCustomer && existingCampaignCustomer.status !== derivedStatus) counters.statusUpdated += 1
         }
 
-        const profile = await ensureCustomerProfile(
-          supabase,
-          user.tenant_id,
-          connection.id,
-          customer,
-          primaryContract?.contractId ?? null,
-          metadata,
-          dryRun,
-        )
-
         const previousSnapshots =
           (existingCampaignCustomer?.metadata as Record<string, Json> | null)?.contratos_snapshot as Record<string, Json>[] | undefined
         const previousByContractId = new Map<string, Record<string, Json>>(
@@ -681,7 +580,6 @@ Deno.serve(async (request) => {
                   tenant_id: user.tenant_id,
                   ixc_connection_id: connection.id,
                   customer_id: customer.id,
-                  customer_profile_id: profile.profileId,
                   contract_id: contract.id,
                   event_type: 'upgrade',
                   event_source: 'ixc',
@@ -695,8 +593,6 @@ Deno.serve(async (request) => {
                     currentSnapshot,
                   },
                   created_by: user.id,
-                  description: 'Upgrade elegivel detectado via sync de contrato IXC',
-                  rule_code: 'upgrade_default',
                 })
 
               if (insertUpgradeError) throw new Error(insertUpgradeError.message)
@@ -732,7 +628,6 @@ Deno.serve(async (request) => {
                   tenant_id: user.tenant_id,
                   ixc_connection_id: connection.id,
                   customer_id: customer.id,
-                  customer_profile_id: profile.profileId,
                   contract_id: contract.id,
                   event_type: 'loyalty_renewal',
                   event_source: 'ixc',
@@ -746,8 +641,6 @@ Deno.serve(async (request) => {
                     currentSnapshot,
                   },
                   created_by: user.id,
-                  description: 'Renovacao de fidelidade detectada via sync de contrato IXC',
-                  rule_code: 'loyalty_renewal_default',
                 })
 
               if (insertRenewalError) throw new Error(insertRenewalError.message)

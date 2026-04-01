@@ -678,12 +678,12 @@ Deno.serve(async (request) => {
     for (let pageOffset = 0; pageOffset < maxPages; pageOffset += 1) {
       const currentPage = page + pageOffset
       const response = await fetchIxcList<FnAreceberItem>(connection, ixcToken, 'fn_areceber', {
-        qtype: 'id_carteira_cobranca',
-        query: '1',
-        oper: '>=',
+        qtype: 'fn_areceber.status',
+        query: 'R',
+        oper: '=',
         page: String(currentPage),
         rp: String(pageSize),
-        sortname: 'fn_areceber.id',
+        sortname: 'fn_areceber.data_vencimento',
         sortorder: 'desc',
       })
 
@@ -870,23 +870,14 @@ Deno.serve(async (request) => {
           const { error: historyError } = await supabase
             .from('pontuacao_historico')
             .insert({
-              tenant_id: user.tenant_id,
-              campanha_cliente_id: campaignCustomer.id,
-              tipo_movimentacao: 'credito',
-              origem: HISTORY_ORIGIN,
+              ixc_cliente_id: customer.id,
+              ixc_fatura_id: receivable.id,
+              tipo_evento: 'pagamento_pontuado',
+              pontos: points,
               descricao: describePoints(points, paymentDateIso, dueDateIso),
-              pontos_movimentados: points,
-              saldo_apos: nextAccumulatedPoints - redeemedPoints,
-              referencia_externa: receivable.id,
-              payload: {
-                ixcConnectionId: connection.id,
-                ixcClienteId: customer.id,
-                ixcContratoId: resolveContractId(receivable),
-                faturaId: receivable.id,
-                valorPago: normalizeText(receivable.valor_recebido),
-                dueDateIso,
-                paymentDateIso,
-              },
+              criado_por: 'sync_ixc_pagamentos',
+              referencia_mes: paymentDateIso ? new Date(paymentDateIso).getMonth() + 1 : null,
+              referencia_ano: paymentDateIso ? new Date(paymentDateIso).getFullYear() : null,
             })
 
           if (historyError) throw new Error(historyError.message)
