@@ -675,13 +675,13 @@ Deno.serve(async (request) => {
     for (let pageOffset = 0; pageOffset < maxPages; pageOffset += 1) {
       const currentPage = page + pageOffset
       const response = await fetchIxcList<FnAreceberItem>(connection, ixcToken, 'fn_areceber', {
-        qtype: 'fn_areceber.status',
-        query: 'R',
-        oper: '=',
+        qtype: 'id_carteira_cobranca',
+        query: '1',
+        oper: '>=',
         page: String(currentPage),
         rp: String(pageSize),
-        sortname: 'data_vencimento',
-        sortorder: 'asc',
+        sortname: 'fn_areceber.id',
+        sortorder: 'desc',
       })
 
       const rows = response.msg ?? response.registros ?? []
