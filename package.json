@@ -1,7 +1,8 @@
 {
-  "name": "ixc-integration-api",
+  "name": "programa-de-pontos",
   "version": "1.0.0",
   "description": "IXC Integration API - Fase 1",
+  "private": true,
   "main": "backend/dist/server.js",
   "scripts": {
     "dev": "vite --config frontend/vite.config.ts",
@@ -11,6 +12,7 @@
     "build:dev": "npm run build:frontend",
     "build:frontend": "vite build --config frontend/vite.config.ts",
     "build:backend": "tsc -p backend/tsconfig.json",
+    "vercel-build": "npm run build:frontend",
     "preview": "vite preview --config frontend/vite.config.ts",
     "dev:backend": "tsx watch backend/src/server.ts",
     "start": "node backend/dist/server.js",

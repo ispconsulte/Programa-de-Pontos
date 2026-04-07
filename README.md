@@ -64,6 +64,34 @@ O fluxo geral é: **entrar → consultar pontuação → acompanhar evolução �
 
 ---
 
+## 🛠️ Estrutura do projeto
+
+- `frontend/`: aplicação web em React/Vite
+- `backend/`: API e regras de negócio em Fastify/TypeScript
+- `supabase/`: migrations e funções auxiliares
+- `dist/`: saída do build do frontend para deploy estático
+
+---
+
+## 📦 Scripts principais
+
+- `npm run dev`: sobe o frontend local
+- `npm run dev:full`: sobe frontend e backend juntos
+- `npm run build`: builda frontend e backend
+- `npm run build:frontend`: gera a pasta `dist/`
+- `npm run test`: roda os testes do backend
+- `npm run typecheck`: valida os tipos do frontend e backend
+
+---
+
+## ▲ Deploy
+
+- O deploy da Vercel publica somente o frontend estático gerado em `dist/`.
+- A configuração de deploy está versionada em `vercel.json`.
+- Variáveis sensíveis devem ficar apenas na Vercel, Supabase ou ambiente local, nunca no Git.
+
+---
+
 ## 👥 Desenvolvimento
 
 Desenvolvido por:
