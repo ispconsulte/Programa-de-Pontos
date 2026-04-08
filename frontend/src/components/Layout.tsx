@@ -294,18 +294,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       >
         {/* Logo area — compact */}
         <div className={cn(
-          'relative flex flex-shrink-0 items-center border-b border-sidebar-border transition-all duration-300',
-          collapsed ? 'h-14 justify-center px-2' : 'h-14 gap-3 px-4'
+          'relative flex flex-shrink-0 items-center justify-center border-b border-sidebar-border transition-all duration-300',
+          collapsed ? 'h-14 px-2' : 'h-20 px-4'
         )}>
-          <div className="flex h-9 w-9 items-center justify-center flex-shrink-0">
-            <AnimatedGiftBox size={collapsed ? 32 : 36} />
+          <div className={cn(
+            'flex items-center justify-center transition-all duration-300',
+            collapsed ? 'h-9 w-9' : 'h-16 w-16'
+          )}>
+            <AnimatedGiftBox size={collapsed ? 32 : 64} />
           </div>
-          {!collapsed && (
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-foreground leading-tight">Bonifica</p>
-              <p className="truncate text-[10px] text-muted-foreground">{tenantName}</p>
-            </div>
-          )}
 
           {/* Mobile close */}
           <button
