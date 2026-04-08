@@ -98,19 +98,19 @@
     --primary: 214 92% 40%;
     --primary-foreground: 0 0% 100%;
     --secondary: 220 24% 90%;
-    --secondary-foreground: 222 47% 11%;
+    --secondary-foreground: 222 47% 15%;
     --muted: 220 20% 90%;
-    --muted-foreground: 220 16% 40%;
+    --muted-foreground: 220 18% 32%;
     --accent: 214 92% 40%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 78% 45%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 16% 72%;
+    --border: 220 16% 78%;
     --input: 220 20% 84%;
     --ring: 214 92% 45%;
-    --success: 160 60% 36%;
+    --success: 160 60% 30%;
     --success-foreground: 0 0% 100%;
-    --warning: 38 92% 42%;
+    --warning: 38 92% 38%;
     --warning-foreground: 0 0% 100%;
     --info: 214 92% 45%;
     --info-foreground: 0 0% 100%;
@@ -177,18 +177,24 @@
     transition: background-color 0.35s ease, color 0.35s ease;
   }
 
-  /* Smooth theme transitions — scoped to key surfaces only for performance */
-  .bg-background,
-  .bg-card,
-  [class*="bg-surface-"],
-  [class*="bg-sidebar"],
-  [class*="bg-muted"],
-  [class*="border-"] {
+  /* Smooth theme transitions — all elements */
+  *,
+  *::before,
+  *::after {
     transition:
-      background-color 0.3s ease,
-      border-color 0.3s ease,
-      color 0.25s ease,
-      box-shadow 0.3s ease;
+      background-color 0.4s ease,
+      border-color 0.4s ease,
+      color 0.35s ease,
+      box-shadow 0.4s ease,
+      fill 0.35s ease,
+      stroke 0.35s ease;
+  }
+
+  /* Exclude animations/transforms from theme transition to avoid jank */
+  [class*="animate-"],
+  [class*="transition-transform"],
+  [class*="transition-opacity"] {
+    transition-property: transform, opacity;
   }
 
   h1, h2, h3, h4, h5, h6 {
