@@ -10,13 +10,12 @@ import { Gift, Package, Sparkles, Truck } from 'lucide-react'
 import { supabase } from '@/lib/supabase-client'
 import { getCurrentTenantId } from '@/lib/supabase-queries'
 
-type RedemptionStatus = 'pendente' | 'em_preparo' | 'entregue' | 'cancelado'
+type RedemptionStatus = 'pendente' | 'entregue' | 'cancelado'
 
 const STATUS_TABS: { value: RedemptionStatus | 'all'; label: string }[] = [
   { value: 'all', label: 'Todos' },
-  { value: 'pendente', label: 'Pendente' },
-  { value: 'em_preparo', label: 'Em preparo' },
   { value: 'entregue', label: 'Entregue' },
+  { value: 'pendente', label: 'Pendente' },
 ]
 
 interface RedemptionRow {
