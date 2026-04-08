@@ -197,8 +197,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true
     const apply = async () => {
+      setProfileLoading(true)
       try {
-        const currentUser = await fetchCurrentUserProfile()
+        const currentUser = await fetchCurrentUserProfile({ force: true })
         if (!mounted) return
         setProfile({
           name: currentUser.name,
@@ -219,8 +220,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         setProfile({
           name: String(m.full_name || m.name || m.display_name || user?.email?.split('@')[0] || 'Usuário'),
           email: user?.email || 'Sem e-mail',
-          role: 'operator',
+          role: '',
         })
+      } finally {
+        if (mounted) setProfileLoading(false)
       }
     }
     apply()
@@ -229,11 +232,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       clearCurrentTenantIdCache()
       setTenantName('Empresa')
       if (!session?.user) {
-        setProfile({ name: 'Usuário', email: 'Sem e-mail', role: 'operator' })
+        setProfile({ name: 'Usuário', email: 'Sem e-mail', role: '' })
+        setProfileLoading(false)
         return
       }
-      // Re-fetch real profile (including role from DB)
-      fetchCurrentUserProfile()
+      setProfileLoading(true)
+      fetchCurrentUserProfile({ force: true })
         .then((currentUser) => {
           if (!mounted) return
           setProfile({ name: currentUser.name, email: currentUser.email, role: currentUser.role })
@@ -252,8 +256,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           setProfile({
             name: String(m.full_name || m.name || m.display_name || user?.email?.split('@')[0] || 'Usuário'),
             email: user?.email || 'Sem e-mail',
-            role: 'operator',
+            role: '',
           })
+        })
+        .finally(() => {
+          if (mounted) setProfileLoading(false)
         })
     })
     return () => {
