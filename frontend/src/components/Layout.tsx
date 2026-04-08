@@ -19,7 +19,7 @@ import {
   X,
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import logoBonifica from '@/assets/logo-bonifica.png'
+import { Gift as GiftIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase-client'
 import {
@@ -392,17 +392,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           'flex flex-shrink-0 items-center justify-center border-b border-sidebar-border transition-all duration-300',
           collapsed ? 'h-20 px-2' : 'h-28 px-5'
         )}>
-          <img
-            src={logoBonifica}
-            alt="Bonifica"
-            className={cn(
-              'flex-shrink-0 transition-all duration-300 object-contain',
-              collapsed
-                ? 'h-11 w-11'
-                : 'h-24'
-            )}
-            style={{ filter: 'drop-shadow(0 0 8px hsl(var(--primary) / 0.25))' }}
-          />
+          <div className={cn(
+            'flex items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-[hsl(48_96%_58%_/_0.1)] transition-all duration-300',
+            collapsed ? 'h-10 w-10' : 'h-16 w-16'
+          )} style={{ boxShadow: '0 0 20px hsl(var(--primary) / 0.15)' }}>
+            <GiftIcon className={cn(
+              'text-primary transition-all duration-300',
+              collapsed ? 'h-5 w-5' : 'h-8 w-8'
+            )} />
+          </div>
 
           {/* Mobile close */}
           <button

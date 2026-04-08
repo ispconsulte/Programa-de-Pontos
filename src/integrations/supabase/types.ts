@@ -999,7 +999,6 @@ export type Database = {
           created_at: string
           email: string
           id: string
-          password_hash: string
           role: string
           tenant_id: string
         }
@@ -1007,7 +1006,6 @@ export type Database = {
           created_at?: string
           email: string
           id?: string
-          password_hash: string
           role?: string
           tenant_id: string
         }
@@ -1015,7 +1013,6 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
-          password_hash?: string
           role?: string
           tenant_id?: string
         }
