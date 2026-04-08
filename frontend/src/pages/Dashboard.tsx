@@ -37,6 +37,7 @@ import {
 import {
   autocompleteCampaignClients,
   fetchCampaignClientFaturas,
+  fetchCampaignClientRedemptions,
   fetchCampaignClientById,
   fetchDashboardHistory,
   fetchDashboardMetrics,
@@ -44,6 +45,7 @@ import {
   type CampaignClientRow,
   type DashboardHistoryRow,
   type ReceivableRow,
+  type RedemptionRow,
 } from '@/lib/supabase-queries'
 
 /* ── Types ────────────────────────────────────────────────────────────── */
