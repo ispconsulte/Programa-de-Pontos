@@ -46,17 +46,26 @@ interface NavSection {
 
 const baseNavSections: NavSection[] = [
   {
-    label: 'OPERAÇÃO',
+    label: '',
     items: [
-      { href: '/operacao', label: 'Operação', icon: Home },
-      { href: '/resgates', label: 'Resgates', icon: Coins },
+      { href: '/operacao', label: 'Painel', icon: Home },
+      { href: '/receivables', label: 'Pontuação', icon: Coins },
+      { href: '/resgates', label: 'Resgates', icon: Gift },
       { href: '/catalogo', label: 'Catálogo', icon: Gift },
     ],
   },
 ]
 
 const adminNavSections: NavSection[] = [
-  ...baseNavSections,
+  {
+    label: '',
+    items: [
+      { href: '/operacao', label: 'Painel', icon: Home },
+      { href: '/receivables', label: 'Pontuação', icon: Coins },
+      { href: '/resgates', label: 'Resgates', icon: Gift },
+      { href: '/catalogo', label: 'Catálogo', icon: Gift },
+    ],
+  },
   {
     label: 'ADMINISTRAÇÃO',
     items: [
