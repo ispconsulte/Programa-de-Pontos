@@ -18,7 +18,7 @@ import {
   X,
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import menuLateralImg from '@/assets/menu-lateral.png'
+import AnimatedGiftBox from '@/components/AnimatedGiftBox'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase-client'
 import {
