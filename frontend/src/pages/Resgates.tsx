@@ -115,6 +115,7 @@ export default function ResgatesPage() {
               <p className="text-xs text-muted-foreground">Acompanhe os resgates dos clientes</p>
             </div>
             <RegisterRedemptionDialog
+              onRedemptionComplete={() => setReloadKey(k => k + 1)}
               trigger={
                 <Button size="sm">
                   <Sparkles className="h-3.5 w-3.5" />
