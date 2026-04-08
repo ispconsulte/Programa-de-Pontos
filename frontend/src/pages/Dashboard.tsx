@@ -232,10 +232,12 @@ export default function DashboardPage() {
     try {
       const tenantId = await getCurrentTenantId()
       if (!tenantId) { setClientError('Tenant não encontrado.'); return }
-      console.log('[Dashboard] selectClient:', { clientId: client.id, tenantId })
-      const faturasData = await fetchCampaignClientFaturas(tenantId, client.id)
-      console.log('[Dashboard] faturas loaded:', faturasData.length)
+      const [faturasData, redemptionsData] = await Promise.all([
+        fetchCampaignClientFaturas(tenantId, client.id),
+        fetchCampaignClientRedemptions(client.ixc_cliente_id),
+      ])
       setFaturas(faturasData)
+      setRedemptions(redemptionsData)
     } catch (err) {
       console.error('[Dashboard] selectClient error:', err)
       setClientError(err instanceof Error ? err.message : 'Erro ao carregar faturas.')
