@@ -21,29 +21,10 @@ const refreshSchema = z.object({
   refreshToken: z.string(),
 })
 
-const SHARED_COMPANY_EMAIL = 'contatoispconsulte@gmail.com'
-
-async function resolveSharedTenantId() {
-  const { data: sharedUser, error } = await supabaseAdmin
-    .from('users')
-    .select('tenant_id')
-    .eq('email', SHARED_COMPANY_EMAIL)
-    .limit(1)
-    .maybeSingle()
-
-  if (error) {
-    throw new AppError(500, error.message)
-  }
-
-  return sharedUser?.tenant_id ?? null
-}
-
 async function ensureTenantForSupabaseUser(userId: string, email: string, tenantNameOverride?: string) {
   if (!userId || !email) {
     throw new AppError(401, 'Unauthorized')
   }
-
-  const sharedTenantId = await resolveSharedTenantId()
 
   const { data: existing, error: existingError } = await supabaseAdmin
     .from('users')
@@ -56,19 +37,8 @@ async function ensureTenantForSupabaseUser(userId: string, email: string, tenant
   }
 
   if (existing) {
-    if (sharedTenantId && existing.tenant_id !== sharedTenantId) {
-      const { error: remapError } = await supabaseAdmin
-        .from('users')
-        .update({ tenant_id: sharedTenantId })
-        .eq('id', existing.id)
-
-      if (remapError) {
-        throw new AppError(500, remapError.message)
-      }
-    }
-
     return {
-      tenantId: sharedTenantId ?? existing.tenant_id,
+      tenantId: existing.tenant_id,
       userId: existing.id,
       created: false,
     }
@@ -90,24 +60,17 @@ async function ensureTenantForSupabaseUser(userId: string, email: string, tenant
 
   const tenantName = tenantNameOverride?.trim() || (email.split('@')[1] ?? email)
   let tenantId: string | null = null
-  let createdTenantId: string | null = null
   try {
-    tenantId = sharedTenantId
+    const { data: tenant, error: tenantError } = await supabaseAdmin
+      .from('tenants')
+      .insert({ name: tenantName })
+      .select('id')
+      .single()
 
-    if (!tenantId) {
-      const { data: tenant, error: tenantError } = await supabaseAdmin
-        .from('tenants')
-        .insert({ name: tenantName })
-        .select('id')
-        .single()
-
-      if (tenantError || !tenant) {
-        throw new AppError(500, tenantError?.message || 'Failed to create tenant')
-      }
-
-      tenantId = tenant.id
-      createdTenantId = tenant.id
+    if (tenantError || !tenant) {
+      throw new AppError(500, tenantError?.message || 'Failed to create tenant')
     }
+    tenantId = tenant.id
 
     const { error: userInsertError } = await supabaseAdmin
       .from('users')
@@ -130,8 +93,8 @@ async function ensureTenantForSupabaseUser(userId: string, email: string, tenant
     }
   } catch (err) {
     const maybeAppError = err as AppError
-    if (createdTenantId) {
-      await supabaseAdmin.from('tenants').delete().eq('id', createdTenantId)
+    if (tenantId) {
+      await supabaseAdmin.from('tenants').delete().eq('id', tenantId)
     }
     if (maybeAppError.statusCode === 500 && maybeAppError.message.toLowerCase().includes('duplicate')) {
       throw new AppError(409, 'User already exists')
