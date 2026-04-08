@@ -1,8 +1,19 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/integrations/supabase/types'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined
-const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY) as string | undefined
+declare const __PUBLIC_SUPABASE_URL__: string
+declare const __PUBLIC_SUPABASE_ANON_KEY__: string
+
+const supabaseUrl = (
+  import.meta.env.VITE_SUPABASE_URL ??
+  __PUBLIC_SUPABASE_URL__
+) as string | undefined
+
+const supabaseAnonKey = (
+  import.meta.env.VITE_SUPABASE_ANON_KEY ??
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
+  __PUBLIC_SUPABASE_ANON_KEY__
+) as string | undefined
 
 export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey)
 

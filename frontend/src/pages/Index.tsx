@@ -15,7 +15,7 @@ export default function RootPage() {
     const routeBySession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (session) {
-        navigate('/dashboard', { replace: true })
+        navigate('/operacao', { replace: true })
       } else {
         navigate('/login', { replace: true })
       }

@@ -5,6 +5,12 @@ import { fileURLToPath } from 'url'
 
 const frontendRoot = fileURLToPath(new URL('.', import.meta.url))
 const appVersion = process.env.VITE_APP_VERSION || process.env.npm_package_version || 'dev'
+const publicSupabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || ''
+const publicSupabaseAnonKey =
+  process.env.VITE_SUPABASE_ANON_KEY ||
+  process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  process.env.SUPABASE_ANON_KEY ||
+  ''
 
 function versionManifestPlugin() {
   const versionPayload = JSON.stringify({ version: appVersion }, null, 2)
@@ -43,6 +49,8 @@ export default defineConfig(({ mode }) => ({
   plugins: [react(), versionManifestPlugin()],
   define: {
     __APP_VERSION__: JSON.stringify(appVersion),
+    __PUBLIC_SUPABASE_URL__: JSON.stringify(publicSupabaseUrl),
+    __PUBLIC_SUPABASE_ANON_KEY__: JSON.stringify(publicSupabaseAnonKey),
   },
   build: {
     outDir: path.resolve(frontendRoot, '../dist'),
