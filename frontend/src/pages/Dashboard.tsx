@@ -279,7 +279,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between border-b border-border px-5 py-4">
               <h2 className="text-sm font-semibold text-foreground">Últimos registros</h2>
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" disabled={refreshBusy} onClick={() => void throttledFetch()}>
+                <Button variant="ghost" size="sm" disabled={refreshBusy} onClick={handleRefresh}>
                   <RefreshCw className={`h-3.5 w-3.5 ${refreshBusy ? 'animate-spin' : ''}`} />
                 </Button>
                 <Button asChild variant="outline" size="sm">
