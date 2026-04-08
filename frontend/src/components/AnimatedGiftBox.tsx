@@ -41,12 +41,12 @@ export default function AnimatedGiftBox({ size = 96, className = '' }: { size?: 
       }
     }), [])
 
-  // Sparkle trails — small bright dots that rise upward
+  // Sparkle trails — small bright dots that drift downward
   const sparkles = useMemo(() =>
     Array.from({ length: 10 }, (_, i) => ({
       id: i,
       x: (Math.random() - 0.5) * 60,
-      ty: -(40 + Math.random() * 50),
+      ty: 40 + Math.random() * 50,
       delay: 100 + Math.random() * 400,
       size: 2 + Math.random() * 2.5,
       color: ['#fbbf24', '#f9fafb', '#fde68a', '#a5f3fc', '#c4b5fd'][i % 5],
