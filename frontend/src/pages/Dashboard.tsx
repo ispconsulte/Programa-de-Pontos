@@ -285,10 +285,10 @@ export default function DashboardPage() {
         <div className="page-stack">
           {/* ═══ SELECTED CLIENT — inline detail ═══ */}
           {selectedClient && (
-            <div className="space-y-4 animate-in fade-in-0 slide-in-from-top-2 duration-300">
+            <div className="space-y-5 animate-in fade-in-0 slide-in-from-top-2 duration-300">
               {clientError && <AlertBanner variant="error" message={clientError} />}
 
-              {/* Search stays visible at top */}
+              {/* Search stays visible at top — compact */}
               <section className="rounded-xl border border-border bg-card p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <Button variant="ghost" size="icon" className="h-8 w-8" onClick={clearSelection}>
@@ -338,35 +338,39 @@ export default function DashboardPage() {
                 </div>
               </section>
 
-              {/* Client header */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ${avatarColor(selectedClient.nome_cliente || '#')}`}>
+              {/* Client header — hero-style */}
+              <div className="flex items-center justify-between rounded-xl border border-border bg-card px-5 py-4">
+                <div className="flex items-center gap-4">
+                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-base font-bold ${avatarColor(selectedClient.nome_cliente || '#')}`}>
                     {(selectedClient.nome_cliente?.trim()?.[0] || '#').toUpperCase()}
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-foreground">{selectedClient.nome_cliente}</h2>
-                    <p className="text-xs text-muted-foreground">{selectedClient.documento || 'Sem documento'}</p>
+                    <div className="flex items-center gap-2.5">
+                      <h2 className="text-lg font-bold text-foreground leading-tight">{selectedClient.nome_cliente}</h2>
+                      {statusBadge(selectedClient.status ?? '—')}
+                    </div>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{selectedClient.documento || 'Sem documento'}</p>
                   </div>
-                  <div className="ml-2">{statusBadge(selectedClient.status ?? '—')}</div>
                 </div>
-                <Button variant="outline" size="icon" className="h-9 w-9" disabled={clientRefreshBusy} onClick={() => void throttledClientRefresh()}>
+                <Button variant="outline" size="icon" className="h-9 w-9 rounded-lg" disabled={clientRefreshBusy} onClick={() => void throttledClientRefresh()}>
                   <RefreshCw className={`h-3.5 w-3.5 ${clientRefreshBusy ? 'animate-spin' : ''}`} />
                 </Button>
               </div>
 
-              {/* Points */}
+              {/* Points — polished cards with larger numbers */}
               <div className="grid gap-3 sm:grid-cols-3">
                 <PointCard label="Acumulados" value={selectedClient.pontos_acumulados} icon={TrendingUp} variant="emerald" />
                 <PointCard label="Resgatados" value={selectedClient.pontos_resgatados} icon={Gift} variant="amber" />
                 <PointCard label="Disponíveis" value={selectedClient.pontos_disponiveis ?? 0} icon={Coins} variant="primary" />
               </div>
 
-              {/* Info */}
-              <Card>
-                <CardHeader className="py-3 px-4"><CardTitle className="text-sm">Informações</CardTitle></CardHeader>
-                <CardContent className="px-4 pb-4">
-                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {/* Info — clean grid */}
+              <Card className="overflow-hidden">
+                <CardHeader className="py-3.5 px-5 border-b border-border">
+                  <CardTitle className="text-sm font-bold">Informações</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     <InfoField icon={Users} label="Nome">{selectedClient.nome_cliente}</InfoField>
                     <InfoField icon={FileText} label="CPF/CNPJ">{selectedClient.documento || '-'}</InfoField>
                     <InfoField icon={Mail} label="E-mail">{selectedClient.email || '-'}</InfoField>
@@ -378,24 +382,25 @@ export default function DashboardPage() {
               </Card>
 
               {/* Faturas */}
-              <Card>
-                <CardHeader className="py-3 px-4">
+              <Card className="overflow-hidden">
+                <CardHeader className="py-3.5 px-5 border-b border-border">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm">Faturas processadas</CardTitle>
-                    <span className="rounded-lg bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground">{faturas.length}</span>
+                    <CardTitle className="text-sm font-bold">Faturas processadas</CardTitle>
+                    <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-bold text-muted-foreground">{faturas.length}</span>
                   </div>
                 </CardHeader>
                 <CardContent className="p-0">
                   {detailLoading ? (
-                    <div className="flex items-center justify-center py-10"><Spinner size="md" /></div>
+                    <div className="flex items-center justify-center py-12"><Spinner size="md" /></div>
                   ) : faturas.length === 0 ? (
-                    <div className="py-10 text-center"><p className="text-sm text-muted-foreground">Nenhuma fatura processada.</p></div>
+                    <div className="py-12 text-center"><p className="text-sm text-muted-foreground">Nenhuma fatura processada.</p></div>
                   ) : (
                     <>
+                      {/* Mobile cards */}
                       <div className="grid gap-2 p-3 md:hidden">
                         {faturas.map((f) => (
                           <div key={f.id} className="rounded-lg border border-border bg-background p-3 text-sm">
-                            <div className="flex justify-between">
+                            <div className="flex justify-between items-center">
                               <span className="font-mono text-xs text-muted-foreground">#{f.fatura_id}</span>
                               {statusBadge(f.status_processamento)}
                             </div>
@@ -407,15 +412,16 @@ export default function DashboardPage() {
                           </div>
                         ))}
                       </div>
+                      {/* Desktop table */}
                       <div className="hidden md:block">
                         <Table>
                           <TableHeader>
-                            <TableRow>
-                              <TableHead>Fatura</TableHead>
-                              <TableHead>Pagamento</TableHead>
-                              <TableHead className="text-right">Valor</TableHead>
-                              <TableHead className="text-right">Pontos</TableHead>
-                              <TableHead className="text-center">Status</TableHead>
+                            <TableRow className="bg-muted/30">
+                              <TableHead className="text-[11px] uppercase tracking-wider">Fatura</TableHead>
+                              <TableHead className="text-[11px] uppercase tracking-wider">Pagamento</TableHead>
+                              <TableHead className="text-right text-[11px] uppercase tracking-wider">Valor</TableHead>
+                              <TableHead className="text-right text-[11px] uppercase tracking-wider">Pontos</TableHead>
+                              <TableHead className="text-center text-[11px] uppercase tracking-wider">Status</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -435,12 +441,6 @@ export default function DashboardPage() {
                   )}
                 </CardContent>
               </Card>
-
-              <div className="flex justify-end">
-                <Button variant="outline" size="sm" asChild>
-                  <Link to={`/clients/${selectedClient.id}`}>Ver detalhes completos <ArrowRight className="ml-1 h-3.5 w-3.5" /></Link>
-                </Button>
-              </div>
             </div>
           )}
 
@@ -668,15 +668,26 @@ function SummaryChip({ icon: Icon, value, label, color }: {
 }
 
 function PointCard({ label, value, icon: Icon, variant }: { label: string; value: number; icon: React.ElementType; variant: 'emerald' | 'amber' | 'primary' }) {
-  const colors = { emerald: 'border-emerald-500/20 bg-emerald-500/[0.04]', amber: 'border-amber-500/20 bg-amber-500/[0.04]', primary: 'border-primary/20 bg-primary/[0.04]' }
+  const styles = {
+    emerald: 'border-emerald-500/25 bg-gradient-to-br from-emerald-500/[0.08] to-emerald-500/[0.02]',
+    amber: 'border-amber-500/25 bg-gradient-to-br from-amber-500/[0.08] to-amber-500/[0.02]',
+    primary: 'border-primary/25 bg-gradient-to-br from-primary/[0.08] to-primary/[0.02]',
+  }
+  const iconStyles = {
+    emerald: 'bg-emerald-500/15 text-emerald-500',
+    amber: 'bg-amber-500/15 text-amber-500',
+    primary: 'bg-primary/15 text-primary',
+  }
   return (
-    <div className={`rounded-xl border p-3 ${colors[variant]}`}>
+    <div className={`rounded-xl border p-4 ${styles[variant]}`}>
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
-          <p className="mt-0.5 text-2xl font-bold text-foreground">{value.toLocaleString('pt-BR')}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{label}</p>
+          <p className="mt-1 text-3xl font-extrabold tracking-tight text-foreground">{value.toLocaleString('pt-BR')}</p>
         </div>
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-foreground/[0.05]"><Icon className="h-4 w-4 text-foreground/50" /></div>
+        <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${iconStyles[variant]}`}>
+          <Icon className="h-4.5 w-4.5" />
+        </div>
       </div>
     </div>
   )
@@ -684,11 +695,13 @@ function PointCard({ label, value, icon: Icon, variant }: { label: string; value
 
 function InfoField({ icon: Icon, label, children }: { icon: React.ElementType; label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-2.5 rounded-lg border border-border/50 bg-card p-2.5">
-      <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-muted"><Icon className="h-3.5 w-3.5 text-muted-foreground" /></div>
+    <div className="flex items-center gap-3 rounded-lg border border-border/40 bg-muted/30 px-3 py-3">
+      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10">
+        <Icon className="h-3.5 w-3.5 text-primary/70" />
+      </div>
       <div className="min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
-        <div className="mt-0.5 truncate text-sm text-foreground">{children || '-'}</div>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary/60">{label}</p>
+        <div className="mt-0.5 truncate text-sm font-medium text-foreground">{children || '-'}</div>
       </div>
     </div>
   )
