@@ -71,51 +71,54 @@ export default function ClientsPage() {
         <PageHeader icon={Users} title="Clientes" subtitle="Base de clientes" />
 
         <div className="page-stack">
-          <Card>
-            <CardContent className="p-5">
-              <form onSubmit={handleSearch} className="space-y-4">
-                <div className="flex flex-wrap gap-2">
-                  {SEARCH_TYPES.map((type) => (
-                    <button
-                      key={type.value}
-                      type="button"
-                      onClick={() => { setSearchType(type.value); setQuery('') }}
-                      className={cn(
-                        'rounded-lg border px-3.5 py-1.5 text-xs font-medium transition-all duration-200',
-                        searchType === type.value
-                          ? 'border-primary/30 bg-primary/10 text-foreground'
-                          : 'border-[hsl(var(--border))] text-muted-foreground hover:text-foreground'
-                      )}
-                    >
-                      {type.label}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/50" />
-                    <Input
-                      type={searchType === 'id' ? 'text' : 'text'}
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                      placeholder={SEARCH_TYPES.find((type) => type.value === searchType)?.placeholder}
-                      className="pl-10"
-                    />
-                  </div>
-                  <Button type="submit" disabled={loading || !query.trim()}>
-                    {loading ? <Spinner size="sm" /> : <Search className="h-3.5 w-3.5" />}
-                    Buscar
-                  </Button>
-                  {searched && (
-                    <Button type="button" variant="outline" size="icon" disabled={refreshBusy} onClick={() => void throttledSearch()}>
-                      <RefreshCw className={`h-3.5 w-3.5 transition-transform ${refreshBusy ? 'animate-spin' : ''}`} />
-                    </Button>
+          {/* Search section */}
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              {SEARCH_TYPES.map((type) => (
+                <button
+                  key={type.value}
+                  type="button"
+                  onClick={() => { setSearchType(type.value); setQuery('') }}
+                  className={cn(
+                    'rounded-full px-4 py-2 text-xs font-semibold tracking-wide uppercase transition-all duration-200',
+                    searchType === type.value
+                      ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20'
+                      : 'bg-[hsl(var(--surface-2))] text-muted-foreground hover:bg-[hsl(var(--muted))] hover:text-foreground'
                   )}
-                </div>
-              </form>
-            </CardContent>
-          </Card>
+                >
+                  {type.label}
+                </button>
+              ))}
+            </div>
+
+            <form onSubmit={handleSearch}>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex gap-3">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/40" />
+                      <Input
+                        type="text"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        placeholder={SEARCH_TYPES.find((type) => type.value === searchType)?.placeholder}
+                        className="pl-10 h-11"
+                      />
+                    </div>
+                    <Button type="submit" disabled={loading || !query.trim()} className="h-11 px-5">
+                      {loading ? <Spinner size="sm" /> : <Search className="h-3.5 w-3.5" />}
+                      Buscar
+                    </Button>
+                    {searched && (
+                      <Button type="button" variant="outline" size="icon" className="h-11 w-11" disabled={refreshBusy} onClick={() => void throttledSearch()}>
+                        <RefreshCw className={`h-3.5 w-3.5 transition-transform ${refreshBusy ? 'animate-spin' : ''}`} />
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </form>
+          </div>
 
           {error && <AlertBanner variant="error" message={error} />}
 
