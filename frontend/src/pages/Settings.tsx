@@ -137,6 +137,9 @@ export default function SettingsPage() {
                 <Button asChild variant="outline" className="w-full justify-start">
                   <Link to="/settings/campaigns">Campanhas e regras de pontos</Link>
                 </Button>
+                <Button asChild variant="outline" className="w-full justify-start">
+                  <Link to="/settings/users">Usuários e permissões</Link>
+                </Button>
               </div>
 
               <div className="space-y-5">

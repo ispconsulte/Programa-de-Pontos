@@ -18,10 +18,11 @@ import {
   Users,
   X,
 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import logoBonifica from '@/assets/logo-bonifica.png'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase-client'
+import { fetchCurrentUserProfile, isAdminUiRole } from '@/lib/user-management'
 
 export type DashboardSearchType = 'name' | 'cpfCnpj' | 'id'
 export const DASHBOARD_CLIENT_SEARCH_EVENT = 'dashboard:client-search'
@@ -39,7 +40,7 @@ interface NavSection {
   items: NavItem[]
 }
 
-const navSections: NavSection[] = [
+const baseNavSections: NavSection[] = [
   {
     label: 'DASHBOARD',
     items: [{ href: '/dashboard', label: 'Dashboard', icon: Home }],
@@ -64,13 +65,14 @@ const navSections: NavSection[] = [
     label: 'CONFIGURAÇÕES',
     items: [{
       href: '/settings',
-      label: 'Configurações',
-      icon: Settings,
-      children: [
-        { href: '/settings', label: 'Integrações' },
-        { href: '/settings/campaigns', label: 'Campanhas' },
-      ],
-    }],
+        label: 'Configurações',
+        icon: Settings,
+        children: [
+          { href: '/settings', label: 'Integrações' },
+          { href: '/settings/campaigns', label: 'Campanhas' },
+          { href: '/settings/users', label: 'Usuários' },
+        ],
+      }],
   },
 ]
 
@@ -82,6 +84,7 @@ const pageTitles: Record<string, string> = {
   '/receivables': 'Pontuação',
   '/settings': 'Configurações',
   '/settings/campaigns': 'Campanhas',
+  '/settings/users': 'Usuários',
 }
 
 function getPageTitle(pathname: string): string {
@@ -236,9 +239,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   /* Profile */
-  const [profile, setProfile] = useState({ name: 'Usuário', email: 'Sem e-mail' })
+  const [profile, setProfile] = useState({ name: 'Usuário', email: 'Sem e-mail', role: 'operator' })
   const [headerSearchType, setHeaderSearchType] = useState<DashboardSearchType>('name')
   const [headerSearchValue, setHeaderSearchValue] = useState('')
+  const navSections = useMemo(() => {
+    if (isAdminUiRole(profile.role)) return baseNavSections
+
+    return baseNavSections.map((section) => ({
+      ...section,
+      items: section.items.map((item) => ({
+        ...item,
+        children: item.children?.filter((child) => child.href !== '/settings/users'),
+      })),
+    }))
+  }, [profile.role])
 
   const toggleCollapse = () => {
     setCollapsed((prev) => {
@@ -260,14 +274,25 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true
     const apply = async () => {
-      const { data } = await supabase.auth.getSession()
-      if (!mounted) return
-      const user = data.session?.user
-      const m = user?.user_metadata ?? {}
-      setProfile({
-        name: String(m.full_name || m.name || m.display_name || user?.email?.split('@')[0] || 'Usuário'),
-        email: user?.email || 'Sem e-mail',
-      })
+      try {
+        const currentUser = await fetchCurrentUserProfile()
+        if (!mounted) return
+        setProfile({
+          name: currentUser.name,
+          email: currentUser.email,
+          role: currentUser.role,
+        })
+      } catch {
+        const { data } = await supabase.auth.getSession()
+        if (!mounted) return
+        const user = data.session?.user
+        const m = user?.user_metadata ?? {}
+        setProfile({
+          name: String(m.full_name || m.name || m.display_name || user?.email?.split('@')[0] || 'Usuário'),
+          email: user?.email || 'Sem e-mail',
+          role: 'operator',
+        })
+      }
     }
     apply()
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
@@ -276,6 +301,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       setProfile({
         name: String(m.full_name || m.name || m.display_name || user?.email?.split('@')[0] || 'Usuário'),
         email: user?.email || 'Sem e-mail',
+        role: 'operator',
       })
     })
     return () => {
@@ -375,7 +401,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           collapsed ? 'px-2' : 'px-3'
         )}>
           <div className="space-y-6">
-            {navSections.map((section, si) => (
+            {navSections.map((section: NavSection, si: number) => (
               <div key={section.label || si}>
                 {/* Section label */}
                 {section.label && !collapsed && (
@@ -388,7 +414,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 )}
 
                 <div className="space-y-0.5">
-                  {section.items.map((item) => (
+                  {section.items.map((item: NavItem) => (
                     <SidebarItem
                       key={item.href}
                       item={item}

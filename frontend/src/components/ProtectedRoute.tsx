@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase-client'
+import { fetchCurrentUserProfile } from '@/lib/user-management'
 import Spinner from './Spinner'
 
 interface ProtectedRouteProps {
@@ -21,6 +22,19 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       if (error || !session) {
         navigate('/login', { replace: true })
         return
+      }
+
+      try {
+        await fetchCurrentUserProfile()
+      } catch (profileError) {
+        const message = profileError instanceof Error ? profileError.message.toLowerCase() : ''
+        if (message.includes('unauthorized') || message.includes('session revoked') || message.includes('user disabled') || message.includes('forbidden')) {
+          await supabase.auth.signOut()
+          if (mounted) {
+            navigate('/login', { replace: true })
+          }
+          return
+        }
       }
 
       setChecking(false)

@@ -28,6 +28,24 @@ declare module 'fastify' {
   }
 }
 
+function decodeJwtIssuedAt(token: string): number | null {
+  try {
+    const [, payload] = token.split('.')
+    if (!payload) return null
+
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/')
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=')
+    const parsed = JSON.parse(Buffer.from(padded, 'base64').toString('utf8')) as { iat?: number }
+    return typeof parsed.iat === 'number' ? parsed.iat : null
+  } catch {
+    return null
+  }
+}
+
+export function isAdminRole(role: string): boolean {
+  return ['admin', 'owner', 'manager'].includes(role)
+}
+
 export async function authenticate(request: FastifyRequest, _reply: FastifyReply): Promise<void> {
   const authorization = request.headers.authorization
   const token = authorization?.startsWith('Bearer ') ? authorization.slice('Bearer '.length).trim() : ''
@@ -42,7 +60,7 @@ export async function authenticate(request: FastifyRequest, _reply: FastifyReply
 
   const { data: userRow, error: userRowError } = await supabaseAdmin
     .from('users')
-    .select('id, tenant_id, role')
+    .select('id, tenant_id, role, is_active, session_revoked_at')
     .eq('id', supabaseUser.id)
     .maybeSingle()
 
@@ -53,13 +71,25 @@ export async function authenticate(request: FastifyRequest, _reply: FastifyReply
     throw new AppError(401, 'Unauthorized')
   }
 
+  if (userRow.is_active === false) {
+    throw new AppError(403, 'User disabled')
+  }
+
+  const tokenIssuedAt = decodeJwtIssuedAt(token)
+  if (userRow.session_revoked_at && tokenIssuedAt) {
+    const revokedAtMs = Date.parse(userRow.session_revoked_at)
+    if (!Number.isNaN(revokedAtMs) && revokedAtMs >= tokenIssuedAt * 1000) {
+      throw new AppError(401, 'Session revoked')
+    }
+  }
+
   request.userId = userRow.id
   request.tenantId = userRow.tenant_id
   request.userRole = userRow.role
 }
 
 export async function requireAdmin(request: FastifyRequest, _reply: FastifyReply): Promise<void> {
-  if (request.userRole !== 'admin') {
+  if (!isAdminRole(request.userRole)) {
     throw new AppError(403, 'Forbidden')
   }
 }

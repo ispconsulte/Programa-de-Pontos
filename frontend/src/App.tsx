@@ -10,6 +10,7 @@ import ReceivablesPage from './pages/Receivables'
 import ReceivableDetailPage from './pages/ReceivableDetail'
 import SettingsPage from './pages/Settings'
 import SettingsCampaignsPage from './pages/SettingsCampaigns'
+import SettingsUsersPage from './pages/SettingsUsers'
 import ClienteEmDiaPage from './pages/ClienteEmDia'
 import ClienteEmDiaBrindesPage from './pages/ClienteEmDiaBrindes'
 import ClienteEmDiaCadastrarPage from './pages/ClienteEmDiaCadastrar'
@@ -52,6 +53,7 @@ function App() {
           <Route path="/receivables/:id" element={<ReceivableDetailPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/settings/campaigns" element={<SettingsCampaignsPage />} />
+          <Route path="/settings/users" element={<SettingsUsersPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
