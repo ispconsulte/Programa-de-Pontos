@@ -299,9 +299,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         )}>
           <div className={cn(
             'flex items-center justify-center transition-all duration-300 mt-2',
-            collapsed ? 'h-9 w-9' : 'h-14 w-14'
+            collapsed ? 'h-9 w-9' : 'h-[4.5rem] w-[4.5rem]'
           )}>
-            <AnimatedGiftBox size={collapsed ? 32 : 56} />
+            <AnimatedGiftBox size={collapsed ? 32 : 72} />
           </div>
           {!collapsed && (
             <span className="mt-1 text-[13px] font-semibold tracking-wide bg-gradient-to-r from-emerald-400 via-yellow-400 to-blue-400 bg-clip-text text-transparent">
