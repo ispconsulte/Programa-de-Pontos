@@ -16,6 +16,7 @@ import {
   Briefcase,
   Megaphone,
   UserCog,
+  HelpCircle,
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import AnimatedGiftBox from '@/components/AnimatedGiftBox'
@@ -363,11 +364,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div className={cn('flex-shrink-0 border-t border-sidebar-border py-3', collapsed ? 'px-2' : 'px-3')}>
+          <SidebarItem
+            item={{ href: '/suporte', label: 'Suporte', icon: HelpCircle }}
+            pathname={pathname}
+            onNav={() => setMobileOpen(false)}
+            collapsed={collapsed}
+          />
           <button
             onClick={() => supabase.auth.signOut()}
             title={collapsed ? 'Sair' : undefined}
             className={cn(
-              'group flex w-full items-center rounded-xl text-[13px] font-medium text-muted-foreground transition-all duration-200 hover:bg-destructive/[0.08] hover:text-destructive',
+              'group flex w-full items-center rounded-xl text-[13px] font-medium text-muted-foreground transition-all duration-200 hover:bg-destructive/[0.08] hover:text-destructive mt-0.5',
               collapsed ? 'justify-center p-2.5' : 'gap-3 px-3 py-2.5'
             )}
           >
