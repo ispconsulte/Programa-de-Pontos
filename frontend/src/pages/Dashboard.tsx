@@ -179,6 +179,7 @@ export default function DashboardPage() {
   const ac = useAutocomplete()
   const [selectedClient, setSelectedClient] = useState<CampaignClientRow | null>(null)
   const [faturas, setFaturas] = useState<ReceivableRow[]>([])
+  const [redemptions, setRedemptions] = useState<RedemptionRow[]>([])
   const [detailLoading, setDetailLoading] = useState(false)
   const [clientError, setClientError] = useState('')
 
