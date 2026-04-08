@@ -374,6 +374,24 @@ export default function DashboardPage() {
             )}
           </section>
         </div>
+
+        {/* Anti-spam modal */}
+        {showCalmModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowCalmModal(false)}>
+            <div className="mx-4 w-full max-w-sm rounded-xl border border-border bg-card p-6 text-center shadow-2xl animate-scale-in" onClick={(e) => e.stopPropagation()}>
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+                <RefreshCw className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="text-lg font-bold text-foreground">Calma! 😊</h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Seus dados estão sendo atualizados. Não é necessário ter pressa.
+              </p>
+              <Button className="mt-5 w-full" onClick={() => setShowCalmModal(false)}>
+                Entendi
+              </Button>
+            </div>
+          </div>
+        )}
       </Layout>
     </ProtectedRoute>
   )
