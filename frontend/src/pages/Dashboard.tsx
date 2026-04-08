@@ -662,6 +662,11 @@ export default function DashboardPage() {
                   </>
                 )}
               </section>
+            </>
+          )}
+        </div>
+
+        {/* Anti-spam modal */}
         {showCalmModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowCalmModal(false)}>
             <div className="mx-4 w-full max-w-sm rounded-xl border border-border bg-card p-6 text-center shadow-2xl animate-scale-in" onClick={(e) => e.stopPropagation()}>
