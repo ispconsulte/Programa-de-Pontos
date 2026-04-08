@@ -8,7 +8,14 @@ import PageHeader from '@/components/PageHeader'
 import Spinner from '@/components/Spinner'
 import { statusBadge } from '@/components/Badge'
 import Pagination from '@/components/Pagination'
-import { getPaymentBehaviorLabel, getPaymentScore, toNumber } from '@/lib/receivables-utils'
+import { toNumber } from '@/lib/receivables-utils'
+
+function getBehaviorLabelFromPoints(pts: number | null | undefined): string {
+  if (pts === 5) return 'Pagamento antecipado'
+  if (pts === 4) return 'Pagamento no vencimento'
+  if (pts === 2) return 'Pagamento após o vencimento'
+  return 'Sem pontuação'
+}
 import { fetchReceivables, fetchClientNamesByIxcIds, getCurrentTenantId, type ReceivableRow } from '@/lib/supabase-queries'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
