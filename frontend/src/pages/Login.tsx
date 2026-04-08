@@ -47,12 +47,50 @@ function RewardParticles() {
   )
 }
 
-/* ── Tier data ── */
-const tiers = [
-  { name: 'Bronze', icon: Medal, color: 'hsl(30 70% 50%)', bg: 'hsl(30 70% 50% / 0.08)', border: 'hsl(30 70% 50% / 0.2)', desc: 'Início da jornada' },
-  { name: 'Prata', icon: Trophy, color: 'hsl(220 20% 72%)', bg: 'hsl(220 20% 72% / 0.08)', border: 'hsl(220 20% 72% / 0.2)', desc: 'Cliente fiel' },
-  { name: 'Ouro', icon: Crown, color: 'hsl(45 95% 55%)', bg: 'hsl(45 95% 55% / 0.08)', border: 'hsl(45 95% 55% / 0.2)', desc: 'Recompensa máxima' },
+/* ── Rotating motivational messages ── */
+const motivationalMessages = [
+  '💰 Manter suas contas em dia gera recompensas!',
+  '🎁 Seja um bom pagador e desfrute de benefícios constantes!',
+  '⭐ Pontue a cada pagamento e troque por prêmios incríveis!',
+  '🚀 Quanto antes você pagar, mais pontos você ganha!',
+  '🏆 Clientes fiéis são sempre recompensados!',
 ]
+
+function RotatingMessageCard({ mounted }: { mounted: boolean }) {
+  const [index, setIndex] = useState(0)
+  const [fade, setFade] = useState(true)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFade(false)
+      setTimeout(() => {
+        setIndex((prev) => (prev + 1) % motivationalMessages.length)
+        setFade(true)
+      }, 400)
+    }, 4000)
+    return () => clearInterval(interval)
+  }, [])
+
+  return (
+    <div
+      className="w-full max-w-[380px]"
+      style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(8px)', transition: 'all 700ms ease 550ms' }}
+    >
+      <div className="relative overflow-hidden rounded-xl border border-primary/10 bg-primary/[0.04] px-5 py-4 backdrop-blur-sm">
+        <div className="pointer-events-none absolute -top-px left-[15%] right-[15%] h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+        <div className="flex items-center gap-3">
+          <Sparkles className="h-4 w-4 flex-shrink-0 text-primary/60" />
+          <p
+            className="text-[13px] font-medium leading-relaxed text-foreground/70 transition-opacity duration-400"
+            style={{ opacity: fade ? 1 : 0 }}
+          >
+            {motivationalMessages[index]}
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function LoginPage() {
   const navigate = useNavigate()
