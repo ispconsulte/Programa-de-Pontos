@@ -34,16 +34,32 @@
   ],
   "rewrites": [
     {
-      "source": "/users/(.*)",
-      "destination": "/api/users/$1"
+      "source": "/users/me",
+      "destination": "/api/users/me"
+    },
+    {
+      "source": "/users",
+      "destination": "/api/users"
     },
     {
       "source": "/settings",
       "destination": "/api/settings"
     },
     {
-      "source": "/campaign/(.*)",
-      "destination": "/api/campaign/$1"
+      "source": "/campaign/legacy-redemptions",
+      "destination": "/api/campaign/legacy-redemptions"
+    },
+    {
+      "source": "/campaign/manual-points",
+      "destination": "/api/campaign/manual-points"
+    },
+    {
+      "source": "/campaign/catalog",
+      "destination": "/api/campaign/catalog"
+    },
+    {
+      "source": "/campaign/catalog/(.*)",
+      "destination": "/api/campaign/catalog/$1"
     },
     {
       "source": "/(.*)",
