@@ -236,7 +236,30 @@ export async function fetchCampaignClientFaturas(
   return (data ?? []) as unknown as ReceivableRow[]
 }
 
-// ── Configurações (tenant + ixc_connections) ──────────────────────────────────
+export interface RedemptionRow {
+  id: string
+  brinde_nome: string
+  pontos_utilizados: number
+  status_resgate: string
+  data_entrega: string | null
+  created_at: string
+  observacoes: string | null
+}
+
+export async function fetchCampaignClientRedemptions(
+  ixcClienteId: string
+): Promise<RedemptionRow[]> {
+  const { data, error } = await (supabase as any)
+    .from('pontuacao_resgates')
+    .select('id, brinde_nome, pontos_utilizados, status_resgate, data_entrega, created_at, observacoes')
+    .eq('ixc_cliente_id', ixcClienteId)
+    .order('created_at', { ascending: false })
+    .limit(10)
+
+  if (error) throw new Error(error.message)
+  return (data ?? []) as unknown as RedemptionRow[]
+}
+
 
 export interface IxcConnection {
   id: string
