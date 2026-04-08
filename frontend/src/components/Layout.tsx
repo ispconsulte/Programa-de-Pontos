@@ -290,7 +290,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             ? 'translate-x-0 shadow-2xl shadow-black/30'
             : '-translate-x-full'
         )}
-        style={{ width: collapsed ? '4rem' : mobileOpen ? '18rem' : '15rem' }}
+        style={{ width: collapsed ? '4rem' : mobileOpen ? '17rem' : '13.75rem' }}
       >
         {/* Logo area — compact */}
         <div className={cn(
