@@ -8,7 +8,14 @@ import PageHeader from '@/components/PageHeader'
 import Spinner from '@/components/Spinner'
 import { statusBadge } from '@/components/Badge'
 import Pagination from '@/components/Pagination'
-import { getPaymentBehaviorLabel, getPaymentScore, toNumber } from '@/lib/receivables-utils'
+import { toNumber } from '@/lib/receivables-utils'
+
+function getBehaviorLabelFromPoints(pts: number | null | undefined): string {
+  if (pts === 5) return 'Pagamento antecipado'
+  if (pts === 4) return 'Pagamento no vencimento'
+  if (pts === 2) return 'Pagamento após o vencimento'
+  return 'Sem pontuação'
+}
 import { fetchReceivables, fetchClientNamesByIxcIds, getCurrentTenantId, type ReceivableRow } from '@/lib/supabase-queries'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -118,8 +125,8 @@ function sortReceivables(items: Receivable[], sortBy: SortOption) {
       case 'payment_desc': return toComparableDate(b.data_pagamento) - toComparableDate(a.data_pagamento)
       case 'received_asc': return (toNumber(a.valor_recebido) ?? 0) - (toNumber(b.valor_recebido) ?? 0)
       case 'received_desc': return (toNumber(b.valor_recebido) ?? 0) - (toNumber(a.valor_recebido) ?? 0)
-      case 'points_asc': return getPaymentScore(a) - getPaymentScore(b)
-      case 'points_desc': return getPaymentScore(b) - getPaymentScore(a)
+      case 'points_asc': return (a.pontos_gerados ?? 0) - (b.pontos_gerados ?? 0)
+      case 'points_desc': return (b.pontos_gerados ?? 0) - (a.pontos_gerados ?? 0)
       default: return 0
     }
   })
@@ -199,7 +206,7 @@ export default function ReceivablesPage() {
     receivables.filter((item) => {
       const term = search.trim().toLowerCase()
       if (!term) return true
-      return [item.cliente_nome, item.id_cliente, item.id, getPaymentBehaviorLabel(item)]
+      return [item.cliente_nome, item.id_cliente, item.id, getBehaviorLabelFromPoints(item.pontos_gerados)]
         .map((v) => String(v ?? '').toLowerCase())
         .some((v) => v.includes(term))
     }),
@@ -207,12 +214,12 @@ export default function ReceivablesPage() {
   )
 
   const scoreSummary = {
-    fivePoints: visibleReceivables.filter((item) => getPaymentScore(item) === 5).length,
-    fourPoints: visibleReceivables.filter((item) => getPaymentScore(item) === 4).length,
-    twoPoints: visibleReceivables.filter((item) => getPaymentScore(item) === 2).length,
+    fivePoints: visibleReceivables.filter((item) => item.pontos_gerados === 5).length,
+    fourPoints: visibleReceivables.filter((item) => item.pontos_gerados === 4).length,
+    twoPoints: visibleReceivables.filter((item) => item.pontos_gerados === 2).length,
   }
 
-  const totalPoints = visibleReceivables.reduce((sum, item) => sum + getPaymentScore(item), 0)
+  const totalPoints = visibleReceivables.reduce((sum, item) => sum + (item.pontos_gerados ?? 0), 0)
 
   return (
     <ProtectedRoute>
@@ -362,7 +369,7 @@ export default function ReceivablesPage() {
                   {/* Mobile cards */}
                   <div className="grid gap-2 p-4 md:hidden">
                     {visibleReceivables.map((item) => {
-                      const score = getPaymentScore(item)
+                      const score = item.pontos_gerados ?? 0
                       return (
                         <Link key={item.id} to={`/receivables/${item.id}`} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 transition-all duration-200 hover:bg-[hsl(var(--muted))]">
                           <div className="flex items-start justify-between">
@@ -377,7 +384,7 @@ export default function ReceivablesPage() {
                             <span className="font-semibold text-emerald-400">{formatBRL(item.valor_recebido)}</span>
                           </div>
                           <div className="mt-2 flex items-center justify-between">
-                            <span className="text-xs text-muted-foreground">{getPaymentBehaviorLabel(item)}</span>
+                            <span className="text-xs text-muted-foreground">{getBehaviorLabelFromPoints(item.pontos_gerados)}</span>
                             {statusBadge(item.status)}
                           </div>
                         </Link>
@@ -402,7 +409,7 @@ export default function ReceivablesPage() {
                       </TableHeader>
                       <TableBody>
                         {visibleReceivables.map((item) => {
-                          const score = getPaymentScore(item)
+                          const score = item.pontos_gerados ?? 0
                           return (
                             <TableRow key={item.id}>
                               <TableCell>
@@ -411,7 +418,7 @@ export default function ReceivablesPage() {
                                   <p className="mt-0.5 text-xs text-muted-foreground">IXC #{formatText(item.id_cliente)}</p>
                                 </div>
                               </TableCell>
-                              <TableCell className="text-muted-foreground">{getPaymentBehaviorLabel(item)}</TableCell>
+                              <TableCell className="text-muted-foreground">{getBehaviorLabelFromPoints(item.pontos_gerados)}</TableCell>
                               <TableCell className="text-center">{scoreBadge(score)}</TableCell>
                               <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(item.data_vencimento)}</TableCell>
                               <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(item.data_pagamento ?? '')}</TableCell>
