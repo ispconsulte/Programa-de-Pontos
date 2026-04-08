@@ -260,8 +260,29 @@ export async function fetchCampaignClientRedemptions(
   return (data ?? []) as unknown as RedemptionRow[]
 }
 
+export interface RankingClientRow {
+  id: string
+  nome_cliente: string | null
+  documento: string | null
+  pontos_acumulados: number
+  pontos_resgatados: number
+  pontos_disponiveis: number | null
+  status_campanha: string
+}
 
-export interface IxcConnection {
+export async function fetchClientRanking(tenantId: string, limit = 10): Promise<RankingClientRow[]> {
+  const { data, error } = await (supabase as any)
+    .from('pontuacao_campanha_clientes')
+    .select('id, nome_cliente, documento, pontos_acumulados, pontos_resgatados, pontos_disponiveis, status_campanha')
+    .eq('tenant_id', tenantId)
+    .order('pontos_acumulados', { ascending: false })
+    .limit(limit)
+
+  if (error) throw new Error(error.message)
+  return (data ?? []) as unknown as RankingClientRow[]
+}
+
+
   id: string
   name: string | null
   ixc_base_url: string
