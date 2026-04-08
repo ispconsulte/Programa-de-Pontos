@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useThrottledAction } from '@/hooks/useThrottledAction'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Coins, RefreshCw, Search, ShieldAlert } from 'lucide-react'
+import { ArrowRight, Users, RefreshCw, Search, ShieldAlert, TrendingUp, Award, Clock } from 'lucide-react'
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import PageHeader from '@/components/PageHeader'
@@ -58,23 +58,23 @@ interface AppliedFilters {
 type SortOption = 'due_desc' | 'due_asc' | 'payment_desc' | 'payment_asc' | 'received_desc' | 'received_asc' | 'points_desc' | 'points_asc'
 
 function formatBRL(value: string | number | undefined): string {
-  if (value === undefined || value === null || value === '') return 'Não encontrado'
+  if (value === undefined || value === null || value === '') return '-'
   const num = typeof value === 'string' ? parseFloat(value) : value
-  if (isNaN(num)) return 'Não encontrado'
+  if (isNaN(num)) return '-'
   return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
 function formatDate(dateStr: string): string {
-  if (!dateStr || dateStr === '0000-00-00' || dateStr === '0000-00-00 00:00:00') return 'Não encontrado'
+  if (!dateStr || dateStr === '0000-00-00' || dateStr === '0000-00-00 00:00:00') return '-'
   const d = new Date(dateStr + (dateStr.includes('T') ? '' : 'T00:00:00'))
-  if (Number.isNaN(d.getTime())) return 'Não encontrado'
+  if (Number.isNaN(d.getTime())) return '-'
   return d.toLocaleDateString('pt-BR')
 }
 
 function formatText(value: string | number | null | undefined): string {
-  if (value === null || value === undefined) return 'Não encontrado'
+  if (value === null || value === undefined) return '-'
   const text = String(value).trim()
-  if (!text || text === '-' || text.toLowerCase() === 'undefined' || text.toLowerCase() === 'null') return 'Não encontrado'
+  if (!text || text === '-' || text.toLowerCase() === 'undefined' || text.toLowerCase() === 'null') return '-'
   return text
 }
 
@@ -125,6 +125,14 @@ function sortReceivables(items: Receivable[], sortBy: SortOption) {
   })
 }
 
+/** Color for score-based badge */
+function scoreBadge(score: number) {
+  if (score === 5) return <span className="inline-flex items-center rounded-md bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-400 ring-1 ring-inset ring-emerald-500/20">+5 pts</span>
+  if (score === 4) return <span className="inline-flex items-center rounded-md bg-sky-500/10 px-2 py-0.5 text-xs font-semibold text-sky-400 ring-1 ring-inset ring-sky-500/20">+4 pts</span>
+  if (score === 2) return <span className="inline-flex items-center rounded-md bg-amber-500/10 px-2 py-0.5 text-xs font-semibold text-amber-400 ring-1 ring-inset ring-amber-500/20">+2 pts</span>
+  return <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground">0 pts</span>
+}
+
 export default function ReceivablesPage() {
   const [receivables, setReceivables] = useState<Receivable[]>([])
   const [loading, setLoading] = useState(true)
@@ -140,6 +148,7 @@ export default function ReceivablesPage() {
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState<SortOption>('due_desc')
   const [clientNameMap, setClientNameMap] = useState<Map<string, string>>(new Map())
+  const [uniqueClients, setUniqueClients] = useState(0)
 
   const fetchReceivablesData = useCallback(async () => {
     setLoading(true)
@@ -164,6 +173,7 @@ export default function ReceivablesPage() {
       const ixcIds = result.data.map(r => r.ixc_cliente_id)
       const nameMap = await fetchClientNamesByIxcIds(tenantId, ixcIds)
       setClientNameMap(nameMap)
+      setUniqueClients(new Set(ixcIds).size)
 
       setReceivables(result.data.map(r => toShape(r, nameMap)))
       setTotal(result.total)
@@ -202,15 +212,64 @@ export default function ReceivablesPage() {
     twoPoints: visibleReceivables.filter((item) => getPaymentScore(item) === 2).length,
   }
 
+  const totalPoints = visibleReceivables.reduce((sum, item) => sum + getPaymentScore(item), 0)
+
   return (
     <ProtectedRoute>
       <Layout>
         <PageHeader
-          icon={Coins}
-          title="Pontuação"
-          subtitle="Recebimentos e bônus"
-          actions={<span className="page-header__meta text-xs text-muted-foreground">{loading ? 'Carregando...' : `${total} registros`}</span>}
+          icon={TrendingUp}
+          title="Gestão de Pontuação"
+          subtitle="Acompanhe pagamentos e pontos dos clientes"
         />
+
+        {/* Summary cards */}
+        <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+                <Users className="h-4.5 w-4.5 text-primary" />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Clientes</p>
+                <p className="text-xl font-bold text-foreground">{loading ? '...' : uniqueClients}</p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04] p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10">
+                <TrendingUp className="h-4.5 w-4.5 text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Antecipados</p>
+                <p className="text-xl font-bold text-emerald-400">{loading ? '...' : scoreSummary.fivePoints}</p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-xl border border-sky-500/20 bg-sky-500/[0.04] p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-500/10">
+                <Award className="h-4.5 w-4.5 text-sky-400" />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">No vencimento</p>
+                <p className="text-xl font-bold text-sky-400">{loading ? '...' : scoreSummary.fourPoints}</p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.04] p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/10">
+                <Clock className="h-4.5 w-4.5 text-amber-400" />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Após vencimento</p>
+                <p className="text-xl font-bold text-amber-400">{loading ? '...' : scoreSummary.twoPoints}</p>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <div className="space-y-5">
           <Card>
@@ -228,16 +287,16 @@ export default function ReceivablesPage() {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">De</label>
-                  <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+                  <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Data inicial</label>
+                  <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} lang="pt-BR" />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Até</label>
-                  <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+                  <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Data final</label>
+                  <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} lang="pt-BR" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Buscar</label>
-                  <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Nome ou ID" />
+                  <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Nome, CPF ou ID" />
                 </div>
               </div>
 
@@ -295,89 +354,80 @@ export default function ReceivablesPage() {
                 </div>
               ) : receivables.length === 0 ? (
                 <div className="py-16 text-center">
-                  <Coins className="mx-auto h-8 w-8 text-muted-foreground/30" />
+                  <TrendingUp className="mx-auto h-8 w-8 text-muted-foreground/30" />
                   <p className="mt-3 text-sm text-muted-foreground">Nenhum registro encontrado.</p>
                 </div>
               ) : (
                 <>
-                  <div className="grid gap-3 border-b border-[hsl(var(--border))] px-4 py-4 sm:px-5 md:grid-cols-3">
-                    {[
-                      { label: '5 pontos', helper: 'Pagamentos antecipados', value: scoreSummary.fivePoints, color: 'text-emerald-400' },
-                      { label: '4 pontos', helper: 'Pagamentos no vencimento', value: scoreSummary.fourPoints, color: 'text-sky-400' },
-                      { label: '2 pontos', helper: 'Pagamentos apos o vencimento', value: scoreSummary.twoPoints, color: 'text-amber-400' },
-                    ].map((item) => (
-                      <div key={item.label} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3">
-                        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{item.label}</p>
-                        <p className={`mt-2 text-2xl font-semibold ${item.color}`}>{item.value}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">{item.helper}</p>
-                      </div>
-                    ))}
-                  </div>
-
+                  {/* Mobile cards */}
                   <div className="grid gap-2 p-4 md:hidden">
-                    {visibleReceivables.map((item) => (
-                      <Link key={item.id} to={`/receivables/${item.id}`} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 transition-all duration-200 hover:bg-[hsl(var(--muted))]">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <p className="text-sm font-medium text-foreground">{formatClientLabel(item)}</p>
-                            <p className="mt-1 text-xs text-muted-foreground">Fatura #{item.id.slice(0, 8)}</p>
+                    {visibleReceivables.map((item) => {
+                      const score = getPaymentScore(item)
+                      return (
+                        <Link key={item.id} to={`/receivables/${item.id}`} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 transition-all duration-200 hover:bg-[hsl(var(--muted))]">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-foreground">{formatClientLabel(item)}</p>
+                              <p className="mt-1 text-xs text-muted-foreground">IXC #{item.id_cliente}</p>
+                            </div>
+                            {scoreBadge(score)}
                           </div>
-                          <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-                        </div>
-                        <div className="mt-2 flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">{getPaymentBehaviorLabel(item)}</span>
-                          <span className="font-semibold text-emerald-400">+{getPaymentScore(item)} pts</span>
-                        </div>
-                        <div className="mt-3 flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">{formatDate(item.data_vencimento)}</span>
-                          <span className="font-medium text-emerald-400">{formatBRL(item.valor_recebido)}</span>
-                        </div>
-                        <div className="mt-2">{statusBadge(item.status)}</div>
-                      </Link>
-                    ))}
+                          <div className="mt-3 flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">{formatDate(item.data_vencimento)}</span>
+                            <span className="font-semibold text-emerald-400">{formatBRL(item.valor_recebido)}</span>
+                          </div>
+                          <div className="mt-2 flex items-center justify-between">
+                            <span className="text-xs text-muted-foreground">{getPaymentBehaviorLabel(item)}</span>
+                            {statusBadge(item.status)}
+                          </div>
+                        </Link>
+                      )
+                    })}
                   </div>
 
+                  {/* Desktop table */}
                   <div className="hidden md:block">
                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead>Cliente</TableHead>
-                          <TableHead>Fatura ID</TableHead>
-                          <TableHead>Faixa</TableHead>
-                          <TableHead className="text-right">Pontos</TableHead>
+                          <TableHead>Classificação</TableHead>
+                          <TableHead className="text-center">Pontos</TableHead>
                           <TableHead>Vencimento</TableHead>
-                          <TableHead>Pago em</TableHead>
-                          <TableHead className="text-right">Recebido</TableHead>
-                          <TableHead>Status</TableHead>
+                          <TableHead>Pagamento</TableHead>
+                          <TableHead className="text-right">Valor</TableHead>
+                          <TableHead className="text-center">Status</TableHead>
                           <TableHead className="text-right" />
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {visibleReceivables.map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell className="text-muted-foreground">
-                              <div>
-                                <p className="font-medium text-foreground">{formatClientLabel(item)}</p>
-                                <p className="mt-1 text-xs text-muted-foreground">IXC #{formatText(item.id_cliente)}</p>
-                              </div>
-                            </TableCell>
-                            <TableCell className="font-mono text-xs text-foreground min-w-[10rem]">{item.id.slice(0, 10)}…</TableCell>
-                            <TableCell className="text-muted-foreground">{getPaymentBehaviorLabel(item)}</TableCell>
-                            <TableCell className="text-right font-semibold text-emerald-400">+{getPaymentScore(item)}</TableCell>
-                            <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(item.data_vencimento)}</TableCell>
-                            <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(item.data_pagamento ?? '')}</TableCell>
-                            <TableCell className="whitespace-nowrap text-right text-emerald-400">{formatBRL(item.valor_recebido)}</TableCell>
-                            <TableCell>{statusBadge(item.status)}</TableCell>
-                            <TableCell className="text-right">
-                              <Button variant="outline" size="sm" asChild className="h-7 px-3 text-xs">
-                                <Link to={`/receivables/${item.id}`}>
-                                  <ArrowRight className="h-3 w-3 mr-1" />
-                                  Detalhe
-                                </Link>
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                        {visibleReceivables.map((item) => {
+                          const score = getPaymentScore(item)
+                          return (
+                            <TableRow key={item.id}>
+                              <TableCell>
+                                <div>
+                                  <p className="font-medium text-foreground">{formatClientLabel(item)}</p>
+                                  <p className="mt-0.5 text-xs text-muted-foreground">IXC #{formatText(item.id_cliente)}</p>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-muted-foreground">{getPaymentBehaviorLabel(item)}</TableCell>
+                              <TableCell className="text-center">{scoreBadge(score)}</TableCell>
+                              <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(item.data_vencimento)}</TableCell>
+                              <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(item.data_pagamento ?? '')}</TableCell>
+                              <TableCell className="whitespace-nowrap text-right font-medium text-emerald-400">{formatBRL(item.valor_recebido)}</TableCell>
+                              <TableCell className="text-center">{statusBadge(item.status)}</TableCell>
+                              <TableCell className="text-right">
+                                <Button variant="outline" size="sm" asChild className="h-7 px-3 text-xs">
+                                  <Link to={`/receivables/${item.id}`}>
+                                    <ArrowRight className="h-3 w-3 mr-1" />
+                                    Ver
+                                  </Link>
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          )
+                        })}
                       </TableBody>
                     </Table>
                   </div>
