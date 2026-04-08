@@ -830,18 +830,35 @@
   66%      { transform: translate(-15px, 15px) scale(0.97); opacity: 0.45; }
 }
 @keyframes loginFloat {
-  0%, 100% { transform: translateY(0) scale(1); opacity: 0.3; }
-  50%      { transform: translateY(-20px) scale(1.3); opacity: 0.7; }
+  0%, 100% { transform: translateY(0) translateX(0) scale(1); opacity: 0.3; }
+  25%      { transform: translateY(-15px) translateX(var(--drift-x, 10px)) scale(1.2); opacity: 0.6; }
+  50%      { transform: translateY(-25px) translateX(calc(var(--drift-x, 10px) * -0.5)) scale(1.35); opacity: 0.75; }
+  75%      { transform: translateY(-10px) translateX(var(--drift-x, 10px)) scale(1.1); opacity: 0.5; }
 }
 @keyframes loginHero3DFloat {
   0%, 100% { transform: perspective(800px) rotateY(-3deg) rotateX(2deg) translateY(0); }
   25%      { transform: perspective(800px) rotateY(2deg) rotateX(-1deg) translateY(-8px); }
-  50%      { transform: perspective(800px) rotateY(3deg) rotateX(2deg) translateY(-4px); }
+  50%      { transform: perspective(800px) rotateY(0deg) rotateX(3deg) translateY(-4px); }
   75%      { transform: perspective(800px) rotateY(-2deg) rotateX(-2deg) translateY(-10px); }
 }
 @keyframes loginHeroGlow {
   0%, 100% { opacity: 0.6; transform: scale(1); }
   50%      { opacity: 1; transform: scale(1.08); }
+}
+@keyframes auroraWave1 {
+  0%, 100% { transform: translateX(-5%) translateY(0) rotate(-2deg); opacity: 0.04; }
+  33%      { transform: translateX(8%) translateY(-3%) rotate(1deg); opacity: 0.06; }
+  66%      { transform: translateX(-3%) translateY(2%) rotate(-1deg); opacity: 0.035; }
+}
+@keyframes auroraWave2 {
+  0%, 100% { transform: translateX(5%) translateY(0) rotate(2deg); opacity: 0.03; }
+  50%      { transform: translateX(-8%) translateY(-2%) rotate(-2deg); opacity: 0.05; }
+}
+@keyframes shimmerLine {
+  0%, 100% { transform: translateX(-100%); opacity: 0; }
+  10%      { opacity: 0.06; }
+  50%      { transform: translateX(100%); opacity: 0.06; }
+  60%      { opacity: 0; }
 }
 
 ::-webkit-scrollbar {
