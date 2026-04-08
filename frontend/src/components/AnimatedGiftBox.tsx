@@ -250,7 +250,7 @@ export default function AnimatedGiftBox({ size = 96, className = '' }: { size?: 
           }
           100% {
             opacity: 0;
-            transform: translate(-50%, -50%) translate(var(--rw-tx), calc(var(--rw-ty) - 15px)) scale(0.6) rotate(10deg);
+            transform: translate(-50%, -50%) translate(var(--rw-tx), calc(var(--rw-ty) + 25px)) scale(0.6) rotate(10deg);
           }
         }
       `}</style>
