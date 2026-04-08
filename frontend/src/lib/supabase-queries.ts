@@ -269,6 +269,28 @@ export async function fetchRecentFaturasByIxcClienteId(
   return (data ?? []) as unknown as ReceivableRow[]
 }
 
+/** Fetch client names for a list of ixc_cliente_ids (bulk) */
+export async function fetchClientNamesByIxcIds(
+  tenantId: string,
+  ixcClienteIds: string[]
+): Promise<Map<string, string>> {
+  const unique = [...new Set(ixcClienteIds)]
+  if (unique.length === 0) return new Map()
+
+  const { data, error } = await (supabase as any)
+    .from('pontuacao_campanha_clientes')
+    .select('ixc_cliente_id, nome_cliente')
+    .eq('tenant_id', tenantId)
+    .in('ixc_cliente_id', unique)
+
+  if (error) throw new Error(error.message)
+  const map = new Map<string, string>()
+  for (const row of data ?? []) {
+    if (row.nome_cliente) map.set(row.ixc_cliente_id, row.nome_cliente)
+  }
+  return map
+}
+
 export interface RedemptionRow {
   id: string
   brinde_nome: string
