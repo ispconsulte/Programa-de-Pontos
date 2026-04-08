@@ -402,7 +402,7 @@ export default function ReceivablesPage() {
                       </TableHeader>
                       <TableBody>
                         {visibleReceivables.map((item) => {
-                          const score = getPaymentScore(item)
+                          const score = item.pontos_gerados ?? 0
                           return (
                             <TableRow key={item.id}>
                               <TableCell>
