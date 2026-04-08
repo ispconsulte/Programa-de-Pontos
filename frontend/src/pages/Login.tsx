@@ -127,7 +127,7 @@ function RotatingMessageCard({ mounted }: { mounted: boolean }) {
           style={{ background: 'conic-gradient(from 0deg, transparent 0%, hsl(217 91% 60% / 0.08) 25%, transparent 50%, hsl(45 90% 55% / 0.06) 75%, transparent 100%)', animation: 'shimmerLine 6s linear infinite' }} />
         {/* Inner glow */}
         <div className="pointer-events-none absolute -top-px left-[15%] right-[15%] h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
-        <span className="text-[13px]">🏆</span>
+        
         <p
           className="text-center text-[12.5px] font-medium leading-snug text-foreground/60 transition-opacity duration-500"
           style={{ opacity: fade ? 1 : 0 }}
