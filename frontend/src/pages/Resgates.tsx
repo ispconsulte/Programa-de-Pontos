@@ -100,7 +100,7 @@ export default function ResgatesPage() {
     }
     load()
     return () => { mounted = false }
-  }, [])
+  }, [reloadKey])
 
   const filtered = tab === 'all' ? rows : rows.filter((r) => r.status_resgate === tab)
 
