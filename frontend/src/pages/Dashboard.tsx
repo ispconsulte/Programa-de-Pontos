@@ -250,12 +250,14 @@ export default function DashboardPage() {
     try {
       const tenantId = await getCurrentTenantId()
       if (!tenantId) return
-      const [updated, faturasData] = await Promise.all([
+      const [updated, faturasData, redemptionsData] = await Promise.all([
         fetchCampaignClientById(tenantId, selectedClient.id),
         fetchCampaignClientFaturas(tenantId, selectedClient.id),
+        fetchCampaignClientRedemptions(selectedClient.ixc_cliente_id),
       ])
       if (updated) setSelectedClient(updated)
       setFaturas(faturasData)
+      setRedemptions(redemptionsData)
     } catch (err) {
       setClientError(err instanceof Error ? err.message : 'Erro ao atualizar.')
     } finally { setDetailLoading(false) }
