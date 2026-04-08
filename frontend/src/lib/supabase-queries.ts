@@ -689,31 +689,46 @@ export async function fetchDashboardMetrics(opts: {
 }): Promise<DashboardMetrics> {
   const { tenantId, dateFrom, dateTo } = opts
 
-  const { data: pointsRows, error: pointsError } = await (supabase as any)
-    .from('pontuacao_faturas_processadas')
-    .select('pontos_gerados')
-    .eq('tenant_id', tenantId)
-    .eq('status_processamento', 'processado')
-    .gte('data_pagamento', `${dateFrom}T00:00:00.000Z`)
-    .lte('data_pagamento', `${dateTo}T23:59:59.999Z`)
-    .limit(10000)
-  if (pointsError) throw new Error(pointsError.message)
+  const [pointsResult, clientsResult, legacyResult] = await Promise.all([
+    (supabase as any)
+      .from('pontuacao_faturas_processadas')
+      .select('pontos_gerados')
+      .eq('tenant_id', tenantId)
+      .eq('status_processamento', 'processado')
+      .gte('data_pagamento', `${dateFrom}T00:00:00.000Z`)
+      .lte('data_pagamento', `${dateTo}T23:59:59.999Z`)
+      .limit(10000),
+    (supabase as any)
+      .from('pontuacao_campanha_clientes')
+      .select('pontos_resgatados')
+      .eq('tenant_id', tenantId),
+    backendRequest<{ data: any[] } | null>('/campaign/legacy-redemptions?limit=200').catch(() => null),
+  ])
 
-  const legacyResponse = await backendRequest<{ data: any[] } | null>('/campaign/legacy-redemptions?limit=200').catch(() => null)
-  const redemptionRows = (legacyResponse?.data ?? []).filter((row: any) => {
+  if (pointsResult.error) throw new Error(pointsResult.error.message)
+
+  // Sum redeemed points from campaign clients table (authoritative source)
+  const clientsRedeemedPoints = (clientsResult.data ?? []).reduce(
+    (sum: number, row: any) => sum + Number(row.pontos_resgatados ?? 0), 0,
+  )
+
+  // Count redemptions from legacy endpoint
+  const redemptionRows = (legacyResult?.data ?? []).filter((row: any) => {
     const status = String(row.status ?? row.status_resgate ?? '').toLowerCase()
     if (status === 'cancelado' || status === 'cancelled') return false
-    const createdAt = String(row.created_at ?? '')
-    return createdAt >= `${dateFrom}T00:00:00.000Z` && createdAt <= `${dateTo}T23:59:59.999Z`
+    return true
   })
 
+  // Also count from pontuacao_resgates via the legacy endpoint
+  const legacyRedeemedPoints = redemptionRows.reduce(
+    (sum: number, row: any) => sum + Number(row.points_spent ?? row.pontos_resgatados ?? row.pontos_utilizados ?? 0),
+    0,
+  )
+
   return {
-    totalPoints: (pointsRows ?? []).reduce((sum: number, row: any) => sum + Number(row.pontos_gerados ?? 0), 0),
+    totalPoints: (pointsResult.data ?? []).reduce((sum: number, row: any) => sum + Number(row.pontos_gerados ?? 0), 0),
     redemptionsCount: redemptionRows.length,
-    redeemedPoints: redemptionRows.reduce(
-      (sum: number, row: any) => sum + Number(row.points_spent ?? row.pontos_resgatados ?? row.pontos_utilizados ?? 0),
-      0,
-    ),
+    redeemedPoints: Math.max(clientsRedeemedPoints, legacyRedeemedPoints),
   }
 }
 
