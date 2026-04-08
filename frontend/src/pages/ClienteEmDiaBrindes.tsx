@@ -201,9 +201,9 @@ export default function ClienteEmDiaBrindesPage() {
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
                             <p className="text-sm font-semibold text-foreground">{reward.nome}</p>
-                            {reward.estoque != null && (
+                            {reward.estoqueDisponivel != null && (
                               <span className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                                <Box className="h-2.5 w-2.5" />{reward.estoque}
+                                <Box className="h-2.5 w-2.5" />{reward.estoqueDisponivel}
                               </span>
                             )}
                           </div>
