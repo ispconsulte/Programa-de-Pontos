@@ -33,7 +33,7 @@ export default function AnimatedGiftBox({ size = 96, className = '' }: { size?: 
         id: i,
         color: ['#ef4444', '#eab308', '#3b82f6', '#10b981', '#a855f7', '#f97316', '#ec4899', '#06b6d4'][i % 8],
         tx: Math.cos(rad) * dist,
-        ty: Math.sin(rad) * dist - 20,
+        ty: Math.sin(rad) * dist + 10,
         size: 3 + Math.random() * 4,
         delay: Math.random() * 250,
         rot: Math.random() * 720 - 360,
@@ -41,12 +41,12 @@ export default function AnimatedGiftBox({ size = 96, className = '' }: { size?: 
       }
     }), [])
 
-  // Sparkle trails — small bright dots that rise upward
+  // Sparkle trails — small bright dots that drift downward
   const sparkles = useMemo(() =>
     Array.from({ length: 10 }, (_, i) => ({
       id: i,
       x: (Math.random() - 0.5) * 60,
-      ty: -(40 + Math.random() * 50),
+      ty: 40 + Math.random() * 50,
       delay: 100 + Math.random() * 400,
       size: 2 + Math.random() * 2.5,
       color: ['#fbbf24', '#f9fafb', '#fde68a', '#a5f3fc', '#c4b5fd'][i % 5],
@@ -54,9 +54,9 @@ export default function AnimatedGiftBox({ size = 96, className = '' }: { size?: 
 
   // Floating reward symbols that pop out
   const rewards = useMemo(() => [
-    { id: 0, emoji: '⭐', angle: -50, dist: 55, delay: 150 },
-    { id: 1, emoji: '🎯', angle: 30, dist: 50, delay: 300 },
-    { id: 2, emoji: '💎', angle: -130, dist: 48, delay: 200 },
+    { id: 0, emoji: '⭐', angle: 40, dist: 55, delay: 150 },
+    { id: 1, emoji: '🎯', angle: 130, dist: 50, delay: 300 },
+    { id: 2, emoji: '💎', angle: 80, dist: 48, delay: 200 },
   ], [])
 
   const s = size
@@ -89,7 +89,7 @@ export default function AnimatedGiftBox({ size = 96, className = '' }: { size?: 
                 animation: `confettiBurst 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) ${c.delay}ms forwards`,
                 '--conf-tx': `${c.tx}px`,
                 '--conf-ty': `${c.ty}px`,
-                '--conf-ty2': `${c.ty + 40}px`,
+                '--conf-ty2': `${c.ty + 50}px`,
                 '--conf-rot': `${c.rot}deg`,
                 '--conf-rot2': `${c.rot + 180}deg`,
               } as React.CSSProperties : {}),
@@ -250,7 +250,7 @@ export default function AnimatedGiftBox({ size = 96, className = '' }: { size?: 
           }
           100% {
             opacity: 0;
-            transform: translate(-50%, -50%) translate(var(--rw-tx), calc(var(--rw-ty) - 15px)) scale(0.6) rotate(10deg);
+            transform: translate(-50%, -50%) translate(var(--rw-tx), calc(var(--rw-ty) + 25px)) scale(0.6) rotate(10deg);
           }
         }
       `}</style>
