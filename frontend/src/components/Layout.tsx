@@ -16,6 +16,7 @@ import {
   Briefcase,
   Megaphone,
   UserCog,
+  HelpCircle,
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import AnimatedGiftBox from '@/components/AnimatedGiftBox'

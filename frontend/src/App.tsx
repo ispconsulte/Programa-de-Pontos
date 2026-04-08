@@ -60,6 +60,7 @@ function App() {
           <Route path="/settings/campaigns" element={<Navigate to="/admin/campanhas" replace />} />
           <Route path="/settings/users" element={<Navigate to="/admin/usuarios" replace />} />
           <Route path="/admin" element={<Navigate to="/admin/empresa" replace />} />
+          <Route path="/suporte" element={<SuportePage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
