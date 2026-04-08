@@ -294,15 +294,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       >
         {/* Logo area — compact */}
         <div className={cn(
-          'relative flex flex-shrink-0 items-center justify-center border-b border-sidebar-border overflow-visible transition-all duration-300',
-          collapsed ? 'h-14 px-2' : 'h-24 px-4'
+          'relative flex flex-shrink-0 flex-col items-center justify-center border-b border-sidebar-border overflow-visible transition-all duration-300',
+          collapsed ? 'h-14 px-2' : 'h-28 px-4'
         )}>
           <div className={cn(
-            'flex items-center justify-center transition-all duration-300 mt-3',
-            collapsed ? 'h-9 w-9' : 'h-16 w-16'
+            'flex items-center justify-center transition-all duration-300 mt-2',
+            collapsed ? 'h-9 w-9' : 'h-14 w-14'
           )}>
-            <AnimatedGiftBox size={collapsed ? 32 : 64} />
+            <AnimatedGiftBox size={collapsed ? 32 : 56} />
           </div>
+          {!collapsed && (
+            <span className="mt-1 text-[11px] font-semibold tracking-wide bg-gradient-to-r from-emerald-400 via-yellow-400 to-blue-400 bg-clip-text text-transparent">
+              Sistema de Recompensas!
+            </span>
+          )}
 
           {/* Mobile close */}
           <button
