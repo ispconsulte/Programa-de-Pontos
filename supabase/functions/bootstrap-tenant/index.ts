@@ -40,13 +40,6 @@ serve(async (req) => {
       .eq('id', user.id)
       .maybeSingle()
 
-    if (existingUser) {
-      return new Response(JSON.stringify({ message: 'Tenant já criado para este usuário.', tenant: existingUser }), {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-
     const { data: sharedUser, error: sharedUserError } = await supabaseAdmin
       .from('users')
       .select('tenant_id')
@@ -55,6 +48,24 @@ serve(async (req) => {
       .maybeSingle()
 
     if (sharedUserError) throw sharedUserError
+
+    if (existingUser) {
+      if (sharedUser?.tenant_id && existingUser.tenant_id !== sharedUser.tenant_id) {
+        const { error: remapError } = await supabaseAdmin
+          .from('users')
+          .update({ tenant_id: sharedUser.tenant_id })
+          .eq('id', existingUser.id)
+
+        if (remapError) throw remapError
+
+        existingUser.tenant_id = sharedUser.tenant_id
+      }
+
+      return new Response(JSON.stringify({ message: 'Tenant já criado para este usuário.', tenant: existingUser }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
     const tenantName = user.email ? `Empresa de ${user.email.split('@')[0]}` : 'Nova Empresa'
     let tenantId = sharedUser?.tenant_id ?? null
