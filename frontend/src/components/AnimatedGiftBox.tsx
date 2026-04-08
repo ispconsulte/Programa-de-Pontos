@@ -159,7 +159,7 @@ export default function AnimatedGiftBox({ size = 96, className = '' }: { size?: 
             zIndex: 10,
           }}
         >
-          <div className="absolute inset-0 rounded-sm overflow-hidden">
+          <div className="absolute inset-0 overflow-hidden">
             <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, #e63946 0%, #c1121f 100%)' }} />
             <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.22) 0%, transparent 50%)' }} />
           </div>
@@ -185,7 +185,7 @@ export default function AnimatedGiftBox({ size = 96, className = '' }: { size?: 
         </div>
 
         {/* Box body */}
-        <div className="absolute left-1/2 -translate-x-1/2 bottom-0 overflow-hidden rounded-sm" style={{ width: boxW, height: boxH }}>
+        <div className="absolute left-1/2 -translate-x-1/2 bottom-0 overflow-hidden" style={{ width: boxW, height: boxH }}>
           {/* Main red gradient */}
           <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, #e63946 0%, #a4161a 100%)' }} />
           {/* Subtle pattern overlay */}
