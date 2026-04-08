@@ -221,7 +221,7 @@ export default function LoginPage() {
 
       {/* Top accent */}
       <div className="pointer-events-none absolute left-0 right-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/15 to-transparent" />
-
+      <AuroraBackground />
       <RewardParticles />
 
       {/* ── Main layout: 40/60 split ── */}
