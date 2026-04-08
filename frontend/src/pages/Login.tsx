@@ -196,7 +196,7 @@ export default function LoginPage() {
       <RewardParticles />
 
       {/* ── Main layout: 40/60 split ── */}
-      <div className="relative z-10 flex w-full flex-col items-center justify-center px-4 py-8 md:flex-row md:items-center md:justify-center md:gap-0 md:px-0 md:py-0 min-h-[100dvh]">
+      <div className="relative z-10 flex min-h-[100dvh] w-full flex-col items-center justify-center px-4 py-8 sm:px-5 md:flex-row md:items-center md:justify-center md:gap-0 md:px-0 md:py-0">
 
         {/* ── LEFT: Visual / Brand (40%) ── */}
         <div
@@ -244,7 +244,7 @@ export default function LoginPage() {
 
         {/* ── RIGHT: Login Form (60%) ── */}
         <div
-          className="flex w-full max-w-[480px] flex-col items-center justify-center px-4 md:w-[62%] lg:w-[60%] md:max-w-none md:px-8 lg:px-16 xl:px-24"
+          className="flex w-full max-w-[34rem] min-w-0 flex-col items-center justify-center px-0 md:w-[62%] md:max-w-none md:px-8 lg:w-[60%] lg:px-16 xl:px-24"
           style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(16px)', transition: 'all 800ms cubic-bezier(0.16, 1, 0.3, 1) 250ms' }}
         >
           {/* Mobile-only logo */}
