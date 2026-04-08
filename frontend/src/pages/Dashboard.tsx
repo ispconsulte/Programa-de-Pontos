@@ -228,10 +228,13 @@ export default function DashboardPage() {
     setClientError('')
     try {
       const tenantId = await getCurrentTenantId()
-      if (!tenantId) return
+      if (!tenantId) { setClientError('Tenant não encontrado.'); return }
+      console.log('[Dashboard] selectClient:', { clientId: client.id, tenantId })
       const faturasData = await fetchCampaignClientFaturas(tenantId, client.id)
+      console.log('[Dashboard] faturas loaded:', faturasData.length)
       setFaturas(faturasData)
     } catch (err) {
+      console.error('[Dashboard] selectClient error:', err)
       setClientError(err instanceof Error ? err.message : 'Erro ao carregar faturas.')
     } finally { setDetailLoading(false) }
   }, [ac])
