@@ -12,6 +12,7 @@ import {
   Gift,
   Hash,
   Mail,
+  Medal,
   Phone,
   RefreshCw,
   Search,
