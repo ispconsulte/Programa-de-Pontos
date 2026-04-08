@@ -306,14 +306,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         )}>
           <div className={cn(
             'flex items-center justify-center transition-all duration-300 mt-2',
-            collapsed ? 'h-9 w-9' : 'h-[4.5rem] w-[4.5rem]'
+            collapsed ? 'h-9 w-9' : 'h-[4rem] w-[4rem]'
           )}>
-            <AnimatedGiftBox size={collapsed ? 32 : 72} />
+            <div className={collapsed ? 'scale-[0.45] transform' : ''}>
+              <AnimatedGiftBox size={collapsed ? 32 : 64} />
+            </div>
           </div>
           {!collapsed && (
-            <span className="-mt-1 text-[13px] font-semibold tracking-wide bg-gradient-to-r from-emerald-400 via-yellow-400 to-blue-400 bg-clip-text text-transparent">
-              Sistema de Recompensas!
-            </span>
+            <div className="text-center -mt-0.5">
+              <span className="text-[13px] font-semibold tracking-wide bg-gradient-to-r from-emerald-400 via-yellow-400 to-blue-400 bg-clip-text text-transparent">
+                Recompensas
+              </span>
+              <p className="text-[10px] text-muted-foreground mt-0.5 truncate max-w-[10rem]">{tenantName}</p>
+            </div>
           )}
 
           {/* Mobile close */}
