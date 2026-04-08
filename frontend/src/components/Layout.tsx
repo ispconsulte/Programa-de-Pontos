@@ -161,7 +161,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState(() => {
     const cachedProfile = getCachedCurrentUserProfile()
     if (!cachedProfile) {
-      return { name: 'Usuário', email: 'Sem e-mail', role: 'operator' }
+      return { name: 'Usuário', email: 'Sem e-mail', role: '' }
     }
     return {
       name: cachedProfile.name,
@@ -170,6 +170,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     }
   })
   const [tenantName, setTenantName] = useState('Empresa')
+  const [profileLoading, setProfileLoading] = useState(() => !getCachedCurrentUserProfile())
   const [headerSearchType, setHeaderSearchType] = useState<DashboardSearchType>('name')
   const [headerSearchValue, setHeaderSearchValue] = useState('')
   const navSections = useMemo(() => {
