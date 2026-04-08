@@ -294,8 +294,10 @@ export default function DashboardPage() {
                 <p className="text-[11px] text-muted-foreground">Digite o nome ou CPF/CNPJ</p>
               </div>
             </div>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <div className="relative" onBlur={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node)) ac.close()
+            }}>
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               <Input
                 type="text"
                 value={ac.query}
@@ -303,8 +305,7 @@ export default function DashboardPage() {
                   ac.handleChange(e.target.value)
                   if (selectedClient) clearSelection()
                 }}
-                onFocus={() => ac.suggestions.length > 0 && ac.setShowDropdown(true)}
-                onBlur={ac.close}
+                onFocus={() => { if (ac.suggestions.length > 0) ac.setShowDropdown(true) }}
                 placeholder="Ex: João Silva ou 123.456.789-00"
                 className="h-12 pl-10 text-base bg-background border-border"
                 autoComplete="off"
