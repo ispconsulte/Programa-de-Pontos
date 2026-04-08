@@ -201,16 +201,16 @@ export default function LoginPage() {
       <RewardParticles />
 
       {/* ── Main layout: 40/60 split ── */}
-      <div className="relative z-10 flex w-full flex-col items-center justify-center px-4 py-8 md:flex-row md:items-stretch md:gap-0 md:px-0 md:py-0">
+      <div className="relative z-10 flex w-full flex-col items-center justify-center px-4 py-8 md:flex-row md:items-center md:gap-0 md:px-0 md:py-0">
 
         {/* ── LEFT: Visual / Brand (40%) ── */}
         <div
-          className="hidden md:flex md:w-[38%] lg:w-[40%] flex-col items-center justify-center px-6 lg:px-10"
+          className="hidden md:flex md:w-[38%] lg:w-[40%] flex-col items-center justify-end px-6 lg:px-10"
           style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(16px)', transition: 'all 800ms cubic-bezier(0.16, 1, 0.3, 1)' }}
         >
           {/* 3D Animated Logo */}
           <div
-            className="mb-8"
+            className="mb-0"
             style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'scale(1)' : 'scale(0.85)', transition: 'all 1000ms cubic-bezier(0.16, 1, 0.3, 1) 100ms' }}
           >
             <div className="relative" style={{ perspective: '1000px' }}>
