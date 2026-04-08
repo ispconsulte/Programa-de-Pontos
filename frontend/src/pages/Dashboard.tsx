@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useThrottledAction } from '@/hooks/useThrottledAction'
 import { Link } from 'react-router-dom'
 import {
@@ -118,6 +118,9 @@ export default function DashboardPage() {
   })
   const [searchType, setSearchType] = useState<HeaderSearchType>('name')
   const [searchQuery, setSearchQuery] = useState('')
+  const [showCalmModal, setShowCalmModal] = useState(false)
+  const clickCountRef = useRef(0)
+  const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const period = useMemo(() => monthDateRange(), [])
 
@@ -178,6 +181,19 @@ export default function DashboardPage() {
   }, [period.from, period.to, searchType, searchQuery])
 
   const [throttledFetch, refreshBusy] = useThrottledAction(fetchData)
+
+  const handleRefresh = () => {
+    clickCountRef.current += 1
+    if (clickTimerRef.current) clearTimeout(clickTimerRef.current)
+    clickTimerRef.current = setTimeout(() => { clickCountRef.current = 0 }, 4000)
+
+    if (clickCountRef.current >= 3) {
+      setShowCalmModal(true)
+      clickCountRef.current = 0
+      return
+    }
+    void throttledFetch()
+  }
 
   useEffect(() => {
     const handler = (event: Event) => {
@@ -263,7 +279,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between border-b border-border px-5 py-4">
               <h2 className="text-sm font-semibold text-foreground">Últimos registros</h2>
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" disabled={refreshBusy} onClick={() => void throttledFetch()}>
+                <Button variant="ghost" size="sm" disabled={refreshBusy} onClick={handleRefresh}>
                   <RefreshCw className={`h-3.5 w-3.5 ${refreshBusy ? 'animate-spin' : ''}`} />
                 </Button>
                 <Button asChild variant="outline" size="sm">
@@ -358,6 +374,24 @@ export default function DashboardPage() {
             )}
           </section>
         </div>
+
+        {/* Anti-spam modal */}
+        {showCalmModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowCalmModal(false)}>
+            <div className="mx-4 w-full max-w-sm rounded-xl border border-border bg-card p-6 text-center shadow-2xl animate-scale-in" onClick={(e) => e.stopPropagation()}>
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+                <RefreshCw className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="text-lg font-bold text-foreground">Calma! 😊</h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Seus dados estão sendo atualizados. Não é necessário ter pressa.
+              </p>
+              <Button className="mt-5 w-full" onClick={() => setShowCalmModal(false)}>
+                Entendi
+              </Button>
+            </div>
+          </div>
+        )}
       </Layout>
     </ProtectedRoute>
   )
