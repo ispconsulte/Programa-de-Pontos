@@ -411,7 +411,7 @@ export default function ReceivablesPage() {
                                   <p className="mt-0.5 text-xs text-muted-foreground">IXC #{formatText(item.id_cliente)}</p>
                                 </div>
                               </TableCell>
-                              <TableCell className="text-muted-foreground">{getPaymentBehaviorLabel(item)}</TableCell>
+                              <TableCell className="text-muted-foreground">{getBehaviorLabelFromPoints(item.pontos_gerados)}</TableCell>
                               <TableCell className="text-center">{scoreBadge(score)}</TableCell>
                               <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(item.data_vencimento)}</TableCell>
                               <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(item.data_pagamento ?? '')}</TableCell>
