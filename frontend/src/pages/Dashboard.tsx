@@ -598,8 +598,8 @@ export default function DashboardPage() {
                                   <td className="px-3 py-3.5 text-center"><RankBadge position={index + 1} /></td>
                                   <td className="px-5 py-3.5">
                                     <div className="flex items-center gap-3">
-                                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${avatarColor(client.nome_cliente || '#')}`}>
-                                        {(client.nome_cliente?.trim()?.[0] || '#').toUpperCase()}
+                                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${avatarColor(client.nome_cliente || 'A')}`}>
+                                        {client.nome_cliente?.trim()?.[0] ? client.nome_cliente.trim()[0].toUpperCase() : <Medal className="h-3.5 w-3.5" />}
                                       </div>
                                       <div className="min-w-0">
                                         <span className="font-medium text-foreground">{client.nome_cliente}</span>
