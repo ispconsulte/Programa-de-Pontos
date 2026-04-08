@@ -118,18 +118,21 @@ function RotatingMessageCard({ mounted }: { mounted: boolean }) {
 
   return (
     <div
-      className="w-[340px]"
+      className="w-[380px]"
       style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(8px)', transition: 'all 700ms ease 850ms' }}
     >
-      <div className="group relative flex h-[56px] items-center justify-center gap-2.5 overflow-hidden rounded-full border border-foreground/[0.06] bg-gradient-to-r from-[hsl(225_25%_8%_/_0.6)] to-[hsl(225_20%_10%_/_0.4)] px-6 backdrop-blur-xl transition-all duration-400 hover:border-primary/15 hover:shadow-[0_0_24px_-4px_hsl(217_91%_60%_/_0.15)]">
-        {/* Animated border shimmer */}
-        <div className="pointer-events-none absolute inset-0 rounded-full opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-          style={{ background: 'conic-gradient(from 0deg, transparent 0%, hsl(217 91% 60% / 0.08) 25%, transparent 50%, hsl(45 90% 55% / 0.06) 75%, transparent 100%)', animation: 'shimmerLine 6s linear infinite' }} />
-        {/* Inner glow */}
-        <div className="pointer-events-none absolute -top-px left-[15%] right-[15%] h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
-        
+      <div className="group relative flex h-[52px] items-center justify-center gap-3 overflow-hidden rounded-full border border-primary/10 bg-gradient-to-r from-primary/[0.06] via-[hsl(225_25%_10%_/_0.5)] to-[hsl(45_90%_55%_/_0.04)] px-7 backdrop-blur-xl transition-all duration-500 hover:border-primary/20 hover:shadow-[0_0_30px_-6px_hsl(217_91%_60%_/_0.2),0_0_15px_-3px_hsl(45_90%_55%_/_0.1)]">
+        {/* Animated gradient border */}
+        <div className="pointer-events-none absolute inset-[-1px] rounded-full opacity-30 transition-opacity duration-500 group-hover:opacity-60"
+          style={{ background: 'conic-gradient(from 180deg, hsl(217 91% 60% / 0.15), hsl(45 90% 55% / 0.1), hsl(160 60% 45% / 0.08), transparent, hsl(217 91% 60% / 0.15))', animation: 'spin 8s linear infinite' }} />
+        {/* Inner bg to mask the conic border */}
+        <div className="pointer-events-none absolute inset-[1px] rounded-full bg-[hsl(225_25%_7%_/_0.9)]" />
+        {/* Top highlight */}
+        <div className="pointer-events-none absolute -top-px left-[20%] right-[20%] h-px bg-gradient-to-r from-transparent via-primary/25 to-transparent" />
+        {/* Dot indicator */}
+        <div className="relative z-10 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary/60 shadow-[0_0_8px_hsl(217_91%_60%_/_0.4)]" />
         <p
-          className="text-center text-[12.5px] font-medium leading-snug text-foreground/60 transition-opacity duration-500"
+          className="relative z-10 text-center text-[12.5px] font-medium leading-snug text-foreground/65 transition-all duration-500"
           style={{ opacity: fade ? 1 : 0 }}
         >
           {motivationalMessages[index]}
