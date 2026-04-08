@@ -449,6 +449,78 @@ export default function DashboardPage() {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Últimos resgates */}
+              <Card className="overflow-hidden">
+                <CardHeader className="py-3.5 px-5 border-b border-border">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/15">
+                        <Gift className="h-3.5 w-3.5 text-amber-500" />
+                      </div>
+                      <CardTitle className="text-sm font-bold">Últimos resgates</CardTitle>
+                    </div>
+                    <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-bold text-muted-foreground">{redemptions.length}</span>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {detailLoading ? (
+                    <div className="flex items-center justify-center py-12"><Spinner size="md" /></div>
+                  ) : redemptions.length === 0 ? (
+                    <div className="py-12 text-center">
+                      <Gift className="mx-auto h-8 w-8 text-muted-foreground/30 mb-2" />
+                      <p className="text-sm text-muted-foreground">Nenhum resgate realizado.</p>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Mobile */}
+                      <div className="divide-y divide-border/50 md:hidden">
+                        {redemptions.map((r) => (
+                          <div key={r.id} className="px-4 py-3.5">
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm font-semibold text-foreground">{r.brinde_nome}</p>
+                              <RedemptionStatusBadge status={r.status_resgate} />
+                            </div>
+                            <div className="mt-1.5 flex items-center justify-between text-xs">
+                              <span className="text-muted-foreground">{formatDate(r.created_at)}</span>
+                              <span className="font-bold text-amber-400">-{r.pontos_utilizados} pts</span>
+                            </div>
+                            {r.observacoes && <p className="mt-1 text-[11px] text-muted-foreground italic">{r.observacoes}</p>}
+                          </div>
+                        ))}
+                      </div>
+                      {/* Desktop */}
+                      <div className="hidden md:block">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-muted/30">
+                              <TableHead className="text-[11px] uppercase tracking-wider">Brinde</TableHead>
+                              <TableHead className="text-[11px] uppercase tracking-wider">Data</TableHead>
+                              <TableHead className="text-right text-[11px] uppercase tracking-wider">Pontos</TableHead>
+                              <TableHead className="text-center text-[11px] uppercase tracking-wider">Status</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {redemptions.map((r) => (
+                              <TableRow key={r.id}>
+                                <TableCell>
+                                  <div>
+                                    <p className="text-sm font-medium text-foreground">{r.brinde_nome}</p>
+                                    {r.observacoes && <p className="text-[11px] text-muted-foreground italic mt-0.5">{r.observacoes}</p>}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-muted-foreground text-xs">{formatDate(r.created_at)}</TableCell>
+                                <TableCell className="text-right font-bold text-amber-400">-{r.pontos_utilizados}</TableCell>
+                                <TableCell className="text-center"><RedemptionStatusBadge status={r.status_resgate} /></TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           )}
 
