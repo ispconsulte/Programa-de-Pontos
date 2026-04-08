@@ -72,20 +72,20 @@ export default function ClientsPage() {
 
         <div className="page-stack">
           <form onSubmit={handleSearch} className="space-y-4">
-            <Card className="overflow-hidden">
-              <CardContent className="space-y-4 p-4 sm:p-5">
-                <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-2">
-                  <div className="flex flex-wrap gap-2">
+            <Card className="border-[hsl(var(--border))] bg-[hsl(var(--card))]">
+              <CardContent className="space-y-5 p-4 pt-5 sm:p-6 sm:pt-6">
+                <div className="rounded-[1.75rem] border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-3 sm:px-4 sm:py-4">
+                  <div className="flex flex-wrap gap-2.5">
                     {SEARCH_TYPES.map((type) => (
                       <button
                         key={type.value}
                         type="button"
                         onClick={() => { setSearchType(type.value); setQuery('') }}
                         className={cn(
-                          'rounded-xl border px-4 py-2 text-xs font-semibold tracking-wide uppercase transition-all duration-200',
+                          'min-h-11 rounded-xl border px-4 py-2 text-xs font-semibold tracking-wide uppercase transition-all duration-200',
                           searchType === type.value
-                            ? 'border-primary/20 bg-primary text-primary-foreground shadow-sm shadow-primary/20'
-                            : 'border-[hsl(var(--border))] bg-transparent text-muted-foreground hover:bg-[hsl(var(--surface-1))] hover:text-foreground'
+                            ? 'border-primary/20 bg-primary text-primary-foreground shadow-sm ring-1 ring-primary/20'
+                            : 'border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-muted-foreground hover:bg-[hsl(var(--surface-1))] hover:text-foreground'
                         )}
                       >
                         {type.label}
@@ -94,28 +94,30 @@ export default function ClientsPage() {
                   </div>
                 </div>
 
-                <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
-                  <div className="relative min-w-0">
-                    <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      type="text"
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                      placeholder={SEARCH_TYPES.find((type) => type.value === searchType)?.placeholder}
-                      className="h-12 pl-10 placeholder:text-muted-foreground"
-                    />
-                  </div>
+                <div className="rounded-[1.75rem] border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 sm:p-4">
+                  <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
+                    <div className="relative min-w-0">
+                      <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        type="text"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        placeholder={SEARCH_TYPES.find((type) => type.value === searchType)?.placeholder}
+                        className="h-12 border-[hsl(var(--border))] bg-[hsl(var(--background))] pl-10 placeholder:text-muted-foreground"
+                      />
+                    </div>
 
-                  <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center lg:justify-end">
-                    <Button type="submit" size="lg" disabled={loading || !query.trim()} className="w-full sm:min-w-[8.5rem]">
-                      {loading ? <Spinner size="sm" /> : <Search className="h-3.5 w-3.5" />}
-                      Buscar
-                    </Button>
-                    {searched && (
-                      <Button type="button" variant="outline" size="icon" className="h-12 w-12 self-end sm:self-auto" disabled={refreshBusy} onClick={() => void throttledSearch()}>
-                        <RefreshCw className={`h-3.5 w-3.5 transition-transform ${refreshBusy ? 'animate-spin' : ''}`} />
+                    <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center lg:justify-end">
+                      <Button type="submit" size="lg" disabled={loading || !query.trim()} className="w-full sm:min-w-[8.5rem]">
+                        {loading ? <Spinner size="sm" /> : <Search className="h-3.5 w-3.5" />}
+                        Buscar
                       </Button>
-                    )}
+                      {searched && (
+                        <Button type="button" variant="outline" size="icon" className="h-12 w-12 self-end sm:self-auto" disabled={refreshBusy} onClick={() => void throttledSearch()}>
+                          <RefreshCw className={`h-3.5 w-3.5 transition-transform ${refreshBusy ? 'animate-spin' : ''}`} />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </CardContent>
