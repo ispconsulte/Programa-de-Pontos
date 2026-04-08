@@ -9,7 +9,7 @@ import Spinner from '@/components/Spinner'
 import { statusBadge } from '@/components/Badge'
 import Pagination from '@/components/Pagination'
 import { getPaymentBehaviorLabel, getPaymentScore, toNumber } from '@/lib/receivables-utils'
-import { fetchReceivables, getCurrentTenantId, type ReceivableRow } from '@/lib/supabase-queries'
+import { fetchReceivables, fetchClientNamesByIxcIds, getCurrentTenantId, type ReceivableRow } from '@/lib/supabase-queries'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
@@ -30,12 +30,12 @@ import {
 } from '@/components/ui/select'
 
 /* ── Adapter: DB row → UI shape ── */
-function toShape(row: ReceivableRow) {
+function toShape(row: ReceivableRow, nameMap?: Map<string, string>) {
   const payload = (row.payload ?? {}) as Record<string, unknown>
   return {
     id: row.id,
     id_cliente: row.ixc_cliente_id,
-    cliente_nome: null as string | null,
+    cliente_nome: nameMap?.get(row.ixc_cliente_id) ?? null,
     data_vencimento: (payload.competencia as string | undefined) ?? row.competencia ?? '',
     data_pagamento: row.data_pagamento ?? null,
     valor: row.valor_pago ?? 0,
@@ -139,6 +139,7 @@ export default function ReceivablesPage() {
   const [limit, setLimit] = useState(10)
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState<SortOption>('due_desc')
+  const [clientNameMap, setClientNameMap] = useState<Map<string, string>>(new Map())
 
   const fetchReceivablesData = useCallback(async () => {
     setLoading(true)
@@ -159,7 +160,12 @@ export default function ReceivablesPage() {
         dateTo: appliedFilters.dateTo || undefined,
       })
 
-      setReceivables(result.data.map(toShape))
+      // Fetch client names in parallel
+      const ixcIds = result.data.map(r => r.ixc_cliente_id)
+      const nameMap = await fetchClientNamesByIxcIds(tenantId, ixcIds)
+      setClientNameMap(nameMap)
+
+      setReceivables(result.data.map(r => toShape(r, nameMap)))
       setTotal(result.total)
       setTotalPages(result.totalPages)
     } catch (err) {
@@ -355,7 +361,7 @@ export default function ReceivablesPage() {
                                 <p className="mt-1 text-xs text-muted-foreground">IXC #{formatText(item.id_cliente)}</p>
                               </div>
                             </TableCell>
-                            <TableCell className="font-mono text-xs text-foreground">{item.id.slice(0, 8)}…</TableCell>
+                            <TableCell className="font-mono text-xs text-foreground min-w-[10rem]">{item.id.slice(0, 10)}…</TableCell>
                             <TableCell className="text-muted-foreground">{getPaymentBehaviorLabel(item)}</TableCell>
                             <TableCell className="text-right font-semibold text-emerald-400">+{getPaymentScore(item)}</TableCell>
                             <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(item.data_vencimento)}</TableCell>
@@ -363,7 +369,12 @@ export default function ReceivablesPage() {
                             <TableCell className="whitespace-nowrap text-right text-emerald-400">{formatBRL(item.valor_recebido)}</TableCell>
                             <TableCell>{statusBadge(item.status)}</TableCell>
                             <TableCell className="text-right">
-                              <Link to={`/receivables/${item.id}`} className="text-sm text-primary transition-colors hover:text-primary/80">Detalhe</Link>
+                              <Button variant="outline" size="sm" asChild className="h-7 px-3 text-xs">
+                                <Link to={`/receivables/${item.id}`}>
+                                  <ArrowRight className="h-3 w-3 mr-1" />
+                                  Detalhe
+                                </Link>
+                              </Button>
                             </TableCell>
                           </TableRow>
                         ))}

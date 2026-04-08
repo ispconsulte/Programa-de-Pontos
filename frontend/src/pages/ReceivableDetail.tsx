@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, Coins, ShieldAlert, Users, Mail, Phone, FileText, Hash, Briefcase, TrendingUp, Gift, CalendarDays, Receipt } from 'lucide-react'
+import { ArrowLeft, Coins, ShieldAlert, Users, Mail, Phone, FileText, Hash, Briefcase, TrendingUp, Gift, CalendarDays, Receipt } from 'lucide-react'
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import PageHeader from '@/components/PageHeader'
@@ -194,17 +194,6 @@ export default function ReceivableDetailPage() {
                           <InfoField icon={Hash} label="ID IXC">{cliente.ixc_cliente_id}</InfoField>
                           <InfoField icon={Briefcase} label="Contrato IXC">{row.ixc_contrato_id || cliente.ixc_contrato_id || '-'}</InfoField>
                         </div>
-                        {cliente.id && (
-                          <div className="border-t border-border/50 pt-3">
-                            <Link
-                              to={`/clients/${cliente.id}`}
-                              className="inline-flex items-center gap-1.5 text-sm text-primary transition-colors hover:text-primary/80"
-                            >
-                              Ver perfil completo do cliente
-                              <ArrowRight className="h-3.5 w-3.5" />
-                            </Link>
-                          </div>
-                        )}
                       </div>
                     ) : (
                       <div className="grid gap-3 sm:grid-cols-2">
