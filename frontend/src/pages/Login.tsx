@@ -58,7 +58,7 @@ export default function LoginPage() {
         {/* Subtle ambient wash */}
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_30%,hsl(217_91%_60%_/_0.025),transparent_70%)]" />
         {/* Left edge accent (desktop) */}
-        <div className="pointer-events-none absolute bottom-0 left-0 top-0 hidden w-px bg-gradient-to-b from-transparent via-white/[0.04] to-transparent lg:block" />
+        <div className="pointer-events-none absolute bottom-0 left-0 top-0 hidden w-px bg-gradient-to-b from-transparent via-foreground/10 to-transparent lg:block" />
 
         <div
           className="relative z-10 w-full max-w-[400px] transition-all duration-700"
@@ -75,7 +75,7 @@ export default function LoginPage() {
           </div>
 
           {/* ── Card ── */}
-          <div className="rounded-2xl border border-[hsl(var(--border))] bg-gradient-to-b from-[hsl(var(--surface-1))] to-[hsl(var(--surface-2)_/_0.4)] p-7 shadow-[0_20px_60px_-16px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.03)] lg:p-8">
+          <div className="rounded-2xl border border-[hsl(var(--border))] bg-gradient-to-b from-[hsl(var(--surface-1))] to-[hsl(var(--surface-2)_/_0.4)] p-7 shadow-[var(--elevation-2),0_0_0_1px_hsl(var(--foreground)/0.05)] lg:p-8">
             {/* Card header */}
             <div className="mb-8">
               <h1 className="font-heading text-[22px] font-bold tracking-tight text-foreground">
@@ -89,8 +89,8 @@ export default function LoginPage() {
             {/* Success banner */}
             {registered && (
               <div className="mb-6 flex items-center gap-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] px-4 py-3 animate-enter">
-                <CheckCircle className="h-4 w-4 flex-shrink-0 text-emerald-400" />
-                <p className="text-[13px] text-emerald-300">Conta criada. Faça login para continuar.</p>
+                <CheckCircle className="h-4 w-4 flex-shrink-0 text-[hsl(var(--success))]" />
+                <p className="text-[13px] text-foreground">Conta criada. Faça login para continuar.</p>
               </div>
             )}
 
@@ -99,7 +99,7 @@ export default function LoginPage() {
               {error && (
                 <div className="flex items-center gap-2.5 rounded-xl border border-destructive/20 bg-destructive/[0.06] px-4 py-3 animate-enter">
                   <AlertCircle className="h-4 w-4 flex-shrink-0 text-destructive" />
-                  <p className="text-[13px] text-red-300">{error}</p>
+                  <p className="text-[13px] text-foreground">{error}</p>
                 </div>
               )}
 

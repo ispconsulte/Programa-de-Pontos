@@ -278,7 +278,7 @@ export default function SettingsUsersPage() {
                         Crie acessos, ajuste papéis, revogue sessões e retire usuários da operação quando necessário.
                       </CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-0 sm:p-6">
                       <Table>
                         <TableHeader>
                           <TableRow>
@@ -310,22 +310,23 @@ export default function SettingsUsersPage() {
                                   <Badge
                                     variant="outline"
                                     className={user.is_active
-                                      ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300'
-                                      : 'border-amber-500/20 bg-amber-500/10 text-amber-300'}
+                                      ? 'border-emerald-500/20 bg-emerald-500/10 text-[hsl(var(--success))]'
+                                      : 'border-amber-500/20 bg-amber-500/10 text-[hsl(var(--warning))]'}
                                   >
                                     {user.is_active ? 'Ativo' : 'Inativo'}
                                   </Badge>
                                 </TableCell>
                                 <TableCell>{formatDateTime(user.last_sign_in_at)}</TableCell>
                                 <TableCell>{formatDateTime(user.session_revoked_at)}</TableCell>
-                                <TableCell className="text-right">
-                                  <div className="flex justify-end gap-2">
-                                    <Button variant="outline" size="sm" onClick={() => openEditDialog(user)}>
+                                <TableCell className="text-right align-top">
+                                  <div className="flex min-w-[10rem] flex-wrap justify-end gap-2">
+                                    <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => openEditDialog(user)}>
                                       Editar
                                     </Button>
                                     <Button
                                       variant="outline"
                                       size="sm"
+                                      className="w-full sm:w-auto"
                                       disabled={rowBusy}
                                       onClick={() => void handleDisconnect(user)}
                                     >
@@ -335,9 +336,9 @@ export default function SettingsUsersPage() {
                                     <Button
                                       variant="outline"
                                       size="sm"
+                                      className="w-full text-destructive hover:text-destructive sm:w-auto"
                                       disabled={rowBusy || user.is_current_user}
                                       onClick={() => void handleDelete(user)}
-                                      className="text-destructive hover:text-destructive"
                                     >
                                       <Trash2 className="h-3.5 w-3.5" />
                                       Excluir
@@ -368,7 +369,7 @@ export default function SettingsUsersPage() {
               </DialogDescription>
             </DialogHeader>
 
-            <form className="space-y-4" onSubmit={handleSubmit}>
+            <form className="space-y-4 px-5 py-4 sm:px-6 sm:py-5" onSubmit={handleSubmit}>
               <div className="space-y-2">
                 <Label htmlFor="user-name">Nome</Label>
                 <Input
@@ -433,7 +434,7 @@ export default function SettingsUsersPage() {
                 />
               </div>
 
-              <DialogFooter>
+              <DialogFooter className="px-0 pb-0">
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                   Cancelar
                 </Button>

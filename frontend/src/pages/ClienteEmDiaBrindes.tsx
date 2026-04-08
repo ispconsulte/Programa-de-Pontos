@@ -39,7 +39,7 @@ function GiftCatalogDialog({ trigger }: { trigger: React.ReactNode }) {
         <DialogHeader>
           <DialogTitle className="text-foreground">Adicionar brinde</DialogTitle>
           <DialogDescription>
-            Cadastre um novo item apenas quando houver dados validados para nome e pontuacao.
+            Cadastre um novo item apenas quando houver dados validados para nome e pontuação.
           </DialogDescription>
         </DialogHeader>
 
@@ -58,13 +58,13 @@ function GiftCatalogDialog({ trigger }: { trigger: React.ReactNode }) {
 
           <div className="space-y-2">
             <Label htmlFor="gift-points" className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
-              Pontos necessarios
+              Pontos necessários
             </Label>
             <Input
               id="gift-points"
               value={form.requiredPoints}
               onChange={(event) => setForm((current) => ({ ...current, requiredPoints: event.target.value }))}
-              placeholder="Informe a pontuacao"
+              placeholder="Informe a pontuação"
             />
           </div>
         </div>
@@ -135,7 +135,7 @@ export default function ClienteEmDiaBrindesPage() {
           <CardHeader>
             <CardTitle>Catálogo oficial de brindes</CardTitle>
             <CardDescription>
-              Esta area exibira nome, pontuacao, estoque, imagem e status assim que houver dados reais cadastrados.
+              Esta área exibirá nome, pontuação, estoque, imagem e status assim que houver dados reais cadastrados.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -144,14 +144,14 @@ export default function ClienteEmDiaBrindesPage() {
             ) : error ? (
               <EmptyState title="Falha ao carregar catálogo" description={error} />
             ) : rewards.length === 0 ? (
-              <EmptyState title="Ainda nao ha registros aqui" description="Nenhum brinde foi cadastrado no Supabase." />
+              <EmptyState title="Ainda não há registros aqui" description="Nenhum brinde foi cadastrado no Supabase." />
             ) : (
               <div className="space-y-3">
                 {rewards.map((reward) => (
                   <div key={reward.id} className="flex items-center justify-between gap-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3">
                     <div>
                       <p className="text-sm font-medium text-foreground">{reward.nome}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">{reward.descricao ?? 'Sem descricao cadastrada.'}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{reward.descricao ?? 'Sem descrição cadastrada.'}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-semibold text-emerald-300">{reward.pontosNecessarios} pts</p>

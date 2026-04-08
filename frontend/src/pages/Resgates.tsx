@@ -100,7 +100,7 @@ export default function ResgatesPage() {
 
         <Card className="overflow-hidden border-emerald-500/10 bg-[linear-gradient(135deg,rgba(16,185,129,0.12),rgba(8,10,15,0)_46%),hsl(var(--surface-1))]">
           <CardContent className="p-5 lg:p-6">
-            <EmptyState title="Nenhum dado encontrado" description="Nao foi possivel encontrar dados no momento." />
+            <EmptyState title="Nenhum dado encontrado" description="Não foi possível encontrar dados no momento." />
           </CardContent>
         </Card>
 
@@ -126,7 +126,7 @@ export default function ResgatesPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="p-4 pt-4">
-                  <EmptyState title="Ainda nao ha registros aqui" description="Nao foi possivel encontrar dados no momento." />
+                  <EmptyState title="Ainda não há registros aqui" description="Não foi possível encontrar dados no momento." />
                 </CardContent>
               </Card>
             )

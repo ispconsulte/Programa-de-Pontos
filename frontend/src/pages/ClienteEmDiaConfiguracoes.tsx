@@ -62,7 +62,7 @@ export default function ClienteEmDiaConfiguracoesPage() {
     'Pontuacao acumulada',
     'Pontuacao mensal',
     'Status campanha (Ativo / Suspenso / Bloqueado)',
-    'Ultimo resgate (data)',
+    'Último resgate (data)',
   ]
 
   async function handleSyncNow() {
@@ -150,8 +150,8 @@ export default function ClienteEmDiaConfiguracoesPage() {
               </div>
               <div className="grid gap-3 sm:grid-cols-3">
                 {[
-                  { label: 'Campanha ativa', value: settings?.activeIxcConnection ? 'Sim' : 'Nao', icon: ShieldCheck },
-                  { label: 'Ultimo sync', value: settings?.latestSync?.iniciadoEm ? new Date(settings.latestSync.iniciadoEm).toLocaleString('pt-BR') : 'Sem registro', icon: RefreshCw },
+                  { label: 'Campanha ativa', value: settings?.activeIxcConnection ? 'Sim' : 'Não', icon: ShieldCheck },
+                  { label: 'Último sync', value: settings?.latestSync?.iniciadoEm ? new Date(settings.latestSync.iniciadoEm).toLocaleString('pt-BR') : 'Sem registro', icon: RefreshCw },
                   { label: 'Intervalo atual', value: '12h', icon: Clock3 },
                 ].map((item) => {
                   const Icon = item.icon
@@ -195,7 +195,7 @@ export default function ClienteEmDiaConfiguracoesPage() {
                   </div>
                 </div>
                 <div className="mt-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-4 text-sm text-muted-foreground">
-                  Vigencia oficial prevista: marco/2026 a janeiro/2027, com fechamento final e expiracao dos pontos em janeiro/2027.
+                  Vigência oficial prevista: março/2026 a janeiro/2027, com fechamento final e expiração dos pontos em janeiro/2027.
                 </div>
               </CardContent>
             </Card>
@@ -293,7 +293,7 @@ export default function ClienteEmDiaConfiguracoesPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Regras oficiais de pontuacao</CardTitle>
+                <CardTitle>Regras oficiais de pontuação</CardTitle>
                 <CardDescription>
                   Referencia operacional das regras de comportamento e relacionamento comercial previstas no processo.
                 </CardDescription>
@@ -357,7 +357,7 @@ export default function ClienteEmDiaConfiguracoesPage() {
                     </div>
                   </div>
                 ) : (
-                  <EmptyState title="Ainda nao ha registros aqui" description="Nenhum log de sincronizacao foi encontrado no Supabase." />
+                  <EmptyState title="Ainda não há registros aqui" description="Nenhum log de sincronização foi encontrado no Supabase." />
                 )}
               </CardContent>
             </Card>

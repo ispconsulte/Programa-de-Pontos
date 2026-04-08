@@ -203,7 +203,7 @@ export default function ReceivablesPage() {
           icon={Coins}
           title="Pontuação"
           subtitle="Recebimentos e bônus"
-          actions={<span className="text-xs text-muted-foreground">{loading ? 'Carregando...' : `${total} registros`}</span>}
+          actions={<span className="page-header__meta text-xs text-muted-foreground">{loading ? 'Carregando...' : `${total} registros`}</span>}
         />
 
         <div className="space-y-5">
@@ -235,8 +235,8 @@ export default function ReceivablesPage() {
                 </div>
               </div>
 
-              <div className="mt-3 sm:mt-4 flex flex-wrap items-end gap-3 sm:gap-4">
-                <div className="w-full sm:w-auto sm:min-w-[200px] space-y-1.5">
+              <div className="mt-3 grid gap-3 sm:mt-4 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_auto_auto] xl:items-end xl:gap-4">
+                <div className="min-w-0 space-y-1.5">
                   <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Ordenar</label>
                   <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
@@ -247,7 +247,7 @@ export default function ReceivablesPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="w-20 space-y-1.5">
+                <div className="w-full sm:w-24 space-y-1.5">
                   <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Exibir</label>
                   <Select value={String(limit)} onValueChange={(value) => { setLimit(Number(value)); setPage(1) }}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
@@ -258,14 +258,18 @@ export default function ReceivablesPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex items-center gap-2 ml-auto">
-                  <Button onClick={handleFilterApply} className="min-h-[2.75rem]">
-                    <Search className="h-3.5 w-3.5" />
-                    Aplicar
-                  </Button>
-                  <Button variant="outline" size="icon" className="min-h-[2.75rem] min-w-[2.75rem]" disabled={refreshBusy} onClick={() => void throttledFetch()}>
-                    <RefreshCw className={`h-3.5 w-3.5 transition-transform ${refreshBusy ? 'animate-spin' : ''}`} />
-                  </Button>
+                <div className="responsive-action-group xl:ml-auto xl:justify-end">
+                  <div>
+                    <Button onClick={handleFilterApply} className="min-h-[2.75rem]">
+                      <Search className="h-3.5 w-3.5" />
+                      Aplicar
+                    </Button>
+                  </div>
+                  <div>
+                    <Button variant="outline" size="icon" className="min-h-[2.75rem] min-w-[2.75rem]" disabled={refreshBusy} onClick={() => void throttledFetch()}>
+                      <RefreshCw className={`h-3.5 w-3.5 transition-transform ${refreshBusy ? 'animate-spin' : ''}`} />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -290,7 +294,7 @@ export default function ReceivablesPage() {
                 </div>
               ) : (
                 <>
-                  <div className="grid gap-3 border-b border-[hsl(var(--border))] px-5 py-4 md:grid-cols-3">
+                  <div className="grid gap-3 border-b border-[hsl(var(--border))] px-4 py-4 sm:px-5 md:grid-cols-3">
                     {[
                       { label: '5 pontos', helper: 'Pagamentos antecipados', value: scoreSummary.fivePoints, color: 'text-emerald-400' },
                       { label: '4 pontos', helper: 'Pagamentos no vencimento', value: scoreSummary.fourPoints, color: 'text-sky-400' },
@@ -367,7 +371,7 @@ export default function ReceivablesPage() {
                     </Table>
                   </div>
 
-                  <div className="border-t border-[hsl(var(--border))] px-5 py-4">
+                  <div className="border-t border-[hsl(var(--border))] px-4 py-4 sm:px-5">
                     <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
                   </div>
                 </>

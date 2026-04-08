@@ -65,7 +65,7 @@ export default function ClienteEmDiaDetailPage() {
                 <p className="mt-2 text-xs text-muted-foreground">
                   {customer?.ultimaSincronizacaoEm
                     ? `Atualizado em ${new Date(customer.ultimaSincronizacaoEm).toLocaleString('pt-BR')}`
-                    : 'Ainda nao ha sincronizacao registrada.'}
+                    : 'Ainda não há sincronização registrada.'}
                 </p>
               </div>
             </div>
@@ -109,7 +109,7 @@ export default function ClienteEmDiaDetailPage() {
             ) : error ? (
               <EmptyState title="Falha ao carregar dados" description={error} />
             ) : !customer ? (
-              <EmptyState title="Nenhum dado encontrado" description="Este cliente ainda nao foi sincronizado para a campanha." />
+              <EmptyState title="Nenhum dado encontrado" description="Este cliente ainda não foi sincronizado para a campanha." />
             ) : (
               <div className="grid gap-3 md:grid-cols-4">
                 <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3">
@@ -122,11 +122,11 @@ export default function ClienteEmDiaDetailPage() {
                 </div>
                 <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3">
                   <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">E-mail</p>
-                  <p className="mt-2 text-sm font-medium text-foreground">{customer.email ?? 'Nao informado'}</p>
+                  <p className="mt-2 text-sm font-medium text-foreground">{customer.email ?? 'Não informado'}</p>
                 </div>
                 <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3">
                   <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Telefone</p>
-                  <p className="mt-2 text-sm font-medium text-foreground">{customer.telefone ?? 'Nao informado'}</p>
+                  <p className="mt-2 text-sm font-medium text-foreground">{customer.telefone ?? 'Não informado'}</p>
                 </div>
               </div>
             )}
@@ -138,7 +138,7 @@ export default function ClienteEmDiaDetailPage() {
             <CardHeader>
               <CardTitle>Timeline da campanha</CardTitle>
               <CardDescription>
-                Historico de pontuacao, upgrades e resgates do cliente.
+                Histórico de pontuação, upgrades e resgates do cliente.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -147,7 +147,7 @@ export default function ClienteEmDiaDetailPage() {
               ) : error ? (
                 <EmptyState title="Falha ao carregar dados" description={error} />
               ) : !customerDetail || customerDetail.historico.length === 0 ? (
-                <EmptyState title="Ainda nao ha registros aqui" description="Nenhuma movimentacao foi registrada para este cliente." />
+                <EmptyState title="Ainda não há registros aqui" description="Nenhuma movimentação foi registrada para este cliente." />
               ) : (
                 <div className="space-y-3">
                   {customerDetail.historico.map((item) => (
@@ -186,7 +186,7 @@ export default function ClienteEmDiaDetailPage() {
               ) : error ? (
                 <EmptyState title="Falha ao carregar dados" description={error} />
               ) : !customerDetail || customerDetail.resgates.length === 0 ? (
-                <EmptyState title="Ainda nao ha registros aqui" description="Nenhum resgate foi registrado para este cliente." />
+                <EmptyState title="Ainda não há registros aqui" description="Nenhum resgate foi registrado para este cliente." />
               ) : (
                 <div className="space-y-3">
                   {customerDetail.resgates.map((item) => (
@@ -194,7 +194,7 @@ export default function ClienteEmDiaDetailPage() {
                       <div className="flex items-start justify-between gap-4">
                         <div>
                           <p className="text-sm font-medium text-foreground">{item.status}</p>
-                          <p className="mt-1 text-xs text-muted-foreground">{item.observacoes ?? 'Sem observacoes'}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">{item.observacoes ?? 'Sem observações'}</p>
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-semibold text-foreground">{item.pontosResgatados} pts</p>

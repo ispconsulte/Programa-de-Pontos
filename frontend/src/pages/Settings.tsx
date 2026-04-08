@@ -114,7 +114,7 @@ export default function SettingsPage() {
           {loading ? (
             <div className="flex justify-center py-16"><Spinner /></div>
           ) : (
-            <div className="grid gap-6 xl:grid-cols-[280px_1fr]">
+            <div className="grid gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
               <div className="space-y-3">
                 <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground px-1">Integrações</p>
                 <div className="rounded-xl border border-primary/20 bg-primary/[0.05] p-4 transition-all duration-200">
@@ -157,21 +157,21 @@ export default function SettingsPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex min-w-0 items-center gap-3">
                           {settings?.ixc_configured ? (
                             <Wifi className="h-4 w-4 text-emerald-400" />
                           ) : (
                             <WifiOff className="h-4 w-4 text-muted-foreground" />
                           )}
-                          <div>
-                            <p className="text-sm font-medium text-foreground">{tenantName || 'Base principal'}</p>
-                            <p className="text-xs text-muted-foreground">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium text-foreground">{tenantName || 'Base principal'}</p>
+                            <p className="truncate text-xs text-muted-foreground">
                               {settings?.ixc_configured ? settings.ixcConnection?.ixc_base_url : 'Não configurada'}
                             </p>
                           </div>
                         </div>
-                        <span className="rounded-md border border-primary/20 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">Ativa</span>
+                        <span className="w-fit rounded-md border border-primary/20 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">Ativa</span>
                       </div>
                     </div>
                     <p className="mt-3 text-xs text-muted-foreground">Bases adicionais poderão ser cadastradas e alternadas pelo administrador.</p>
@@ -253,7 +253,7 @@ export default function SettingsPage() {
                       </div>
 
                       <div className="flex justify-end border-t border-[hsl(var(--border))] pt-5">
-                        <Button type="submit" disabled={saving} size="lg" className="min-w-[200px] text-[13px] font-semibold tracking-wide">
+                        <Button type="submit" disabled={saving} size="lg" className="w-full min-w-0 text-[13px] font-semibold tracking-wide sm:w-auto sm:min-w-[200px]">
                           {saving ? <Spinner size="sm" /> : <Save className="h-4 w-4" />}
                           {saving ? 'Salvando...' : 'Salvar configurações'}
                         </Button>

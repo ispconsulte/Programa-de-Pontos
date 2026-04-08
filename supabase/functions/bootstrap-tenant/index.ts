@@ -6,6 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+const SHARED_COMPANY_EMAIL = 'contatoispconsulte@gmail.com'
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -45,22 +47,36 @@ serve(async (req) => {
       })
     }
 
-    const tenantName = user.email ? `Empresa de ${user.email.split('@')[0]}` : 'Nova Empresa'
-    const { data: newTenant, error: insertTenantError } = await supabaseAdmin
-      .from('tenants')
-      .insert({
-        name: tenantName,
-      })
-      .select('id')
-      .single()
+    const { data: sharedUser, error: sharedUserError } = await supabaseAdmin
+      .from('users')
+      .select('tenant_id')
+      .eq('email', SHARED_COMPANY_EMAIL)
+      .limit(1)
+      .maybeSingle()
 
-    if (insertTenantError) throw insertTenantError
+    if (sharedUserError) throw sharedUserError
+
+    const tenantName = user.email ? `Empresa de ${user.email.split('@')[0]}` : 'Nova Empresa'
+    let tenantId = sharedUser?.tenant_id ?? null
+
+    if (!tenantId) {
+      const { data: newTenant, error: insertTenantError } = await supabaseAdmin
+        .from('tenants')
+        .insert({
+          name: tenantName,
+        })
+        .select('id')
+        .single()
+
+      if (insertTenantError) throw insertTenantError
+      tenantId = newTenant.id
+    }
 
     const { error: insertUserError } = await supabaseAdmin
       .from('users')
       .insert({
         id: user.id,
-        tenant_id: newTenant.id,
+        tenant_id: tenantId,
         email: user.email,
         password_hash: '$2b$10$dummyhash', 
         role: 'admin'
@@ -68,7 +84,7 @@ serve(async (req) => {
 
     if (insertUserError) throw insertUserError
 
-    return new Response(JSON.stringify({ message: 'Tenant criado com sucesso', tenant_id: newTenant.id }), {
+    return new Response(JSON.stringify({ message: 'Tenant criado com sucesso', tenant_id: tenantId }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

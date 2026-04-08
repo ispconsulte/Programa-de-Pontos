@@ -104,14 +104,14 @@ export default function RegisterRedemptionDialog({
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="max-w-2xl border-[hsl(var(--border))] bg-[linear-gradient(180deg,rgba(16,185,129,0.06),rgba(255,255,255,0)_22%),hsl(var(--background))] p-0">
         <DialogHeader className="px-6 py-5">
-          <div className="flex items-start gap-4">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 ring-1 ring-emerald-500/20">
-              <Gift className="h-5 w-5 text-emerald-300" />
-            </div>
+            <div className="flex items-start gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 ring-1 ring-emerald-500/20">
+              <Gift className="h-5 w-5 text-[hsl(var(--success))]" />
+              </div>
             <div>
               <DialogTitle>Registrar resgate</DialogTitle>
               <DialogDescription className="mt-1.5 max-w-xl">
-                Registre um novo resgate apenas quando houver dados reais de cliente e de brinde disponiveis.
+                Registre um novo resgate apenas quando houver dados reais de cliente e de brinde disponíveis.
               </DialogDescription>
             </div>
           </div>
@@ -162,7 +162,7 @@ export default function RegisterRedemptionDialog({
                         </div>
                         <div className="text-right">
                           <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Saldo</p>
-                          <p className="mt-1 text-sm font-semibold text-emerald-300">
+                          <p className="mt-1 text-sm font-semibold text-[hsl(var(--success))]">
                             {customer.availablePoints.toLocaleString('pt-BR')} pts
                           </p>
                         </div>
@@ -172,7 +172,7 @@ export default function RegisterRedemptionDialog({
 
                   {filteredCustomers.length === 0 && (
                     <div className="rounded-lg border border-dashed border-[hsl(var(--border))] px-3 py-5 text-center text-sm text-muted-foreground">
-                      {customers.length === 0 ? 'Ainda nao ha registros aqui.' : 'Nenhum resultado encontrado. Tente novamente mais tarde.'}
+                      {customers.length === 0 ? 'Ainda não há registros aqui.' : 'Nenhum resultado encontrado. Tente novamente mais tarde.'}
                     </div>
                   )}
                 </div>
@@ -184,7 +184,7 @@ export default function RegisterRedemptionDialog({
                 </Label>
                 <Select value={selectedGiftId} onValueChange={setSelectedGiftId}>
                   <SelectTrigger>
-                    <SelectValue placeholder={gifts.length === 0 ? 'Nenhum dado encontrado' : 'Escolha o brinde e a pontuacao necessaria'} />
+                    <SelectValue placeholder={gifts.length === 0 ? 'Nenhum dado encontrado' : 'Escolha o brinde e a pontuação necessária'} />
                   </SelectTrigger>
                   <SelectContent>
                     {gifts.map((gift) => (
@@ -199,21 +199,21 @@ export default function RegisterRedemptionDialog({
               <div className="grid gap-5 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="responsible" className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
-                    Responsavel pela entrega
+                    Responsável pela entrega
                   </Label>
                   <Input
                     id="responsible"
                     value={responsible}
                     onChange={(event) => setResponsible(event.target.value)}
-                    placeholder="Nome do responsavel pela entrega"
+                    placeholder="Nome do responsável pela entrega"
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
-                    Pontos disponiveis do cliente
+                    Pontos disponíveis do cliente
                   </Label>
-                  <div className="flex h-10 items-center rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3.5 text-sm font-semibold text-white">
+                  <div className="flex h-10 items-center rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3.5 text-sm font-semibold text-foreground">
                     {selectedCustomer ? `${availablePoints.toLocaleString('pt-BR')} pts` : 'Nenhum dado encontrado'}
                   </div>
                 </div>
@@ -221,13 +221,13 @@ export default function RegisterRedemptionDialog({
 
               <div className="space-y-2">
                 <Label htmlFor="notes" className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
-                  Observacoes
+                  Observações
                 </Label>
                 <textarea
                   id="notes"
                   value={notes}
                   onChange={(event) => setNotes(event.target.value)}
-                  placeholder="Observacoes operacionais, contexto da entrega ou anotacoes do IXC"
+                  placeholder="Observações operacionais, contexto da entrega ou anotações do IXC"
                   className="min-h-[110px] w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3.5 py-3 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none transition-all duration-200 focus:border-primary/40 focus:ring-1 focus:ring-primary/20"
                 />
               </div>
@@ -235,23 +235,23 @@ export default function RegisterRedemptionDialog({
 
             <div className="space-y-4">
               <div className="rounded-2xl border border-emerald-500/15 bg-emerald-500/[0.06] p-4">
-                <p className="text-[11px] uppercase tracking-[0.16em] text-emerald-200">Resumo operacional</p>
+                <p className="text-[11px] uppercase tracking-[0.16em] text-[hsl(var(--success))]">Resumo operacional</p>
                 <div className="mt-4 space-y-3">
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-sm text-muted-foreground">Cliente</span>
-                    <span className="text-sm font-medium text-white">{selectedCustomer?.name ?? 'Nenhum dado encontrado'}</span>
+                    <span className="text-sm font-medium text-foreground">{selectedCustomer?.name ?? 'Nenhum dado encontrado'}</span>
                   </div>
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-sm text-muted-foreground">Brinde</span>
-                    <span className="text-sm font-medium text-white">{selectedGift?.name ?? 'Nenhum dado encontrado'}</span>
+                    <span className="text-sm font-medium text-foreground">{selectedGift?.name ?? 'Nenhum dado encontrado'}</span>
                   </div>
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-sm text-muted-foreground">Pontos necessarios</span>
-                    <span className="text-sm font-medium text-white">{requiredPoints ? `${requiredPoints} pts` : 'Nenhum dado encontrado'}</span>
+                    <span className="text-sm text-muted-foreground">Pontos necessários</span>
+                    <span className="text-sm font-medium text-foreground">{requiredPoints ? `${requiredPoints} pts` : 'Nenhum dado encontrado'}</span>
                   </div>
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-sm text-muted-foreground">Pontos disponiveis</span>
-                    <span className="text-sm font-medium text-emerald-300">
+                    <span className="text-sm text-muted-foreground">Pontos disponíveis</span>
+                    <span className="text-sm font-medium text-[hsl(var(--success))]">
                       {selectedCustomer ? `${availablePoints.toLocaleString('pt-BR')} pts` : 'Nenhum dado encontrado'}
                     </span>
                   </div>
@@ -265,7 +265,7 @@ export default function RegisterRedemptionDialog({
                       <AlertTriangle className="h-4 w-4" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-rose-200">Bloqueado: saldo insuficiente</p>
+                      <p className="text-sm font-semibold text-destructive">Bloqueado: saldo insuficiente</p>
                       <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                         O cliente possui {availablePoints.toLocaleString('pt-BR')} pts, mas este brinde exige {requiredPoints.toLocaleString('pt-BR')} pts.
                       </p>
@@ -280,9 +280,9 @@ export default function RegisterRedemptionDialog({
                     <UserRound className="h-4 w-4" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-white">Fluxo administrativo confiavel</p>
+                    <p className="text-sm font-semibold text-foreground">Fluxo administrativo confiavel</p>
                     <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                      O resgate so pode ser confirmado quando cliente, brinde e responsavel estiverem definidos e houver dados disponiveis.
+                      O resgate só pode ser confirmado quando cliente, brinde e responsável estiverem definidos e houver dados disponíveis.
                     </p>
                   </div>
                 </div>
@@ -296,7 +296,7 @@ export default function RegisterRedemptionDialog({
             Cancelar
           </Button>
           <Button
-            className="bg-emerald-600 text-white hover:bg-emerald-500"
+            className="bg-[hsl(var(--success))] text-[hsl(var(--success-foreground))] hover:bg-[hsl(var(--success)/0.9)]"
             disabled={!canConfirm}
             onClick={handleConfirm}
           >

@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase-client'
-import { fetchCurrentUserProfile } from '@/lib/user-management'
+import {
+  clearCurrentUserProfileCache,
+  fetchCurrentUserProfile,
+  getCachedCurrentUserProfile,
+} from '@/lib/user-management'
+import { clearCurrentTenantIdCache } from '@/lib/supabase-queries'
 import Spinner from './Spinner'
 
 interface ProtectedRouteProps {
@@ -10,7 +15,7 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const navigate = useNavigate()
-  const [checking, setChecking] = useState(true)
+  const [checking, setChecking] = useState(() => !getCachedCurrentUserProfile())
 
   useEffect(() => {
     let mounted = true
@@ -20,6 +25,8 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       if (!mounted) return
 
       if (error || !session) {
+        clearCurrentUserProfileCache()
+        clearCurrentTenantIdCache()
         navigate('/login', { replace: true })
         return
       }
@@ -37,14 +44,22 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
         }
       }
 
-      setChecking(false)
+      if (mounted) {
+        setChecking(false)
+      }
     }
 
     void validateSession()
 
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+      clearCurrentUserProfileCache()
+      clearCurrentTenantIdCache()
       if (!session?.access_token) {
         navigate('/login', { replace: true })
+        return
+      }
+      if (mounted) {
+        setChecking(false)
       }
     })
 

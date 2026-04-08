@@ -22,7 +22,13 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import logoBonifica from '@/assets/logo-bonifica.png'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase-client'
-import { fetchCurrentUserProfile, isAdminUiRole } from '@/lib/user-management'
+import {
+  clearCurrentUserProfileCache,
+  fetchCurrentUserProfile,
+  getCachedCurrentUserProfile,
+  isAdminUiRole,
+} from '@/lib/user-management'
+import { clearCurrentTenantIdCache } from '@/lib/supabase-queries'
 
 export type DashboardSearchType = 'name' | 'cpfCnpj' | 'id'
 export const DASHBOARD_CLIENT_SEARCH_EVENT = 'dashboard:client-search'
@@ -239,7 +245,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   /* Profile */
-  const [profile, setProfile] = useState({ name: 'Usuário', email: 'Sem e-mail', role: 'operator' })
+  const [profile, setProfile] = useState(() => {
+    const cachedProfile = getCachedCurrentUserProfile()
+    if (!cachedProfile) {
+      return { name: 'Usuário', email: 'Sem e-mail', role: 'operator' }
+    }
+    return {
+      name: cachedProfile.name,
+      email: cachedProfile.email,
+      role: cachedProfile.role,
+    }
+  })
   const [headerSearchType, setHeaderSearchType] = useState<DashboardSearchType>('name')
   const [headerSearchValue, setHeaderSearchValue] = useState('')
   const navSections = useMemo(() => {
@@ -296,6 +312,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     }
     apply()
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      clearCurrentUserProfileCache()
+      clearCurrentTenantIdCache()
       const user = session?.user
       const m = user?.user_metadata ?? {}
       setProfile({

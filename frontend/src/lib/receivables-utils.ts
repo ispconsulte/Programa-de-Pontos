@@ -52,7 +52,7 @@ export function getCampaignRuleLabel(points: number) {
   if (points === 5) return 'Pagamento ate 3 dias antes do vencimento'
   if (points === 4) return 'Pagamento no dia do vencimento'
   if (points === 2) return 'Pagamento apos o vencimento'
-  return 'Regra nao identificada'
+  return 'Regra não identificada'
 }
 
 export function toNumber(value: string | number | null | undefined) {

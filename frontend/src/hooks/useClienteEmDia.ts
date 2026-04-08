@@ -359,7 +359,7 @@ export function useClienteEmDia(options: UseClienteEmDiaOptions = {}): UseClient
         resgates: (customerRedemptionsResult.data ?? []).map((row: unknown) => normalizeRedemptionItem(row as Record<string, unknown>)),
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Nao foi possivel carregar os dados do Cliente em Dia.')
+      setError(err instanceof Error ? err.message : 'Não foi possível carregar os dados do Cliente em Dia.')
     } finally {
       setLoading(false)
     }

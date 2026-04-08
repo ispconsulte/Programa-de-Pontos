@@ -264,13 +264,13 @@ export default function DashboardPage() {
 
           <section className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
             <div className="flex flex-col gap-3 border-b border-[hsl(var(--border))] p-5 sm:flex-row sm:items-center sm:justify-between lg:p-6">
-              <div>
+              <div className="min-w-0">
                 <h2 className="text-sm font-semibold text-foreground">Últimos registros de pontuação</h2>
                 <p className="mt-0.5 text-[13px] text-muted-foreground">
                   Histórico recente de pontuação gerada no período selecionado.
                 </p>
               </div>
-              <Button asChild variant="outline" size="sm" className="w-fit">
+              <Button asChild variant="outline" size="sm" className="w-full sm:w-fit">
                 <Link to="/receivables">
                   Ver todos
                   <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
@@ -311,8 +311,8 @@ export default function DashboardPage() {
                       ))}
                     </div>
 
-                    <div className="hidden md:block">
-                      <table className="w-full text-sm">
+                    <div className="table-responsive hidden md:block">
+                      <table className="w-full min-w-[52rem] text-sm">
                         <thead>
                           <tr className="border-b border-[hsl(var(--border))]">
                             <th className="px-5 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground lg:px-6">Cliente</th>

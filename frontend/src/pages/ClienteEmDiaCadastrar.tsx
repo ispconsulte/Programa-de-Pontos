@@ -85,7 +85,7 @@ export default function ClienteEmDiaCadastrarPage() {
                 />
               </div>
 
-              <EmptyState title="Ainda nao ha registros aqui" description="Nao foi possivel encontrar dados no momento." />
+              <EmptyState title="Ainda não há registros aqui" description="Não foi possível encontrar dados no momento." />
             </CardContent>
           </Card>
 

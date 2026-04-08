@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Programa de Pontos">
+  <defs>
+    <linearGradient id="bg" x1="8" y1="6" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f59e0b" />
+      <stop offset="1" stop-color="#d97706" />
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="16" fill="url(#bg)" />
+  <path d="M32 14l4.944 10.017 11.056 1.607-8 7.797 1.889 11.012L32 39.237l-9.889 5.196L24 33.421l-8-7.797 11.056-1.607L32 14z" fill="#fff7ed"/>
+</svg>

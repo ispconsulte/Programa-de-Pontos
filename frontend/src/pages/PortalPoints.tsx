@@ -28,8 +28,8 @@ export default function PortalPointsPage() {
         <Card className="overflow-hidden border-emerald-200/70 bg-white shadow-xl shadow-emerald-950/5">
           <CardContent className="p-6 lg:p-8">
             <EmptyState
-              title="Nao foi possivel encontrar dados no momento"
-              description="Ainda nao ha registros aqui. Assim que seus dados forem sincronizados, seus pontos e resgates aparecerao neste portal."
+              title="Não foi possível encontrar dados no momento"
+              description="Ainda não há registros aqui. Assim que seus dados forem sincronizados, seus pontos e resgates aparecerão neste portal."
             />
           </CardContent>
         </Card>

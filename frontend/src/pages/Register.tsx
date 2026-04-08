@@ -80,7 +80,7 @@ export default function RegisterPage() {
         </div>
 
         <div className="mb-8">
-          <h1 className="text-2xl font-bold tracking-tight text-white font-heading">Criar conta</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground font-heading">Criar conta</h1>
           <p className="mt-2 text-sm text-muted-foreground">Preencha os dados para começar.</p>
         </div>
 
@@ -89,7 +89,7 @@ export default function RegisterPage() {
             {error && (
               <div className="flex items-center gap-2.5 rounded-lg border border-destructive/20 bg-destructive/[0.06] px-4 py-3">
                 <AlertCircle className="h-4 w-4 flex-shrink-0 text-destructive" />
-                <p className="text-sm text-red-300">{error}</p>
+                <p className="text-sm text-foreground">{error}</p>
               </div>
             )}
 

@@ -43,8 +43,44 @@ export function isAdminUiRole(role: string | null | undefined): boolean {
   return ['admin', 'owner', 'manager'].includes(String(role ?? '').toLowerCase())
 }
 
-export async function fetchCurrentUserProfile(): Promise<CurrentUserProfile> {
-  return backendRequest<CurrentUserProfile>('/users/me')
+let currentUserProfileCache: CurrentUserProfile | null = null
+let currentUserProfilePromise: Promise<CurrentUserProfile> | null = null
+
+export function getCachedCurrentUserProfile(): CurrentUserProfile | null {
+  return currentUserProfileCache
+}
+
+export function clearCurrentUserProfileCache(): void {
+  currentUserProfileCache = null
+  currentUserProfilePromise = null
+}
+
+export async function fetchCurrentUserProfile(options?: { force?: boolean }): Promise<CurrentUserProfile> {
+  if (options?.force) {
+    clearCurrentUserProfileCache()
+  }
+
+  if (currentUserProfileCache) {
+    return currentUserProfileCache
+  }
+
+  if (!currentUserProfilePromise) {
+    currentUserProfilePromise = backendRequest<CurrentUserProfile>('/users/me')
+      .then((profile) => {
+        currentUserProfileCache = profile
+        return profile
+      })
+      .catch((error) => {
+        currentUserProfilePromise = null
+        throw error
+      })
+  }
+
+  try {
+    return await currentUserProfilePromise
+  } finally {
+    currentUserProfilePromise = null
+  }
 }
 
 export async function fetchManagedUsers(): Promise<ManagedUser[]> {

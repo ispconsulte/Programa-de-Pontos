@@ -34,7 +34,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   return (
     <div className="space-y-1">
       <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
-      <div className="text-sm text-slate-100">{children || '-'}</div>
+      <div className="text-sm text-foreground">{children || '-'}</div>
     </div>
   )
 }
@@ -89,7 +89,7 @@ export default function ClientDetailPage() {
             <div className="rounded-xl border border-destructive/20 bg-destructive/[0.06] px-4 py-3">
               <div className="flex items-center gap-2">
                 <ShieldAlert className="h-4 w-4 flex-shrink-0 text-destructive" />
-                <p className="text-sm text-red-300">{error}</p>
+                <p className="text-sm text-foreground">{error}</p>
               </div>
             </div>
           ) : client ? (
@@ -164,9 +164,9 @@ export default function ClientDetailPage() {
                         {faturas.map((fatura) => (
                           <TableRow key={fatura.id}>
                             <TableCell className="font-mono text-xs text-foreground">{fatura.fatura_id}</TableCell>
-                            <TableCell className="text-slate-300">{fatura.ixc_contrato_id || '-'}</TableCell>
-                            <TableCell className="whitespace-nowrap text-slate-300">{formatDate(fatura.competencia)}</TableCell>
-                            <TableCell className="whitespace-nowrap text-slate-300">{formatDate(fatura.data_pagamento)}</TableCell>
+                            <TableCell className="text-muted-foreground">{fatura.ixc_contrato_id || '-'}</TableCell>
+                            <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(fatura.competencia)}</TableCell>
+                            <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(fatura.data_pagamento)}</TableCell>
                             <TableCell className="text-right text-emerald-400">{formatBRL(fatura.valor_pago)}</TableCell>
                             <TableCell className="text-right font-semibold text-emerald-400">+{fatura.pontos_gerados}</TableCell>
                             <TableCell>{statusBadge(fatura.status_processamento)}</TableCell>

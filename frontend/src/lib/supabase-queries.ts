@@ -3,8 +3,15 @@
  * Todos os dados são buscados diretamente do Supabase.
  */
 import { supabase } from './supabase-client'
+import { getCachedCurrentUserProfile } from './user-management'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
+
+let tenantIdCache: { userId: string; tenantId: string | null } | null = null
+
+export function clearCurrentTenantIdCache(): void {
+  tenantIdCache = null
+}
 
 /** Retorna o tenant_id do usuário autenticado via tabela users */
 export async function getCurrentTenantId(): Promise<string | null> {
@@ -12,13 +19,25 @@ export async function getCurrentTenantId(): Promise<string | null> {
   const userId = sessionData.session?.user?.id
   if (!userId) return null
 
+  const cachedProfile = getCachedCurrentUserProfile()
+  if (cachedProfile?.id === userId) {
+    tenantIdCache = { userId, tenantId: cachedProfile.tenant_id }
+    return cachedProfile.tenant_id
+  }
+
+  if (tenantIdCache?.userId === userId) {
+    return tenantIdCache.tenantId
+  }
+
   const { data } = await supabase
     .from('users')
     .select('tenant_id')
     .eq('id', userId)
     .maybeSingle()
 
-  return data?.tenant_id ?? null
+  const tenantId = data?.tenant_id ?? null
+  tenantIdCache = { userId, tenantId }
+  return tenantId
 }
 
 // ── Faturas processadas (Receivables) ────────────────────────────────────────

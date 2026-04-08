@@ -21,6 +21,23 @@ const refreshSchema = z.object({
   refreshToken: z.string(),
 })
 
+const SHARED_COMPANY_EMAIL = 'contatoispconsulte@gmail.com'
+
+async function resolveSharedTenantId() {
+  const { data: sharedUser, error } = await supabaseAdmin
+    .from('users')
+    .select('tenant_id')
+    .eq('email', SHARED_COMPANY_EMAIL)
+    .limit(1)
+    .maybeSingle()
+
+  if (error) {
+    throw new AppError(500, error.message)
+  }
+
+  return sharedUser?.tenant_id ?? null
+}
+
 async function ensureTenantForSupabaseUser(userId: string, email: string, tenantNameOverride?: string) {
   if (!userId || !email) {
     throw new AppError(401, 'Unauthorized')
@@ -61,22 +78,27 @@ async function ensureTenantForSupabaseUser(userId: string, email: string, tenant
   const tenantName = tenantNameOverride?.trim() || (email.split('@')[1] ?? email)
   let tenantId: string | null = null
   try {
-    const { data: tenant, error: tenantError } = await supabaseAdmin
-      .from('tenants')
-      .insert({ name: tenantName })
-      .select('id')
-      .single()
+    tenantId = await resolveSharedTenantId()
 
-    if (tenantError || !tenant) {
-      throw new AppError(500, tenantError?.message || 'Failed to create tenant')
+    if (!tenantId) {
+      const { data: tenant, error: tenantError } = await supabaseAdmin
+        .from('tenants')
+        .insert({ name: tenantName })
+        .select('id')
+        .single()
+
+      if (tenantError || !tenant) {
+        throw new AppError(500, tenantError?.message || 'Failed to create tenant')
+      }
+
+      tenantId = tenant.id
     }
-    tenantId = tenant.id
 
     const { error: userInsertError } = await supabaseAdmin
       .from('users')
       .insert({
         id: userId,
-        tenant_id: tenant.id,
+        tenant_id: tenantId,
         email,
         password_hash: 'supabase-managed',
         role: 'admin',
@@ -93,7 +115,7 @@ async function ensureTenantForSupabaseUser(userId: string, email: string, tenant
     }
   } catch (err) {
     const maybeAppError = err as AppError
-    if (tenantId) {
+    if (tenantId && tenantId !== await resolveSharedTenantId()) {
       await supabaseAdmin.from('tenants').delete().eq('id', tenantId)
     }
     if (maybeAppError.statusCode === 500 && maybeAppError.message.toLowerCase().includes('duplicate')) {

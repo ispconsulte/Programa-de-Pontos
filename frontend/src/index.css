@@ -28,7 +28,12 @@
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 0%;
+    --info: 214 92% 56%;
+    --info-foreground: 0 0% 100%;
     --radius: 0.625rem;
+    --elevation-1: 0 10px 30px -18px rgba(0, 0, 0, 0.45);
+    --elevation-2: 0 24px 60px -24px rgba(0, 0, 0, 0.5);
+    --overlay: rgba(0, 0, 0, 0.62);
 
     /* ── Sidebar ── */
     --sidebar: 225 35% 4.5%;
@@ -61,8 +66,8 @@
 
     /* ── Layout ── */
     --page-max-width: 90rem;
-    --page-padding-inline: max(1rem, env(safe-area-inset-left));
-    --page-padding-block: 1.5rem;
+    --page-padding-inline: max(0.75rem, env(safe-area-inset-left));
+    --page-padding-block: 1rem;
     --section-gap: clamp(1.25rem, 1rem + 1vw, 2rem);
     --card-gap: clamp(0.875rem, 0.75rem + 0.5vw, 1.25rem);
     --grid-min-card: minmax(min(100%, 16rem), 1fr);
@@ -107,6 +112,8 @@
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 42%;
     --warning-foreground: 0 0% 100%;
+    --info: 214 92% 45%;
+    --info-foreground: 0 0% 100%;
     --sidebar: 220 20% 98%;
     --sidebar-active: 214 100% 96%;
     --sidebar-border: 220 18% 88%;
@@ -115,11 +122,14 @@
     --surface-3: 220 22% 93%;
     --scrollbar-thumb: hsla(220, 10%, 40%, 0.22);
     --scrollbar-thumb-hover: hsla(220, 10%, 40%, 0.34);
+    --elevation-1: 0 10px 30px -20px rgba(15, 23, 42, 0.18);
+    --elevation-2: 0 24px 60px -28px rgba(15, 23, 42, 0.2);
+    --overlay: rgba(15, 23, 42, 0.22);
   }
 
   @media (min-width: 480px) {
     :root {
-      --page-padding-inline: 1.25rem;
+      --page-padding-inline: 1rem;
       --page-padding-block: 1.5rem;
     }
   }
@@ -228,6 +238,7 @@
     margin-inline: auto;
     padding-inline: var(--page-padding-inline);
     padding-block: var(--page-padding-block);
+    min-width: 0;
   }
 
   .page-stack {
@@ -290,6 +301,10 @@
 
   .page-header__actions > * > * {
     width: 100%;
+  }
+
+  .page-header__actions > .page-header__meta {
+    min-width: 0;
   }
 
   @media (min-width: 768px) {
@@ -393,6 +408,7 @@
   .table-responsive {
     position: relative;
     width: 100%;
+    max-width: 100%;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     border-radius: 1rem;
@@ -491,12 +507,35 @@
     width: 100%;
   }
 
+  .responsive-action-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .responsive-action-group > * {
+    flex: 1 1 100%;
+  }
+
+  .responsive-action-group > * > * {
+    width: 100%;
+  }
+
   @media (min-width: 480px) {
     .button-row > * {
       flex: 0 1 auto;
     }
 
     .button-row > * > * {
+      width: auto;
+    }
+
+    .responsive-action-group > * {
+      flex: 0 1 auto;
+    }
+
+    .responsive-action-group > * > * {
       width: auto;
     }
   }
@@ -800,7 +839,7 @@
 }
 
 /* Date input dark-mode fix */
-input[type="date"]::-webkit-calendar-picker-indicator {
+html:not(.light) input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(0.7);
   cursor: pointer;
 }

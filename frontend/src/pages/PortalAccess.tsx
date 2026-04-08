@@ -63,7 +63,7 @@ export default function PortalAccessPage() {
             </div>
 
             <p className="mt-6 max-w-xl text-base leading-7 text-slate-300">
-              Consulte sua participacao na campanha, acompanhe pontos disponiveis e veja seus resgates
+              Consulte sua participação na campanha, acompanhe pontos disponíveis e veja seus resgates
               sem precisar lembrar senha.
             </p>
 
@@ -143,7 +143,7 @@ export default function PortalAccessPage() {
                             id="document"
                             value={documentValue}
                             onChange={(event) => setDocumentValue(event.target.value)}
-                            placeholder="Digite apenas numeros ou com pontuacao"
+                            placeholder="Digite apenas números ou com pontuação"
                           />
                         </div>
 
@@ -176,7 +176,7 @@ export default function PortalAccessPage() {
                 </Tabs>
 
                 <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-2))] px-4 py-4 text-sm leading-6 text-slate-400">
-                  Se precisar de ajuda, fale com o time responsavel pela campanha. Seus dados sao utilizados somente para validar o acesso.
+                  Se precisar de ajuda, fale com o time responsável pela campanha. Seus dados são utilizados somente para validar o acesso.
                 </div>
               </CardContent>
             </Card>

@@ -21,7 +21,7 @@ export default function PageHeader({ icon: Icon, title, subtitle, actions }: Pag
           {subtitle && <p className="page-header__subtitle text-muted-foreground">{subtitle}</p>}
         </div>
       </div>
-      {actions && <div className="page-header__actions">{actions}</div>}
+      {actions && <div className="page-header__actions">{typeof actions === 'string' ? <span className="page-header__meta text-xs text-muted-foreground">{actions}</span> : actions}</div>}
     </div>
   )
 }
