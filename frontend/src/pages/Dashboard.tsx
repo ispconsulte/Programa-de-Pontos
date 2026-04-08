@@ -118,6 +118,9 @@ export default function DashboardPage() {
   })
   const [searchType, setSearchType] = useState<HeaderSearchType>('name')
   const [searchQuery, setSearchQuery] = useState('')
+  const [showCalmModal, setShowCalmModal] = useState(false)
+  const clickCountRef = useRef(0)
+  const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const period = useMemo(() => monthDateRange(), [])
 
