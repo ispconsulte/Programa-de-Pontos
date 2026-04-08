@@ -1,6 +1,6 @@
 import { useState, FormEvent, useEffect, useMemo } from 'react'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
-import { Eye, EyeOff, AlertCircle, CheckCircle, ArrowRight, Trophy, Medal, Crown } from 'lucide-react'
+import { Eye, EyeOff, AlertCircle, CheckCircle, ArrowRight, Sparkles } from 'lucide-react'
 import { supabase } from '@/lib/supabase-client'
 import Spinner from '@/components/Spinner'
 import { Input } from '@/components/ui/input'
