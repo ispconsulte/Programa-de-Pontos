@@ -565,8 +565,8 @@ export default function DashboardPage() {
                           {ranking.map((client, index) => (
                             <div key={client.id} className="flex items-center gap-3 px-4 py-3.5">
                               <RankBadge position={index + 1} />
-                              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${avatarColor(client.nome_cliente || '#')}`}>
-                                {(client.nome_cliente?.trim()?.[0] || '#').toUpperCase()}
+                              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${avatarColor(client.nome_cliente || 'A')}`}>
+                                {client.nome_cliente?.trim()?.[0] ? client.nome_cliente.trim()[0].toUpperCase() : <Medal className="h-4 w-4" />}
                               </div>
                               <div className="min-w-0 flex-1">
                                 <p className="truncate text-sm font-semibold text-foreground">{client.nome_cliente}</p>
