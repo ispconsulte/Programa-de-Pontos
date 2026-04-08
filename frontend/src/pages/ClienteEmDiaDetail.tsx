@@ -1,26 +1,38 @@
 import Layout from '@/components/Layout'
+import ProtectedRoute from '@/components/ProtectedRoute'
 import RegisterRedemptionDialog from '@/components/RegisterRedemptionDialog'
+import ManualPointsDialog from '@/components/ManualPointsDialog'
 import EmptyState from '@/components/EmptyState'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useClienteEmDia } from '@/hooks/useClienteEmDia'
+import { fetchCurrentUserProfile, isAdminUiRole } from '@/lib/user-management'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, ChevronRight, Gift, Plus, Settings, Star } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { ArrowLeft, ChevronRight, Gift, Settings, Star } from 'lucide-react'
 
 export default function ClienteEmDiaDetailPage() {
   const { ixc_cliente_id } = useParams()
-  const { loading, error, customerDetail, rewards } = useClienteEmDia({
+  const { loading, error, customerDetail, reload } = useClienteEmDia({
     customerId: ixc_cliente_id,
   })
   const customer = customerDetail?.customer ?? null
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  useEffect(() => {
+    void fetchCurrentUserProfile()
+      .then((profile) => setIsAdmin(isAdminUiRole(profile.role)))
+      .catch(() => setIsAdmin(false))
+  }, [])
 
   return (
-    <Layout>
-      <div className="space-y-6">
+    <ProtectedRoute>
+      <Layout>
+        <div className="space-y-6">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Link to="/cliente-em-dia" className="inline-flex items-center gap-1 transition-colors hover:text-foreground">
+          <Link to="/operacao" className="inline-flex items-center gap-1 transition-colors hover:text-foreground">
             <ArrowLeft className="h-3.5 w-3.5" />
-            Cliente em Dia
+            Operação
           </Link>
           <ChevronRight className="h-3 w-3" />
           <span className="text-foreground">Detalhe do cliente</span>
@@ -73,11 +85,47 @@ export default function ClienteEmDiaDetailPage() {
         </Card>
 
         <div className="flex flex-wrap gap-2">
-          <Button className="bg-emerald-600 text-white hover:bg-emerald-500" disabled>
-            <Plus className="h-3.5 w-3.5" />
-            Adicionar pontos manualmente
-          </Button>
+          {isAdmin && (
+            <ManualPointsDialog
+              client={customer ? {
+                id: customer.id,
+                ixc_cliente_id: customer.ixcClienteId,
+                ixc_contrato_id: customer.ixcContratoId,
+                nome_cliente: customer.nomeCliente,
+                documento: customer.documento,
+                email: customer.email,
+                telefone: customer.telefone,
+                status: customer.statusCampanha,
+                pontos_acumulados: customer.pontosAcumulados,
+                pontos_resgatados: customer.pontosResgatados,
+                pontos_disponiveis: customer.pontosDisponiveis,
+                ultima_sincronizacao_em: customer.ultimaSincronizacaoEm,
+                metadata: customer.metadata,
+                created_at: customer.createdAt,
+                updated_at: customer.updatedAt,
+              } : null}
+              onCompleted={reload}
+            />
+          )}
           <RegisterRedemptionDialog
+            preselectedClient={customer ? {
+              id: customer.id,
+              ixc_cliente_id: customer.ixcClienteId,
+              ixc_contrato_id: customer.ixcContratoId,
+              nome_cliente: customer.nomeCliente,
+              documento: customer.documento,
+              email: customer.email,
+              telefone: customer.telefone,
+              status: customer.statusCampanha,
+              pontos_acumulados: customer.pontosAcumulados,
+              pontos_resgatados: customer.pontosResgatados,
+              pontos_disponiveis: customer.pontosDisponiveis,
+              ultima_sincronizacao_em: customer.ultimaSincronizacaoEm,
+              metadata: customer.metadata,
+              created_at: customer.createdAt,
+              updated_at: customer.updatedAt,
+            } : null}
+            onRedemptionComplete={reload}
             trigger={
               <Button variant="outline" className="border-[hsl(var(--border))]">
                 <Gift className="h-3.5 w-3.5" />
@@ -199,7 +247,8 @@ export default function ClienteEmDiaDetailPage() {
             </CardContent>
           </Card>
         </div>
-      </div>
-    </Layout>
+        </div>
+      </Layout>
+    </ProtectedRoute>
   )
 }

@@ -6,9 +6,8 @@ import EmptyState from '@/components/EmptyState'
 import Spinner from '@/components/Spinner'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { Gift, Package, Sparkles, Truck } from 'lucide-react'
-import { supabase } from '@/lib/supabase-client'
-import { getCurrentTenantId } from '@/lib/supabase-queries'
+import { Gift, Sparkles } from 'lucide-react'
+import { fetchLegacyRedemptions, getCurrentTenantId } from '@/lib/supabase-queries'
 
 type RedemptionStatus = 'pendente' | 'entregue' | 'cancelado'
 
@@ -58,28 +57,7 @@ export default function ResgatesPage() {
         const tenantId = await getCurrentTenantId()
         if (!tenantId || !mounted) return
 
-        const { data: resgates } = await (supabase as any)
-          .from('pontuacao_resgates')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(100)
-
-        if (!mounted) return
-
-        const rawResgates = (resgates || []) as any[]
-        const clienteIds = [...new Set(rawResgates.map((r: any) => r.ixc_cliente_id))]
-        let clienteMap: Record<string, string> = {}
-
-        if (clienteIds.length > 0) {
-          const { data: clientes } = await (supabase as any)
-            .from('pontuacao_campanha_clientes')
-            .select('ixc_cliente_id, nome_cliente')
-            .in('ixc_cliente_id', clienteIds)
-
-          if (clientes) {
-            clienteMap = Object.fromEntries((clientes as any[]).map((c: any) => [c.ixc_cliente_id, c.nome_cliente || '']))
-          }
-        }
+        const rawResgates = await fetchLegacyRedemptions({ limit: 100 })
 
         setRows(
           rawResgates.map((r: any) => ({
@@ -89,7 +67,7 @@ export default function ResgatesPage() {
             pontos_utilizados: r.pontos_utilizados,
             status_resgate: r.status_resgate,
             created_at: r.created_at,
-            cliente_nome: clienteMap[r.ixc_cliente_id] || `Cliente #${r.ixc_cliente_id}`,
+            cliente_nome: r.cliente_nome || `Cliente #${r.ixc_cliente_id}`,
           }))
         )
       } catch {

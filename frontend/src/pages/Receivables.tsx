@@ -16,7 +16,14 @@ function getBehaviorLabelFromPoints(pts: number | null | undefined): string {
   if (pts === 2) return 'Pagamento após o vencimento'
   return 'Sem pontuação'
 }
-import { fetchReceivables, fetchClientNamesByIxcIds, getCurrentTenantId, type ReceivableRow } from '@/lib/supabase-queries'
+import {
+  fetchReceivables,
+  fetchReceivablesSummary,
+  fetchClientNamesByIxcIds,
+  getCurrentTenantId,
+  type ReceivableRow,
+  type ReceivablesSummary,
+} from '@/lib/supabase-queries'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
@@ -155,7 +162,14 @@ export default function ReceivablesPage() {
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState<SortOption>('due_desc')
   const [clientNameMap, setClientNameMap] = useState<Map<string, string>>(new Map())
-  const [uniqueClients, setUniqueClients] = useState(0)
+  const [summary, setSummary] = useState<ReceivablesSummary>({
+    totalRecords: 0,
+    uniqueClients: 0,
+    fivePoints: 0,
+    fourPoints: 0,
+    twoPoints: 0,
+    totalPoints: 0,
+  })
 
   const fetchReceivablesData = useCallback(async () => {
     setLoading(true)
@@ -167,20 +181,30 @@ export default function ReceivablesPage() {
         return
       }
 
-      const result = await fetchReceivables({
-        tenantId,
-        page,
-        limit,
+      const filters = {
         category: appliedFilters.category !== 'all' ? appliedFilters.category : undefined,
         dateFrom: appliedFilters.dateFrom || undefined,
         dateTo: appliedFilters.dateTo || undefined,
-      })
+      }
+
+      const [result, summaryResult] = await Promise.all([
+        fetchReceivables({
+          tenantId,
+          page,
+          limit,
+          ...filters,
+        }),
+        fetchReceivablesSummary({
+          tenantId,
+          ...filters,
+        }),
+      ])
 
       // Fetch client names in parallel
       const ixcIds = result.data.map(r => r.ixc_cliente_id)
       const nameMap = await fetchClientNamesByIxcIds(tenantId, ixcIds)
       setClientNameMap(nameMap)
-      setUniqueClients(new Set(ixcIds).size)
+      setSummary(summaryResult)
 
       setReceivables(result.data.map(r => toShape(r, nameMap)))
       setTotal(result.total)
@@ -213,14 +237,6 @@ export default function ReceivablesPage() {
     sortBy
   )
 
-  const scoreSummary = {
-    fivePoints: visibleReceivables.filter((item) => item.pontos_gerados === 5).length,
-    fourPoints: visibleReceivables.filter((item) => item.pontos_gerados === 4).length,
-    twoPoints: visibleReceivables.filter((item) => item.pontos_gerados === 2).length,
-  }
-
-  const totalPoints = visibleReceivables.reduce((sum, item) => sum + (item.pontos_gerados ?? 0), 0)
-
   return (
     <ProtectedRoute>
       <Layout>
@@ -238,8 +254,9 @@ export default function ReceivablesPage() {
                 <Users className="h-4.5 w-4.5 text-primary" />
               </div>
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Clientes</p>
-                <p className="text-xl font-bold text-foreground">{loading ? '...' : uniqueClients}</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Registros processados</p>
+                <p className="text-xl font-bold text-foreground">{loading ? '...' : summary.totalRecords.toLocaleString('pt-BR')}</p>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">{summary.uniqueClients.toLocaleString('pt-BR')} clientes únicos</p>
               </div>
             </div>
           </div>
@@ -250,7 +267,7 @@ export default function ReceivablesPage() {
               </div>
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Antecipados</p>
-                <p className="text-xl font-bold text-emerald-400">{loading ? '...' : scoreSummary.fivePoints}</p>
+                <p className="text-xl font-bold text-emerald-400">{loading ? '...' : summary.fivePoints.toLocaleString('pt-BR')}</p>
               </div>
             </div>
           </div>
@@ -261,7 +278,7 @@ export default function ReceivablesPage() {
               </div>
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">No vencimento</p>
-                <p className="text-xl font-bold text-sky-400">{loading ? '...' : scoreSummary.fourPoints}</p>
+                <p className="text-xl font-bold text-sky-400">{loading ? '...' : summary.fourPoints.toLocaleString('pt-BR')}</p>
               </div>
             </div>
           </div>
@@ -272,7 +289,8 @@ export default function ReceivablesPage() {
               </div>
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Após vencimento</p>
-                <p className="text-xl font-bold text-amber-400">{loading ? '...' : scoreSummary.twoPoints}</p>
+                <p className="text-xl font-bold text-amber-400">{loading ? '...' : summary.twoPoints.toLocaleString('pt-BR')}</p>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">{summary.totalPoints.toLocaleString('pt-BR')} pontos lançados</p>
               </div>
             </div>
           </div>

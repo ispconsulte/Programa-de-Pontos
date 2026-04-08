@@ -22,12 +22,14 @@ import {
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase-client'
 import { autocompleteCampaignClients, getCurrentTenantId, type CampaignClientRow } from '@/lib/supabase-queries'
+import { registerRewardRedemption, type RewardCatalogRow } from '@/lib/loyalty-admin'
 import Spinner from '@/components/Spinner'
 
 interface GiftOption {
   id: string
   name: string
   requiredPoints: number
+  stock: number | null
 }
 
 interface RegisterRedemptionDialogProps {
@@ -77,7 +79,7 @@ export default function RegisterRedemptionDialog({
       try {
         const { data } = await (supabase as any)
           .from('pontuacao_catalogo_brindes')
-          .select('id, nome, pontos_necessarios, ativo')
+          .select('id, nome, pontos_necessarios, ativo, estoque, imagem_url, descricao')
           .eq('ativo', true)
           .order('pontos_necessarios', { ascending: true })
         if (!mounted) return
@@ -85,6 +87,7 @@ export default function RegisterRedemptionDialog({
           id: g.id,
           name: g.nome,
           requiredPoints: g.pontos_necessarios,
+          stock: g.estoque ?? null,
         })))
       } catch { /* ignore */ }
       finally { if (mounted) setGiftsLoading(false) }
@@ -145,31 +148,20 @@ export default function RegisterRedemptionDialog({
     setSubmitting(true)
     setSubmitError('')
     try {
-      const { error } = await (supabase as any)
-        .from('pontuacao_resgates')
-        .insert({
-          ixc_cliente_id: selectedClient.ixc_cliente_id,
-          brinde_nome: selectedGift.name,
-          brinde_id: selectedGift.id,
-          pontos_utilizados: selectedGift.requiredPoints,
-          status_resgate: 'entregue',
-          responsavel_entrega: responsible.trim(),
-          observacoes: notes.trim() || null,
-          confirmacao_cliente: true,
-        })
-      if (error) throw new Error(error.message)
-
-      // Deduct points from client
-      const newAvailable = Math.max(0, (selectedClient.pontos_disponiveis ?? 0) - selectedGift.requiredPoints)
-      const newResgatados = (selectedClient.pontos_resgatados ?? 0) + selectedGift.requiredPoints
-      await (supabase as any)
-        .from('pontuacao_campanha_clientes')
-        .update({
-          pontos_disponiveis: newAvailable,
-          pontos_resgatados: newResgatados,
-          ultimo_resgate: new Date().toISOString(),
-        })
-        .eq('id', selectedClient.id)
+      await registerRewardRedemption({
+        client: selectedClient,
+        reward: {
+          id: selectedGift.id,
+          nome: selectedGift.name,
+          descricao: null,
+          pontos_necessarios: selectedGift.requiredPoints,
+          ativo: true,
+          estoque: selectedGift.stock,
+          imagem_url: null,
+        } as RewardCatalogRow,
+        responsible,
+        notes,
+      })
 
       setSuccess(true)
       setTimeout(() => {
@@ -287,13 +279,19 @@ export default function RegisterRedemptionDialog({
                   <SelectContent>
                     {gifts.map((g) => (
                       <SelectItem key={g.id} value={g.id}>
-                        {g.name} — {g.requiredPoints} pts
+                        {g.name} — {g.requiredPoints} pts{g.stock != null ? ` • estoque ${g.stock}` : ''}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               )}
             </div>
+
+            {selectedGift?.stock != null && (
+              <p className="text-xs text-muted-foreground">
+                Estoque atual: <span className="font-semibold text-foreground">{selectedGift.stock}</span>
+              </p>
+            )}
 
             {/* Responsible */}
             <div className="space-y-2">

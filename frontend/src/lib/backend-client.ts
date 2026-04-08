@@ -4,8 +4,11 @@ function resolveApiBaseUrl(): string {
   const explicit = import.meta.env.VITE_API_BASE_URL?.trim()
   if (explicit) return explicit.replace(/\/+$/, '')
 
-  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-    return 'http://localhost:3000'
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1' || hostname === '[::1]') {
+      return 'http://localhost:3000'
+    }
   }
 
   return ''

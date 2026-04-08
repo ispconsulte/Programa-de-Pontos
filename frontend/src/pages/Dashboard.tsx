@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import RegisterRedemptionDialog from '@/components/RegisterRedemptionDialog'
+import ManualPointsDialog from '@/components/ManualPointsDialog'
 import { useThrottledAction } from '@/hooks/useThrottledAction'
 import { Link } from 'react-router-dom'
 import {
@@ -47,6 +48,7 @@ import {
   type ReceivableRow,
   type RedemptionRow,
 } from '@/lib/supabase-queries'
+import { fetchCurrentUserProfile, isAdminUiRole } from '@/lib/user-management'
 
 /* ── Helpers ──────────────────────────────────────────────────────────── */
 
@@ -74,11 +76,9 @@ function toLocalDate(value?: string | null): Date | null {
   return new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]))
 }
 
-function monthDateRange() {
+function persistedDateRange() {
   const now = new Date()
-  const first = new Date(now.getFullYear(), now.getMonth(), 1)
-  const last = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-  return { from: first.toISOString().slice(0, 10), to: last.toISOString().slice(0, 10), label: 'Mês atual' }
+  return { from: '2020-01-01', to: now.toISOString().slice(0, 10), label: 'Base completa' }
 }
 
 const avatarColors = [
@@ -134,7 +134,7 @@ export default function DashboardPage() {
   const [rankingOpen, setRankingOpen] = useState(true)
   const clickCountRef = useRef(0)
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const period = useMemo(() => monthDateRange(), [])
+  const period = useMemo(() => persistedDateRange(), [])
 
   /* --- Client search state --- */
   const ac = useAutocomplete()
@@ -143,6 +143,7 @@ export default function DashboardPage() {
   const [redemptions, setRedemptions] = useState<RedemptionRow[]>([])
   const [detailLoading, setDetailLoading] = useState(false)
   const [clientError, setClientError] = useState('')
+  const [isAdmin, setIsAdmin] = useState(false)
 
   /* --- Dashboard data fetch --- */
   const fetchData = useCallback(async () => {
@@ -226,6 +227,11 @@ export default function DashboardPage() {
   /* --- Events --- */
 
   useEffect(() => { void fetchData() }, [fetchData])
+  useEffect(() => {
+    void fetchCurrentUserProfile()
+      .then((profile) => setIsAdmin(isAdminUiRole(profile.role)))
+      .catch(() => setIsAdmin(false))
+  }, [])
 
   return (
     <ProtectedRoute>
@@ -321,6 +327,18 @@ export default function DashboardPage() {
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">Registre um resgate diretamente aqui.</p>
                   </div>
+                  {isAdmin && (
+                    <ManualPointsDialog
+                      client={selectedClient}
+                      onCompleted={() => void throttledClientRefresh()}
+                      trigger={
+                        <Button variant="outline" className="shrink-0">
+                          <Coins className="h-3.5 w-3.5 mr-1.5" />
+                          Injetar pontos
+                        </Button>
+                      }
+                    />
+                  )}
                   <RegisterRedemptionDialog
                     preselectedClient={selectedClient}
                     onRedemptionComplete={() => void throttledClientRefresh()}
@@ -553,11 +571,7 @@ export default function DashboardPage() {
 
               {/* ═══ RANKING DE CLIENTES ═══ */}
               <section className="rounded-xl border border-border bg-card overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => setRankingOpen(!rankingOpen)}
-                  className="flex w-full items-center justify-between border-b border-border px-5 py-4 transition-colors hover:bg-muted/30"
-                >
+                <div className="flex items-center justify-between border-b border-border px-5 py-4">
                   <div className="flex items-center gap-2.5">
                     <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/15">
                       <TrendingUp className="h-3.5 w-3.5 text-amber-500" />
@@ -565,12 +579,20 @@ export default function DashboardPage() {
                     <h2 className="text-sm font-bold text-foreground">Ranking de recompensas</h2>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" disabled={refreshBusy} onClick={(e) => { e.stopPropagation(); handleRefresh() }}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" disabled={refreshBusy} onClick={handleRefresh}>
                       <RefreshCw className={`h-3.5 w-3.5 ${refreshBusy ? 'animate-spin' : ''}`} />
                     </Button>
-                    {rankingOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setRankingOpen(!rankingOpen)}
+                    >
+                      {rankingOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                    </Button>
                   </div>
-                </button>
+                </div>
 
                 {rankingOpen && (
                   <>

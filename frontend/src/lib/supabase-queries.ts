@@ -64,6 +64,15 @@ export interface ReceivablesResult {
   totalPages: number
 }
 
+export interface ReceivablesSummary {
+  totalRecords: number
+  uniqueClients: number
+  fivePoints: number
+  fourPoints: number
+  twoPoints: number
+  totalPoints: number
+}
+
 export type ReceivableCategoryFilter = 'processado' | 'ignorado' | 'erro' | 'all'
 
 export async function fetchReceivables(opts: {
@@ -109,6 +118,46 @@ export async function fetchReceivables(opts: {
     data: (data ?? []) as unknown as ReceivableRow[],
     total,
     totalPages: Math.max(1, Math.ceil(total / limit)),
+  }
+}
+
+export async function fetchReceivablesSummary(opts: {
+  tenantId: string
+  category?: string
+  dateFrom?: string
+  dateTo?: string
+}): Promise<ReceivablesSummary> {
+  const { tenantId, category, dateFrom, dateTo } = opts
+
+  let query = (supabase as any)
+    .from('pontuacao_faturas_processadas')
+    .select('ixc_cliente_id, pontos_gerados', { count: 'exact' })
+    .eq('tenant_id', tenantId)
+    .limit(10000)
+
+  if (category && category !== 'all') {
+    query = query.eq('status_processamento', category)
+  }
+
+  if (dateFrom) {
+    query = query.gte('data_pagamento', `${dateFrom}T00:00:00.000Z`)
+  }
+  if (dateTo) {
+    query = query.lte('data_pagamento', `${dateTo}T23:59:59.999Z`)
+  }
+
+  const { data, error, count } = await query
+  if (error) throw new Error(error.message)
+
+  const rows = (data ?? []) as Array<{ ixc_cliente_id: string; pontos_gerados: number | null }>
+
+  return {
+    totalRecords: count ?? rows.length,
+    uniqueClients: new Set(rows.map((row) => String(row.ixc_cliente_id))).size,
+    fivePoints: rows.filter((row) => Number(row.pontos_gerados ?? 0) === 5).length,
+    fourPoints: rows.filter((row) => Number(row.pontos_gerados ?? 0) === 4).length,
+    twoPoints: rows.filter((row) => Number(row.pontos_gerados ?? 0) === 2).length,
+    totalPoints: rows.reduce((sum, row) => sum + Number(row.pontos_gerados ?? 0), 0),
   }
 }
 
@@ -293,6 +342,7 @@ export async function fetchClientNamesByIxcIds(
 
 export interface RedemptionRow {
   id: string
+  ixc_cliente_id?: string
   brinde_nome: string
   pontos_utilizados: number
   status_resgate: string
@@ -301,18 +351,21 @@ export interface RedemptionRow {
   observacoes: string | null
 }
 
+export async function fetchLegacyRedemptions(options?: {
+  customerId?: string
+  limit?: number
+}): Promise<RedemptionRow[]> {
+  const params = new URLSearchParams()
+  if (options?.customerId) params.set('customerId', options.customerId)
+  params.set('limit', String(options?.limit ?? 100))
+  const response = await backendRequest<{ data: RedemptionRow[] }>(`/campaign/legacy-redemptions?${params.toString()}`)
+  return response.data ?? []
+}
+
 export async function fetchCampaignClientRedemptions(
   ixcClienteId: string
 ): Promise<RedemptionRow[]> {
-  const { data, error } = await (supabase as any)
-    .from('pontuacao_resgates')
-    .select('id, brinde_nome, pontos_utilizados, status_resgate, data_entrega, created_at, observacoes')
-    .eq('ixc_cliente_id', ixcClienteId)
-    .order('created_at', { ascending: false })
-    .limit(10)
-
-  if (error) throw new Error(error.message)
-  return (data ?? []) as unknown as RedemptionRow[]
+  return fetchLegacyRedemptions({ customerId: ixcClienteId, limit: 20 })
 }
 
 export interface RankingClientRow {
@@ -646,43 +699,19 @@ export async function fetchDashboardMetrics(opts: {
     .limit(10000)
   if (pointsError) throw new Error(pointsError.message)
 
-  let redemptionRows: any[] = []
-
-  const rewardAttempt = await (supabase as any)
-    .from('reward_redemptions')
-    .select('id, points_spent, status, created_at')
-    .eq('tenant_id', tenantId)
-    .gte('created_at', `${dateFrom}T00:00:00.000Z`)
-    .lte('created_at', `${dateTo}T23:59:59.999Z`)
-    .limit(10000)
-
-  if (!rewardAttempt.error) {
-    redemptionRows = (rewardAttempt.data ?? []).filter((row: any) => {
-      const status = String(row.status ?? '').toLowerCase()
-      return status !== 'cancelado' && status !== 'cancelled'
-    })
-  } else {
-    const legacyAttempt = await (supabase as any)
-      .from('pontuacao_resgates')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .gte('solicitado_em', `${dateFrom}T00:00:00.000Z`)
-      .lte('solicitado_em', `${dateTo}T23:59:59.999Z`)
-      .limit(10000)
-
-    if (legacyAttempt.error) throw new Error(legacyAttempt.error.message)
-
-    redemptionRows = (legacyAttempt.data ?? []).filter((row: any) => {
-      const status = String(row.status ?? '').toLowerCase()
-      return status !== 'cancelado' && status !== 'cancelled'
-    })
-  }
+  const legacyResponse = await backendRequest<{ data: any[] }>('/campaign/legacy-redemptions?limit=200')
+  const redemptionRows = (legacyResponse.data ?? []).filter((row: any) => {
+    const status = String(row.status ?? row.status_resgate ?? '').toLowerCase()
+    if (status === 'cancelado' || status === 'cancelled') return false
+    const createdAt = String(row.created_at ?? '')
+    return createdAt >= `${dateFrom}T00:00:00.000Z` && createdAt <= `${dateTo}T23:59:59.999Z`
+  })
 
   return {
     totalPoints: (pointsRows ?? []).reduce((sum: number, row: any) => sum + Number(row.pontos_gerados ?? 0), 0),
     redemptionsCount: redemptionRows.length,
     redeemedPoints: redemptionRows.reduce(
-      (sum: number, row: any) => sum + Number(row.points_spent ?? row.pontos_resgatados ?? 0),
+      (sum: number, row: any) => sum + Number(row.points_spent ?? row.pontos_resgatados ?? row.pontos_utilizados ?? 0),
       0,
     ),
   }

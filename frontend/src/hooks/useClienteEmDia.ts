@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase-client'
 import { backendRequest } from '@/lib/backend-client'
+import { fetchLegacyRedemptions } from '@/lib/supabase-queries'
 
 type ClienteEmDiaCampaignStatus = 'ativo' | 'inativo' | 'bloqueado'
 
@@ -244,19 +245,6 @@ export function useClienteEmDia(options: UseClienteEmDiaOptions = {}): UseClient
         .select('*')
         .order('updated_at', { ascending: false })
 
-      const redemptionsQuery = (() => {
-        let query = db
-          .from('pontuacao_resgates')
-          .select('*')
-          .order('created_at', { ascending: false })
-
-        if (options.redemptionsCustomerId) {
-          query = query.eq('ixc_cliente_id', options.redemptionsCustomerId)
-        }
-
-        return query
-      })()
-
       const latestSyncQuery = db
         .from('pontuacao_sync_log')
         .select('*')
@@ -266,13 +254,12 @@ export function useClienteEmDia(options: UseClienteEmDiaOptions = {}): UseClient
       const [
         overviewResult,
         rewardsResult,
-        redemptionsResult,
         latestSyncResult,
         settingsResult,
+        redemptionsResult,
       ] = await Promise.all([
         overviewQuery,
         rewardsQuery,
-        redemptionsQuery,
         latestSyncQuery,
         backendRequest<{
           name: string
@@ -282,15 +269,18 @@ export function useClienteEmDia(options: UseClienteEmDiaOptions = {}): UseClient
           ixc_connection_id: string | null
           ixc_connection_name: string | null
         }>('/settings').catch(() => null),
+        fetchLegacyRedemptions({
+          customerId: options.redemptionsCustomerId,
+          limit: 100,
+        }),
       ])
 
       if (overviewResult.error) throw overviewResult.error
       if (rewardsResult.error) throw rewardsResult.error
-      if (redemptionsResult.error) throw redemptionsResult.error
       if (latestSyncResult.error) throw latestSyncResult.error
       const overviewItems = (overviewResult.data ?? []).map((row: unknown) => normalizeOverviewItem(row as Record<string, unknown>))
       const rewardItems = (rewardsResult.data ?? []).map((row: unknown) => normalizeRewardItem(row as Record<string, unknown>))
-      const redemptionItems = (redemptionsResult.data ?? []).map((row: unknown) => normalizeRedemptionItem(row as Record<string, unknown>))
+      const redemptionItems = (redemptionsResult ?? []).map((row: unknown) => normalizeRedemptionItem(row as Record<string, unknown>))
 
       setOverview(overviewItems)
       setRewards(rewardItems)
@@ -343,20 +333,18 @@ export function useClienteEmDia(options: UseClienteEmDiaOptions = {}): UseClient
           .select('*')
           .eq('ixc_cliente_id', customer.ixcClienteId)
           .order('created_at', { ascending: false }),
-        db
-          .from('pontuacao_resgates')
-          .select('*')
-          .eq('ixc_cliente_id', customer.ixcClienteId)
-          .order('created_at', { ascending: false }),
+        fetchLegacyRedemptions({
+          customerId: customer.ixcClienteId,
+          limit: 50,
+        }),
       ])
 
       if (historicoResult.error) throw historicoResult.error
-      if (customerRedemptionsResult.error) throw customerRedemptionsResult.error
 
       setCustomerDetail({
         customer,
         historico: (historicoResult.data ?? []).map((row: unknown) => normalizeHistoricoItem(row as Record<string, unknown>)),
-        resgates: (customerRedemptionsResult.data ?? []).map((row: unknown) => normalizeRedemptionItem(row as Record<string, unknown>)),
+        resgates: (customerRedemptionsResult ?? []).map((row: unknown) => normalizeRedemptionItem(row as Record<string, unknown>)),
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Não foi possível carregar os dados do Cliente em Dia.')
