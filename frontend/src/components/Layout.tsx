@@ -390,11 +390,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {/* Logo area */}
         <div className={cn(
           'relative flex flex-shrink-0 items-center justify-center border-b border-sidebar-border transition-all duration-300',
-          collapsed ? 'h-20 px-2' : 'h-28 px-5'
+          collapsed ? 'h-20 px-2' : 'h-36 px-4'
         )}>
           <div className={cn(
             'relative transition-all duration-300',
-            collapsed ? 'h-10 w-10' : 'h-16 w-16'
+            collapsed ? 'h-10 w-10' : 'h-24 w-24'
           )}>
             {/* Glow behind */}
             <div className="absolute inset-[-30%] rounded-full opacity-40 blur-xl"
