@@ -295,7 +295,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {/* Logo area — compact */}
         <div className={cn(
           'relative flex flex-shrink-0 flex-col items-center justify-center border-b border-sidebar-border overflow-visible transition-all duration-300',
-          collapsed ? 'h-14 px-2' : 'h-28 px-4'
+          collapsed ? 'h-14 px-2' : 'h-[7.5rem] px-4'
         )}>
           <div className={cn(
             'flex items-center justify-center transition-all duration-300 mt-2',
