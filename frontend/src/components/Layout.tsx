@@ -134,8 +134,8 @@ function SidebarItem({
         className={cn(
           'group flex items-center justify-center rounded-xl p-2.5 transition-all duration-200',
           active
-            ? 'bg-primary/10 text-primary'
-            : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+            ? 'bg-primary/12 text-primary shadow-sm'
+            : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'
         )}
       >
         <Icon className="h-[18px] w-[18px] flex-shrink-0" />
@@ -152,15 +152,15 @@ function SidebarItem({
           className={cn(
             'group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all duration-200',
             active
-              ? 'bg-primary/10 text-primary'
-              : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+              ? 'bg-primary/12 text-primary shadow-sm'
+              : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'
           )}
         >
           <Icon className="h-[18px] w-[18px] flex-shrink-0" />
           <span className="flex-1 text-[13px] font-medium">{item.label}</span>
           <ChevronDown
             className={cn(
-              'h-3.5 w-3.5 text-muted-foreground/50 transition-transform duration-200',
+              'h-3.5 w-3.5 text-muted-foreground transition-transform duration-200',
               open && 'rotate-180'
             )}
           />
@@ -168,7 +168,7 @@ function SidebarItem({
 
         <div
           className={cn(
-            'ml-[18px] mt-0.5 space-y-0.5 border-l border-border/50 pl-3.5 transition-all duration-200 overflow-hidden',
+            'ml-[18px] mt-0.5 space-y-0.5 overflow-hidden border-l border-border pl-3.5 transition-all duration-200',
             open ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
           )}
         >
@@ -182,8 +182,8 @@ function SidebarItem({
                 className={cn(
                   'block rounded-lg px-3 py-2 text-[12.5px] font-medium transition-all duration-150',
                   childActive
-                    ? 'text-primary bg-primary/5'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
                 )}
               >
                 {child.label}
@@ -205,8 +205,8 @@ function SidebarItem({
         'group flex items-center rounded-xl transition-all duration-200',
         collapsed ? 'justify-center p-2.5' : 'gap-3 px-3 py-2.5',
         isActive
-          ? 'bg-primary/10 text-primary'
-          : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+          ? 'bg-primary/12 text-primary shadow-sm'
+          : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'
       )}
     >
       <Icon className="h-[18px] w-[18px] flex-shrink-0" />
