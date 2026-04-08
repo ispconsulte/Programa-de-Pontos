@@ -19,7 +19,7 @@ import {
   X,
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Gift as GiftIcon } from 'lucide-react'
+import menuLateralImg from '@/assets/menu-lateral.png'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase-client'
 import {
@@ -389,23 +389,28 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       >
         {/* Logo area */}
         <div className={cn(
-          'flex flex-shrink-0 items-center justify-center border-b border-sidebar-border transition-all duration-300',
+          'relative flex flex-shrink-0 items-center justify-center border-b border-sidebar-border transition-all duration-300',
           collapsed ? 'h-20 px-2' : 'h-28 px-5'
         )}>
           <div className={cn(
-            'flex items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-[hsl(48_96%_58%_/_0.1)] transition-all duration-300',
+            'relative transition-all duration-300',
             collapsed ? 'h-10 w-10' : 'h-16 w-16'
-          )} style={{ boxShadow: '0 0 20px hsl(var(--primary) / 0.15)' }}>
-            <GiftIcon className={cn(
-              'text-primary transition-all duration-300',
-              collapsed ? 'h-5 w-5' : 'h-8 w-8'
-            )} />
+          )}>
+            {/* Glow behind */}
+            <div className="absolute inset-[-30%] rounded-full opacity-40 blur-xl"
+              style={{ background: 'radial-gradient(circle, hsl(0 75% 50% / 0.2), hsl(45 90% 55% / 0.1), transparent 70%)', animation: 'float 3s ease-in-out infinite' }} />
+            <img
+              src={menuLateralImg}
+              alt="Bonifica"
+              className="relative h-full w-full object-contain drop-shadow-lg"
+              style={{ animation: 'float 3s ease-in-out infinite' }}
+            />
           </div>
 
           {/* Mobile close */}
           <button
             onClick={() => setMobileOpen(false)}
-            className="ml-auto rounded-lg p-1.5 text-muted-foreground hover:text-foreground lg:hidden"
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-muted-foreground hover:text-foreground lg:hidden"
           >
             <X className="h-4 w-4" />
           </button>
