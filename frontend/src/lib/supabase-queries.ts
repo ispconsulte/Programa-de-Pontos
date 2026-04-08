@@ -600,7 +600,7 @@ export type DashboardSearchType = 'name' | 'cpfCnpj' | 'id'
 export interface DashboardMetrics {
   totalPoints: number
   redemptionsCount: number
-  redeemedPoints: number
+  availablePoints: number
 }
 
 export interface DashboardHistoryRow {
@@ -689,7 +689,13 @@ export async function fetchDashboardMetrics(opts: {
 }): Promise<DashboardMetrics> {
   const { tenantId, dateFrom, dateTo } = opts
 
-  const [pointsResult, clientsResult, redemptionClientsResult, legacyResult] = await Promise.all([
+  const params = new URLSearchParams({
+    limit: '1',
+    dateFrom,
+    dateTo,
+  })
+
+  const [pointsResult, clientsResult, legacyResult] = await Promise.all([
     (supabase as any)
       .from('pontuacao_faturas_processadas')
       .select('pontos_gerados')
@@ -700,66 +706,32 @@ export async function fetchDashboardMetrics(opts: {
       .limit(10000),
     (supabase as any)
       .from('pontuacao_campanha_clientes')
-      .select('pontos_resgatados')
+      .select('pontos_resgatados, pontos_disponiveis')
       .eq('tenant_id', tenantId),
-    (supabase as any)
-      .from('pontuacao_campanha_clientes')
-      .select('ixc_cliente_id')
-      .eq('tenant_id', tenantId)
-      .gt('pontos_resgatados', 0)
-      .limit(5000),
-    backendRequest<{ data: any[] } | null>('/campaign/legacy-redemptions?limit=200').catch(() => null),
+    backendRequest<{ data: any[]; meta?: { total?: number } }>(`/campaign/legacy-redemptions?${params.toString()}`).catch(() => null),
   ])
 
   if (pointsResult.error) throw new Error(pointsResult.error.message)
+  if (clientsResult.error) throw new Error(clientsResult.error.message)
 
-  // Sum redeemed points from campaign clients table (authoritative source)
-  const clientsRedeemedPoints = (clientsResult.data ?? []).reduce(
-    (sum: number, row: any) => sum + Number(row.pontos_resgatados ?? 0), 0,
-  )
+  const clientRows = clientsResult.data ?? []
 
-  // Count redemptions from legacy endpoint
-  const redemptionRows = (legacyResult?.data ?? []).filter((row: any) => {
-    const status = String(row.status ?? row.status_resgate ?? '').toLowerCase()
-    if (status === 'cancelado' || status === 'cancelled') return false
-    return true
-  })
-
-  // Also count from pontuacao_resgates via the legacy endpoint
-  const legacyRedeemedPoints = redemptionRows.reduce(
-    (sum: number, row: any) => sum + Number(row.points_spent ?? row.pontos_resgatados ?? row.pontos_utilizados ?? 0),
+  const availablePoints = clientRows.reduce(
+    (sum: number, row: any) => sum + Number(row.pontos_disponiveis ?? 0),
     0,
   )
 
-  let fallbackRedemptionsCount = 0
-  if (redemptionClientsResult.error) {
-    throw new Error(redemptionClientsResult.error.message)
-  }
-
-  const redemptionClientIds = Array.from(
-    new Set((redemptionClientsResult.data ?? []).map((row: any) => String(row.ixc_cliente_id))),
+  const clientsWithRedemptions = clientRows.reduce(
+    (sum: number, row: any) => sum + (Number(row.pontos_resgatados ?? 0) > 0 ? 1 : 0),
+    0,
   )
 
-  if (redemptionClientIds.length > 0) {
-    const { count, error: countError } = await (supabase as any)
-      .from('pontuacao_resgates')
-      .select('id', { count: 'exact', head: true })
-      .in('ixc_cliente_id', redemptionClientIds)
-      .neq('status_resgate', 'cancelado')
-      .gte('created_at', `${dateFrom}T00:00:00.000Z`)
-      .lte('created_at', `${dateTo}T23:59:59.999Z`)
-
-    if (!countError) {
-      fallbackRedemptionsCount = Number(count ?? 0)
-    } else {
-      fallbackRedemptionsCount = redemptionClientIds.length
-    }
-  }
+  const backendRedemptionsCount = Number(legacyResult?.meta?.total ?? 0)
 
   return {
     totalPoints: (pointsResult.data ?? []).reduce((sum: number, row: any) => sum + Number(row.pontos_gerados ?? 0), 0),
-    redemptionsCount: Math.max(redemptionRows.length, fallbackRedemptionsCount),
-    redeemedPoints: Math.max(clientsRedeemedPoints, legacyRedeemedPoints),
+    redemptionsCount: Math.max(backendRedemptionsCount, clientsWithRedemptions),
+    availablePoints,
   }
 }
 
