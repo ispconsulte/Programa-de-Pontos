@@ -195,30 +195,7 @@ export default function LoginPage() {
             Sua plataforma completa de fidelização, pontuação e recompensas.
           </p>
 
-          {/* Tier cards */}
-          <div
-            className="flex flex-wrap items-center justify-center gap-3 md:gap-4"
-            style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(8px)', transition: 'all 700ms ease 550ms' }}
-          >
-            {tiers.map((tier) => {
-              const Icon = tier.icon
-              return (
-                <div
-                  key={tier.name}
-                  className="flex items-center gap-2.5 rounded-xl border px-3.5 py-2.5 backdrop-blur-sm transition-all duration-300 hover:scale-[1.04]"
-                  style={{ borderColor: tier.border, background: tier.bg }}
-                >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: `${tier.color.replace(')', ' / 0.15)')}` }}>
-                    <Icon className="h-4 w-4" style={{ color: tier.color }} />
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-bold uppercase tracking-[0.08em]" style={{ color: tier.color }}>{tier.name}</p>
-                    <p className="text-[10px] text-muted-foreground/40">{tier.desc}</p>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+          <RotatingMessageCard mounted={mounted} />
         </div>
 
         {/* ── RIGHT: Login Form ── */}
