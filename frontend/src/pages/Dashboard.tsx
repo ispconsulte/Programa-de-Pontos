@@ -255,16 +255,6 @@ export default function DashboardPage() {
   }, [ac])
 
   /* --- Events --- */
-  useEffect(() => {
-    const handler = (event: Event) => {
-      const detail = (event as CustomEvent<{ searchType: HeaderSearchType; query: string }>).detail
-      if (!detail) return
-      setSearchType(detail.searchType)
-      setSearchQuery(detail.query ?? '')
-    }
-    window.addEventListener(DASHBOARD_CLIENT_SEARCH_EVENT, handler)
-    return () => window.removeEventListener(DASHBOARD_CLIENT_SEARCH_EVENT, handler)
-  }, [])
 
   useEffect(() => { void fetchData() }, [fetchData])
 
