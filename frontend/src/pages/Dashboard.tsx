@@ -39,11 +39,11 @@ import {
   fetchCampaignClientFaturas,
   fetchCampaignClientRedemptions,
   fetchCampaignClientById,
-  fetchDashboardHistory,
+  fetchClientRanking,
   fetchDashboardMetrics,
   getCurrentTenantId,
   type CampaignClientRow,
-  type DashboardHistoryRow,
+  type RankingClientRow,
   type ReceivableRow,
   type RedemptionRow,
 } from '@/lib/supabase-queries'
