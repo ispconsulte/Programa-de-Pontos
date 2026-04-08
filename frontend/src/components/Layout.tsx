@@ -49,7 +49,6 @@ const baseNavSections: NavSection[] = [
     label: 'OPERAÇÃO',
     items: [
       { href: '/operacao', label: 'Operação', icon: Home },
-      { href: '/clients', label: 'Clientes', icon: Users },
       { href: '/resgates', label: 'Resgates', icon: Coins },
       { href: '/catalogo', label: 'Catálogo', icon: Gift },
     ],
