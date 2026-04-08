@@ -58,7 +58,7 @@ export default function ResgatesPage() {
         const tenantId = await getCurrentTenantId()
         if (!tenantId || !mounted) return
 
-        const { data: resgates } = await supabase
+        const { data: resgates } = await (supabase as any)
           .from('pontuacao_resgates')
           .select('*')
           .order('created_at', { ascending: false })
@@ -66,23 +66,29 @@ export default function ResgatesPage() {
 
         if (!mounted) return
 
-        const clienteIds = [...new Set((resgates || []).map((r) => r.ixc_cliente_id))]
+        const rawResgates = (resgates || []) as any[]
+        const clienteIds = [...new Set(rawResgates.map((r: any) => r.ixc_cliente_id))]
         let clienteMap: Record<string, string> = {}
 
         if (clienteIds.length > 0) {
-          const { data: clientes } = await supabase
+          const { data: clientes } = await (supabase as any)
             .from('pontuacao_campanha_clientes')
             .select('ixc_cliente_id, nome_cliente')
             .in('ixc_cliente_id', clienteIds)
 
           if (clientes) {
-            clienteMap = Object.fromEntries(clientes.map((c) => [c.ixc_cliente_id, c.nome_cliente || '']))
+            clienteMap = Object.fromEntries((clientes as any[]).map((c: any) => [c.ixc_cliente_id, c.nome_cliente || '']))
           }
         }
 
         setRows(
-          (resgates || []).map((r) => ({
-            ...r,
+          rawResgates.map((r: any) => ({
+            id: r.id,
+            ixc_cliente_id: r.ixc_cliente_id,
+            brinde_nome: r.brinde_nome,
+            pontos_utilizados: r.pontos_utilizados,
+            status_resgate: r.status_resgate,
+            created_at: r.created_at,
             cliente_nome: clienteMap[r.ixc_cliente_id] || `Cliente #${r.ixc_cliente_id}`,
           }))
         )
