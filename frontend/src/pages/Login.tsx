@@ -205,13 +205,23 @@ export default function LoginPage() {
 
         {/* ── LEFT: Visual / Brand (40%) ── */}
         <div
-          className="hidden md:flex md:w-[38%] lg:w-[40%] flex-col items-center justify-end px-6 lg:px-10"
+          className="hidden md:flex md:w-[38%] lg:w-[40%] flex-col items-center justify-center px-6 lg:px-10"
           style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(16px)', transition: 'all 800ms cubic-bezier(0.16, 1, 0.3, 1)' }}
         >
+          {/* Title */}
+          <h2
+            className="mb-6 text-center text-[clamp(1.1rem,2.2vw,1.4rem)] font-bold tracking-tight"
+            style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(10px)', transition: 'all 700ms ease 100ms' }}
+          >
+            <span className="bg-gradient-to-r from-primary via-[hsl(45,90%,60%)] to-[hsl(160,60%,50%)] bg-clip-text text-transparent">
+              Sistema de Recompensas
+            </span>
+          </h2>
+
           {/* 3D Animated Logo */}
           <div
-            className="mb-14 lg:mb-16"
-            style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'scale(1)' : 'scale(0.85)', transition: 'all 1000ms cubic-bezier(0.16, 1, 0.3, 1) 100ms' }}
+            className="mb-6"
+            style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'scale(1)' : 'scale(0.85)', transition: 'all 1000ms cubic-bezier(0.16, 1, 0.3, 1) 200ms' }}
           >
             <div className="relative" style={{ perspective: '1000px' }}>
               <div className="absolute inset-[-25%] rounded-full blur-3xl"
