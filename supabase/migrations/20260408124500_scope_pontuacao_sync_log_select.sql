@@ -1,4 +1,5 @@
 DROP POLICY IF EXISTS sync_log_select_authenticated ON public.pontuacao_sync_log;
+DROP POLICY IF EXISTS pontuacao_sync_log_select_own_tenant ON public.pontuacao_sync_log;
 
 CREATE POLICY pontuacao_sync_log_select_own_tenant
 ON public.pontuacao_sync_log

@@ -9,6 +9,18 @@ TO authenticated
 USING (id = auth.uid());
 
 -- Never expose credential material through PostgREST/Supabase browser roles.
-REVOKE ALL (password_hash) ON public.users FROM PUBLIC;
-REVOKE ALL (password_hash) ON public.users FROM anon;
-REVOKE ALL (password_hash) ON public.users FROM authenticated;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'users'
+      AND column_name = 'password_hash'
+  ) THEN
+    EXECUTE 'REVOKE ALL (password_hash) ON public.users FROM PUBLIC';
+    EXECUTE 'REVOKE ALL (password_hash) ON public.users FROM anon';
+    EXECUTE 'REVOKE ALL (password_hash) ON public.users FROM authenticated';
+  END IF;
+END
+$$;
