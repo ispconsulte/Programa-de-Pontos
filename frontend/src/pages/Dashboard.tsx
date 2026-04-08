@@ -52,11 +52,6 @@ import {
 
 type Classification = 'antecipado' | 'vencimento' | 'atraso' | 'indefinido'
 
-interface DashboardRow extends DashboardHistoryRow {
-  deltaVencimento: number | null
-  classificacao: Classification
-}
-
 /* ── Helpers ──────────────────────────────────────────────────────────── */
 
 function formatPoints(value: number): string { return value.toLocaleString('pt-BR') }
