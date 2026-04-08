@@ -1,15 +1,57 @@
-import { useState, FormEvent, useEffect } from 'react'
+import { useState, FormEvent, useEffect, useMemo } from 'react'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
-import { Eye, EyeOff, AlertCircle, CheckCircle, ArrowRight } from 'lucide-react'
+import { Eye, EyeOff, AlertCircle, CheckCircle, ArrowRight, Star, Crown, Gem } from 'lucide-react'
 import { supabase } from '@/lib/supabase-client'
 import Spinner from '@/components/Spinner'
-import LogoAnimated from '@/components/LogoAnimated'
-import LoginHero from '@/components/LoginHero'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import logoBonifica from '@/assets/logo-bonifica.png'
 
+/* ── Floating particles (memoized) ── */
+function AmbientParticles() {
+  const particles = useMemo(() =>
+    Array.from({ length: 18 }, (_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      size: 2 + Math.random() * 3,
+      delay: Math.random() * 6,
+      duration: 8 + Math.random() * 10,
+      color: i % 4 === 0
+        ? 'hsl(217 91% 60% / 0.25)'
+        : i % 4 === 1
+          ? 'hsl(48 96% 58% / 0.2)'
+          : i % 4 === 2
+            ? 'hsl(260 70% 60% / 0.18)'
+            : 'hsl(160 70% 48% / 0.15)',
+    })), [])
 
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      {particles.map(p => (
+        <div
+          key={p.id}
+          className="absolute rounded-full"
+          style={{
+            left: `${p.x}%`,
+            top: `${p.y}%`,
+            width: p.size,
+            height: p.size,
+            background: p.color,
+            boxShadow: `0 0 ${p.size * 3}px ${p.color}`,
+            animation: `loginFloat ${p.duration}s ease-in-out ${p.delay}s infinite`,
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
+const tiers = [
+  { name: 'Bronze', icon: Star, accent: 'hsl(30 70% 50%)' },
+  { name: 'Prata', icon: Gem, accent: 'hsl(220 20% 70%)' },
+  { name: 'Ouro', icon: Crown, accent: 'hsl(45 95% 55%)' },
+]
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -36,7 +78,6 @@ export default function LoginPage() {
       const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
       if (signInError || !data.session?.access_token) { setError(signInError?.message || 'Credenciais inválidas.'); return }
 
-      // Bootstrap tenant if needed (idempotent)
       try {
         await supabase.functions.invoke('bootstrap-tenant', { body: {} })
       } catch { /* edge function unreachable - ok */ }
@@ -49,46 +90,118 @@ export default function LoginPage() {
     }
   }
 
+  const d = (ms: number) => ({ transitionDelay: `${ms}ms` })
+
   return (
-    <div className="min-h-screen bg-background lg:grid lg:grid-cols-2">
-      <LoginHero />
+    <div className="login-page relative flex min-h-[100dvh] flex-col overflow-hidden">
+      {/* ── Unified full-screen background ── */}
+      <div className="absolute inset-0 bg-[linear-gradient(135deg,hsl(230,35%,4%)_0%,hsl(225,30%,6%)_30%,hsl(220,28%,8%)_60%,hsl(225,25%,5%)_100%)]" />
 
-      {/* ── Right: Form panel ── */}
-      <div className="relative flex w-full flex-col items-center justify-center px-6 py-12 lg:min-h-screen lg:px-12 xl:px-16">
-        {/* Subtle ambient wash */}
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_30%,hsl(217_91%_60%_/_0.025),transparent_70%)]" />
-        {/* Left edge accent (desktop) */}
-        <div className="pointer-events-none absolute bottom-0 left-0 top-0 hidden w-px bg-gradient-to-b from-transparent via-foreground/10 to-transparent lg:block" />
+      {/* Large ambient orbs */}
+      <div className="pointer-events-none absolute -left-[15%] -top-[10%] h-[600px] w-[600px] rounded-full opacity-30"
+        style={{ background: 'radial-gradient(circle, hsl(217 91% 60% / 0.10) 0%, transparent 60%)', animation: 'loginGlowDrift 22s ease-in-out infinite' }} />
+      <div className="pointer-events-none absolute -bottom-[8%] right-[10%] h-[500px] w-[500px] rounded-full opacity-20"
+        style={{ background: 'radial-gradient(circle, hsl(260 70% 55% / 0.08) 0%, transparent 55%)', animation: 'loginGlowDrift 28s ease-in-out 4s infinite reverse' }} />
+      <div className="pointer-events-none absolute right-[30%] top-[20%] h-[300px] w-[300px] rounded-full opacity-15"
+        style={{ background: 'radial-gradient(circle, hsl(48 96% 55% / 0.06) 0%, transparent 50%)', animation: 'loginGlowDrift 18s ease-in-out 8s infinite' }} />
 
+      {/* Subtle grid overlay */}
+      <div className="pointer-events-none absolute inset-0 opacity-[0.015]"
+        style={{ backgroundImage: 'linear-gradient(hsl(217 91% 60% / 0.15) 1px, transparent 1px), linear-gradient(90deg, hsl(217 91% 60% / 0.15) 1px, transparent 1px)', backgroundSize: '80px 80px' }} />
+
+      {/* Top accent line */}
+      <div className="pointer-events-none absolute left-0 right-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/15 to-transparent" />
+
+      <AmbientParticles />
+
+      {/* ── Main content ── */}
+      <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-5 py-8 md:flex-row md:items-center md:justify-center md:gap-8 lg:gap-16 xl:gap-24">
+
+        {/* ── LEFT: Brand / Hero area ── */}
         <div
-          className="relative z-10 w-full max-w-[400px] transition-all duration-700"
-          style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(12px)' }}
+          className="mb-10 flex w-full max-w-[420px] flex-col items-center text-center md:mb-0 md:w-auto md:max-w-[440px] md:items-start md:text-left lg:max-w-[480px]"
+          style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(20px)', transition: 'all 900ms cubic-bezier(0.16, 1, 0.3, 1)' }}
         >
-          {/* ── Mobile logo ── */}
-          <div className="mb-8 flex items-center justify-center lg:hidden">
-            <img
-              src={logoBonifica}
-              alt="Logo Bonifica"
-              className="h-16 w-auto object-contain"
-              style={{ filter: 'drop-shadow(0 0 16px hsl(var(--primary) / 0.3))' }}
-            />
+          {/* Logo */}
+          <div
+            className="mb-6 transition-all duration-[1200ms] md:mb-8"
+            style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'scale(1)' : 'scale(0.85)', ...d(100) }}
+          >
+            <div className="relative">
+              <div className="absolute inset-0 rounded-full blur-3xl"
+                style={{ background: 'radial-gradient(circle, hsl(217 91% 60% / 0.15) 0%, hsl(48 96% 58% / 0.06) 50%, transparent 70%)' }} />
+              <img
+                src={logoBonifica}
+                alt="Bonifica"
+                className="relative h-16 w-auto object-contain md:h-20 lg:h-24"
+                style={{ filter: 'drop-shadow(0 0 24px hsl(217 91% 60% / 0.25)) drop-shadow(0 0 48px hsl(48 96% 58% / 0.1))' }}
+              />
+            </div>
           </div>
 
-          {/* ── Card ── */}
-          <div className="rounded-2xl border border-[hsl(var(--border))] bg-gradient-to-b from-[hsl(var(--surface-1))] to-[hsl(var(--surface-2)_/_0.4)] p-7 shadow-[var(--elevation-2),0_0_0_1px_hsl(var(--foreground)/0.05)] lg:p-8">
+          {/* Headline */}
+          <h1
+            className="mb-3 text-[clamp(1.5rem,4vw,2rem)] font-bold leading-[1.15] tracking-tight text-foreground transition-all duration-700"
+            style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(10px)', ...d(250) }}
+          >
+            Fidelize.{' '}
+            <span className="bg-gradient-to-r from-primary via-[hsl(48,96%,62%)] to-[hsl(260,70%,60%)] bg-clip-text text-transparent">
+              Recompense.
+            </span>
+            <br className="hidden sm:block" />
+            {' '}Cresça.
+          </h1>
+
+          <p
+            className="mb-6 max-w-[340px] text-[clamp(0.8rem,2vw,0.875rem)] leading-relaxed text-muted-foreground/60 transition-all duration-700 md:mb-8"
+            style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(8px)', ...d(400) }}
+          >
+            A plataforma completa de fidelização e pontuação para o seu negócio.
+          </p>
+
+          {/* Tier badges */}
+          <div
+            className="flex items-center gap-4 transition-all duration-700 md:gap-5"
+            style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(8px)', ...d(550) }}
+          >
+            {tiers.map((tier, i) => {
+              const Icon = tier.icon
+              return (
+                <div key={tier.name} className="flex items-center gap-4 md:gap-5">
+                  {i > 0 && <div className="h-3.5 w-px bg-foreground/[0.08]" />}
+                  <div className="flex items-center gap-1.5">
+                    <Icon className="h-3.5 w-3.5 md:h-4 md:w-4" style={{ color: tier.accent, opacity: 0.75 }} />
+                    <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-foreground/40 md:text-[11px]">{tier.name}</span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* ── RIGHT: Login form ── */}
+        <div
+          className="w-full max-w-[400px] md:w-[380px] lg:w-[400px]"
+          style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(16px)', transition: 'all 800ms cubic-bezier(0.16, 1, 0.3, 1) 200ms' }}
+        >
+          {/* Glass card */}
+          <div className="login-card rounded-2xl border border-foreground/[0.06] bg-[hsl(225_25%_7.5%_/_0.6)] p-6 shadow-[0_24px_80px_-16px_rgba(0,0,0,0.5),0_0_0_1px_hsl(217_91%_60%_/_0.04)] backdrop-blur-xl sm:p-7 lg:p-8">
+            {/* Subtle top glow on card */}
+            <div className="pointer-events-none absolute -top-px left-[10%] right-[10%] h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+
             {/* Card header */}
-            <div className="mb-8">
-              <h1 className="font-heading text-[22px] font-bold tracking-tight text-foreground">
+            <div className="mb-7">
+              <h2 className="text-[clamp(1.15rem,3vw,1.35rem)] font-bold tracking-tight text-foreground">
                 Acesse seu painel
-              </h1>
-              <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground/80">
+              </h2>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground/55">
                 Seus pontos e recompensas estão te esperando.
               </p>
             </div>
 
             {/* Success banner */}
             {registered && (
-              <div className="mb-6 flex items-center gap-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] px-4 py-3 animate-enter">
+              <div className="mb-5 flex items-center gap-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] px-4 py-3 animate-enter">
                 <CheckCircle className="h-4 w-4 flex-shrink-0 text-[hsl(var(--success))]" />
                 <p className="text-[13px] text-foreground">Conta criada. Faça login para continuar.</p>
               </div>
@@ -105,7 +218,7 @@ export default function LoginPage() {
 
               {/* Email field */}
               <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                <Label htmlFor="email" className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/50">
                   E-mail
                 </Label>
                 <Input
@@ -115,13 +228,13 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="seu@empresa.com"
                   autoComplete="email"
-                  className="h-[46px] rounded-xl border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 text-[14px] transition-all duration-200 placeholder:text-muted-foreground/25 focus-visible:border-primary/40 focus-visible:bg-[hsl(var(--surface-3))] focus-visible:shadow-[0_0_0_3px_hsl(var(--primary)_/_0.08)]"
+                  className="h-[46px] rounded-xl border-foreground/[0.06] bg-foreground/[0.03] px-4 text-[14px] transition-all duration-200 placeholder:text-muted-foreground/25 focus-visible:border-primary/30 focus-visible:bg-foreground/[0.05] focus-visible:shadow-[0_0_0_3px_hsl(var(--primary)_/_0.08)]"
                 />
               </div>
 
               {/* Password field */}
               <div className="space-y-1.5">
-                <Label htmlFor="password" className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                <Label htmlFor="password" className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/50">
                   Senha
                 </Label>
                 <div className="relative">
@@ -132,12 +245,12 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     autoComplete="current-password"
-                    className="h-[46px] rounded-xl border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 pr-11 text-[14px] transition-all duration-200 placeholder:text-muted-foreground/25 focus-visible:border-primary/40 focus-visible:bg-[hsl(var(--surface-3))] focus-visible:shadow-[0_0_0_3px_hsl(var(--primary)_/_0.08)]"
+                    className="h-[46px] rounded-xl border-foreground/[0.06] bg-foreground/[0.03] px-4 pr-11 text-[14px] transition-all duration-200 placeholder:text-muted-foreground/25 focus-visible:border-primary/30 focus-visible:bg-foreground/[0.05] focus-visible:shadow-[0_0_0_3px_hsl(var(--primary)_/_0.08)]"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground/40 transition-all duration-150 hover:bg-[hsl(var(--muted))] hover:text-foreground/70"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground/35 transition-all duration-150 hover:bg-foreground/[0.06] hover:text-foreground/60"
                     tabIndex={-1}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -145,37 +258,31 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* Spacer */}
-              <div className="pt-1.5" />
+              <div className="pt-1" />
 
               {/* CTA Button */}
               <button
                 type="submit"
                 disabled={loading}
-                className="group relative flex h-[48px] w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-primary text-[14px] font-semibold text-primary-foreground shadow-[0_1px_0_0_hsl(var(--primary)/_0.6)_inset,0_4px_20px_-4px_hsl(var(--primary)_/_0.35)] transition-all duration-200 hover:shadow-[0_1px_0_0_hsl(var(--primary)/_0.6)_inset,0_8px_28px_-4px_hsl(var(--primary)_/_0.45)] hover:brightness-[1.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.985] active:brightness-[0.96] disabled:pointer-events-none disabled:opacity-50"
+                className="group relative flex h-[48px] w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-primary to-[hsl(230,80%,58%)] text-[14px] font-semibold text-primary-foreground shadow-[0_1px_0_0_hsl(var(--primary)/_0.6)_inset,0_6px_24px_-6px_hsl(var(--primary)_/_0.4)] transition-all duration-200 hover:shadow-[0_1px_0_0_hsl(var(--primary)/_0.6)_inset,0_10px_32px_-4px_hsl(var(--primary)_/_0.5)] hover:brightness-[1.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(225,30%,6%)] active:scale-[0.985] active:brightness-[0.96] disabled:pointer-events-none disabled:opacity-50"
               >
-                {/* Hover shine */}
                 <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/[0.06] to-transparent transition-transform duration-500 group-hover:translate-x-full" />
-                <span className="relative">
-                  {loading ? 'Entrando...' : 'Entrar'}
-                </span>
+                <span className="relative">{loading ? 'Entrando...' : 'Entrar'}</span>
                 {loading
                   ? <Spinner size="sm" />
                   : <ArrowRight className="relative h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
                 }
               </button>
             </form>
-
           </div>
 
           {/* Register link */}
-          <p className="mt-6 text-center text-[13px] text-muted-foreground/60">
+          <p className="mt-5 text-center text-[13px] text-muted-foreground/45">
             Não tem conta?{' '}
-            <Link to="/register" className="text-primary hover:text-primary/80 transition-colors font-medium">
+            <Link to="/register" className="font-medium text-primary/80 transition-colors hover:text-primary">
               Criar conta
             </Link>
           </p>
-
         </div>
       </div>
     </div>
