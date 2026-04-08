@@ -1,6 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
 import {
-  Bell as _Bell,
   Camera,
   ChevronDown,
   ChevronsLeft,
