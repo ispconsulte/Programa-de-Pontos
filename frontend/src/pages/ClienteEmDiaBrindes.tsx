@@ -16,18 +16,20 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useClienteEmDia } from '@/hooks/useClienteEmDia'
-import { Award, Box, CheckCircle, Gift, Package, Plus, Star, Zap } from 'lucide-react'
+import { Award, Box, CheckCircle, Gift, Image as ImageIcon, Package, Plus, Star, Zap } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { fetchCurrentUserProfile, isAdminUiRole } from '@/lib/user-management'
 
 type CatalogFormState = {
   name: string
   requiredPoints: string
+  imageUrl: string
 }
 
 const emptyForm: CatalogFormState = {
   name: '',
   requiredPoints: '',
+  imageUrl: '',
 }
 
 function GiftCatalogDialog({ trigger }: { trigger: React.ReactNode }) {
@@ -67,6 +69,18 @@ function GiftCatalogDialog({ trigger }: { trigger: React.ReactNode }) {
               value={form.requiredPoints}
               onChange={(event) => setForm((current) => ({ ...current, requiredPoints: event.target.value }))}
               placeholder="Informe a pontuação"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="gift-image" className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+              URL da imagem (opcional)
+            </Label>
+            <Input
+              id="gift-image"
+              value={form.imageUrl}
+              onChange={(event) => setForm((current) => ({ ...current, imageUrl: event.target.value }))}
+              placeholder="https://exemplo.com/imagem.jpg"
             />
           </div>
         </div>
@@ -163,7 +177,7 @@ export default function ClienteEmDiaBrindesPage() {
             </div>
           </div>
 
-          {/* Catalog list */}
+          {/* Catalog grid */}
           <Card className="overflow-hidden">
             <CardHeader className="border-b border-border px-5 py-4">
               <div className="flex items-center justify-between">
@@ -184,44 +198,57 @@ export default function ClienteEmDiaBrindesPage() {
               ) : rewards.length === 0 ? (
                 <div className="p-8"><EmptyState title="Ainda não há registros aqui" description="Nenhum brinde foi cadastrado." /></div>
               ) : (
-                <div className="divide-y divide-border/50">
-                  {rewards.map((reward, index) => {
+                <div className="grid gap-px bg-border/30 sm:grid-cols-2 lg:grid-cols-3">
+                  {rewards.map((reward) => {
                     const tier = tierColor(reward.pontosNecessarios)
                     return (
                       <div
                         key={reward.id}
-                        className={`group flex items-center gap-4 px-5 py-4 transition-colors hover:bg-muted/30`}
+                        className="group relative flex flex-col bg-card p-5 transition-colors hover:bg-muted/20"
                       >
-                        {/* Icon with tier color */}
-                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${tier.bg} ${tier.text}`}>
-                          {tierIcon(reward.pontosNecessarios)}
+                        {/* Image or icon fallback */}
+                        <div className={`mb-4 flex h-28 w-full items-center justify-center overflow-hidden rounded-xl border border-border/50 ${tier.bg}`}>
+                          {reward.imagemUrl ? (
+                            <img
+                              src={reward.imagemUrl}
+                              alt={reward.nome}
+                              className="h-full w-full object-contain p-2"
+                              loading="lazy"
+                              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden') }}
+                            />
+                          ) : null}
+                          <div className={`flex flex-col items-center justify-center gap-1 ${reward.imagemUrl ? 'hidden' : ''} ${tier.text}`}>
+                            {tierIcon(reward.pontosNecessarios)}
+                            <ImageIcon className="h-3 w-3 opacity-40" />
+                            <span className="text-[9px] uppercase tracking-wider opacity-50">Sem imagem</span>
+                          </div>
                         </div>
 
                         {/* Info */}
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-semibold text-foreground">{reward.nome}</p>
-                            {reward.estoqueDisponivel != null && (
-                              <span className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                                <Box className="h-2.5 w-2.5" />{reward.estoqueDisponivel}
-                              </span>
-                            )}
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="text-sm font-bold text-foreground leading-snug">{reward.nome}</p>
+                            <span className={`mt-0.5 shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
+                              reward.ativo
+                                ? 'bg-emerald-500/10 text-emerald-400'
+                                : 'bg-rose-500/10 text-rose-400'
+                            }`}>
+                              {reward.ativo ? 'Ativo' : 'Inativo'}
+                            </span>
                           </div>
-                          <p className="mt-0.5 text-xs text-muted-foreground">{reward.descricao ?? 'Sem descrição cadastrada.'}</p>
+                          <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{reward.descricao ?? 'Sem descrição cadastrada.'}</p>
                         </div>
 
-                        {/* Points & status */}
-                        <div className="flex items-center gap-3 shrink-0">
+                        {/* Footer: points + stock */}
+                        <div className="mt-3 flex items-center justify-between">
                           <div className={`rounded-lg border ${tier.border} bg-gradient-to-r ${tier.accent} to-transparent px-3 py-1.5`}>
                             <p className={`text-sm font-bold ${tier.text}`}>{reward.pontosNecessarios} pts</p>
                           </div>
-                          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
-                            reward.ativo
-                              ? 'bg-emerald-500/10 text-emerald-400'
-                              : 'bg-rose-500/10 text-rose-400'
-                          }`}>
-                            {reward.ativo ? 'Ativo' : 'Inativo'}
-                          </span>
+                          {reward.estoqueDisponivel != null && (
+                            <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                              <Box className="h-2.5 w-2.5" />{reward.estoqueDisponivel} em estoque
+                            </span>
+                          )}
                         </div>
                       </div>
                     )
