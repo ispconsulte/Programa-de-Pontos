@@ -369,7 +369,12 @@ export default function ReceivablesPage() {
                             <TableCell className="whitespace-nowrap text-right text-emerald-400">{formatBRL(item.valor_recebido)}</TableCell>
                             <TableCell>{statusBadge(item.status)}</TableCell>
                             <TableCell className="text-right">
-                              <Link to={`/receivables/${item.id}`} className="text-sm text-primary transition-colors hover:text-primary/80">Detalhe</Link>
+                              <Button variant="outline" size="sm" asChild className="h-7 px-3 text-xs">
+                                <Link to={`/receivables/${item.id}`}>
+                                  <ArrowRight className="h-3 w-3 mr-1" />
+                                  Detalhe
+                                </Link>
+                              </Button>
                             </TableCell>
                           </TableRow>
                         ))}
