@@ -786,3 +786,19 @@ function InfoField({ icon: Icon, label, children }: { icon: React.ElementType; l
     </div>
   )
 }
+
+function RedemptionStatusBadge({ status }: { status: string }) {
+  const s = status.toLowerCase()
+  const map: Record<string, { label: string; cls: string }> = {
+    pendente: { label: 'Pendente', cls: 'bg-amber-500/10 text-amber-400' },
+    solicitado: { label: 'Solicitado', cls: 'bg-sky-500/10 text-sky-400' },
+    entregue: { label: 'Entregue', cls: 'bg-emerald-500/10 text-emerald-400' },
+    cancelado: { label: 'Cancelado', cls: 'bg-rose-500/10 text-rose-400' },
+  }
+  const found = map[s] || { label: status, cls: 'bg-muted text-muted-foreground' }
+  return (
+    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${found.cls}`}>
+      {found.label}
+    </span>
+  )
+}
