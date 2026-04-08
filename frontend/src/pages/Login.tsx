@@ -281,15 +281,18 @@ export default function LoginPage() {
 
           <div className="w-full max-w-[440px]">
             {/* Glass card */}
-            <div className="login-card relative rounded-2xl border border-foreground/[0.06] bg-[hsl(225_25%_7.5%_/_0.65)] p-7 shadow-[0_24px_80px_-16px_rgba(0,0,0,0.5),0_0_0_1px_hsl(217_91%_60%_/_0.04)] backdrop-blur-xl sm:p-8 lg:p-10">
-              {/* Top glow */}
-              <div className="pointer-events-none absolute -top-px left-[10%] right-[10%] h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+            <div className="login-card group/card relative rounded-3xl border border-primary/[0.08] bg-gradient-to-b from-[hsl(225_25%_9%_/_0.8)] to-[hsl(225_25%_6%_/_0.7)] p-8 shadow-[0_32px_80px_-20px_rgba(0,0,0,0.6),0_0_0_1px_hsl(217_91%_60%_/_0.04)] backdrop-blur-2xl sm:p-9 lg:p-10">
+              {/* Animated top border glow */}
+              <div className="pointer-events-none absolute -top-px left-[8%] right-[8%] h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+              {/* Corner accents */}
+              <div className="pointer-events-none absolute left-0 top-0 h-16 w-px bg-gradient-to-b from-primary/15 to-transparent" />
+              <div className="pointer-events-none absolute right-0 top-0 h-16 w-px bg-gradient-to-b from-primary/15 to-transparent" />
 
-              <div className="mb-7 text-center">
-                <h2 className="text-[clamp(1.25rem,3vw,1.5rem)] font-bold tracking-tight text-foreground">
+              <div className="mb-8 text-center">
+                <h2 className="text-[clamp(1.3rem,3vw,1.6rem)] font-bold tracking-tight text-foreground">
                   Acesse seu painel
                 </h2>
-                <p className="mt-2 text-[13.5px] leading-relaxed text-muted-foreground/50">
+                <p className="mt-2.5 text-[13.5px] leading-relaxed text-muted-foreground/45">
                   Seus pontos e recompensas estão te esperando.
                 </p>
               </div>
@@ -309,8 +312,8 @@ export default function LoginPage() {
                   </div>
                 )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+                <div className="space-y-2.5">
+                  <Label htmlFor="email" className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/45">
                     E-mail
                   </Label>
                   <Input
@@ -320,12 +323,12 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="seu@empresa.com"
                     autoComplete="email"
-                    className="h-[48px] rounded-xl border-foreground/[0.06] bg-foreground/[0.03] px-4 text-[14px] transition-all duration-200 placeholder:text-muted-foreground/25 focus-visible:border-primary/30 focus-visible:bg-foreground/[0.05] focus-visible:shadow-[0_0_0_3px_hsl(var(--primary)_/_0.08)]"
+                    className="h-[50px] rounded-xl border-primary/[0.08] bg-[hsl(225_25%_10%_/_0.5)] px-4 text-[14px] transition-all duration-300 placeholder:text-muted-foreground/20 focus-visible:border-primary/25 focus-visible:bg-[hsl(225_25%_11%_/_0.6)] focus-visible:shadow-[0_0_0_3px_hsl(var(--primary)_/_0.1),0_4px_16px_-4px_hsl(var(--primary)_/_0.1)]"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+                <div className="space-y-2.5">
+                  <Label htmlFor="password" className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/45">
                     Senha
                   </Label>
                   <div className="relative">
@@ -336,12 +339,12 @@ export default function LoginPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
                       autoComplete="current-password"
-                      className="h-[48px] rounded-xl border-foreground/[0.06] bg-foreground/[0.03] px-4 pr-11 text-[14px] transition-all duration-200 placeholder:text-muted-foreground/25 focus-visible:border-primary/30 focus-visible:bg-foreground/[0.05] focus-visible:shadow-[0_0_0_3px_hsl(var(--primary)_/_0.08)]"
+                      className="h-[50px] rounded-xl border-primary/[0.08] bg-[hsl(225_25%_10%_/_0.5)] px-4 pr-11 text-[14px] transition-all duration-300 placeholder:text-muted-foreground/20 focus-visible:border-primary/25 focus-visible:bg-[hsl(225_25%_11%_/_0.6)] focus-visible:shadow-[0_0_0_3px_hsl(var(--primary)_/_0.1),0_4px_16px_-4px_hsl(var(--primary)_/_0.1)]"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground/35 transition-all duration-150 hover:bg-foreground/[0.06] hover:text-foreground/60"
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-muted-foreground/30 transition-all duration-200 hover:bg-primary/[0.08] hover:text-foreground/60"
                       tabIndex={-1}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -350,20 +353,22 @@ export default function LoginPage() {
                 </div>
 
                 {/* Forgot password */}
-                <div className="flex justify-end">
+                <div className="flex justify-end pt-0.5">
                   <button
                     type="button"
-                    className="text-[12.5px] font-medium text-primary/70 transition-colors hover:text-primary"
+                    className="text-[12.5px] font-medium text-primary/60 transition-colors duration-200 hover:text-primary"
                     onClick={() => {/* future: forgot password flow */}}
                   >
                     Esqueceu sua senha?
                   </button>
                 </div>
 
+                <div className="pt-1" />
+
                 <button
                   type="submit"
                   disabled={loading}
-                  className="group relative flex h-[50px] w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-primary to-[hsl(230,80%,58%)] text-[14.5px] font-semibold text-primary-foreground shadow-[0_1px_0_0_hsl(var(--primary)/_0.6)_inset,0_6px_24px_-6px_hsl(var(--primary)_/_0.4)] transition-all duration-200 hover:shadow-[0_1px_0_0_hsl(var(--primary)/_0.6)_inset,0_10px_32px_-4px_hsl(var(--primary)_/_0.5)] hover:brightness-[1.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(225,30%,6%)] active:scale-[0.985] active:brightness-[0.96] disabled:pointer-events-none disabled:opacity-50"
+                  className="group relative flex h-[52px] w-full items-center justify-center gap-2.5 overflow-hidden rounded-xl bg-gradient-to-r from-primary via-[hsl(225,85%,58%)] to-[hsl(230,80%,55%)] text-[15px] font-semibold text-primary-foreground shadow-[0_2px_0_0_hsl(var(--primary)/_0.5)_inset,0_8px_28px_-6px_hsl(var(--primary)_/_0.45)] transition-all duration-300 hover:shadow-[0_2px_0_0_hsl(var(--primary)/_0.5)_inset,0_14px_40px_-6px_hsl(var(--primary)_/_0.55)] hover:brightness-[1.1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(225,30%,6%)] active:scale-[0.985] active:brightness-[0.96] disabled:pointer-events-none disabled:opacity-50"
                 >
                   <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/[0.06] to-transparent transition-transform duration-500 group-hover:translate-x-full" />
                   <span className="relative">{loading ? 'Entrando...' : 'Entrar'}</span>
