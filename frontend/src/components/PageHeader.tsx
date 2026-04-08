@@ -9,7 +9,7 @@ interface PageHeaderProps {
 
 export default function PageHeader({ icon: Icon, title, subtitle, actions }: PageHeaderProps) {
   return (
-    <div className="page-header mb-6">
+    <div className="page-header mb-4 sm:mb-6">
       <div className="page-header__lead">
         {Icon && (
           <div className="page-header__icon bg-primary/[0.08] ring-1 ring-primary/[0.12]">
