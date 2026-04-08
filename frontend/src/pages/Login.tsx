@@ -138,11 +138,8 @@ function RotatingMessageCard({ mounted }: { mounted: boolean }) {
     </div>
   )
 }
-        </p>
-      </div>
-    </div>
-  )
-}
+
+
 
 export default function LoginPage() {
   const navigate = useNavigate()
