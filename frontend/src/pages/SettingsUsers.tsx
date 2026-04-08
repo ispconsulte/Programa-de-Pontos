@@ -86,13 +86,13 @@ export default function SettingsUsersPage() {
     setError('')
 
     try {
-      const [me, managedUsers] = await Promise.all([
-        fetchCurrentUserProfile(),
-        fetchManagedUsers(),
-      ])
-
+      const me = await fetchCurrentUserProfile()
       setCurrentUser(me)
-      setUsers(managedUsers)
+
+      if (isAdminUiRole(me.role)) {
+        const managedUsers = await fetchManagedUsers()
+        setUsers(managedUsers)
+      }
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Não foi possível carregar os usuários.')
     } finally {
