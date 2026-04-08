@@ -999,22 +999,31 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          is_active: boolean
           role: string
+          session_revoked_at: string | null
           tenant_id: string
+          updated_at: string
         }
         Insert: {
           created_at?: string
           email: string
           id?: string
+          is_active?: boolean
           role?: string
+          session_revoked_at?: string | null
           tenant_id: string
+          updated_at?: string
         }
         Update: {
           created_at?: string
           email?: string
           id?: string
+          is_active?: boolean
           role?: string
+          session_revoked_at?: string | null
           tenant_id?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1023,7 +1032,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      can_access_pontuacao_cliente: {
+        Args: { target_cliente_id: string; target_tenant_id: string }
+        Returns: boolean
+      }
+      is_pontuacao_admin: {
+        Args: { target_tenant_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
