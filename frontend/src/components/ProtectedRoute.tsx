@@ -64,7 +64,10 @@ export default function ProtectedRoute({
 
     void validateSession()
 
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: subscription } = supabase.auth.onAuthStateChange((event, session) => {
+      // Only react to actual auth changes, not routine token refreshes
+      if (event === 'TOKEN_REFRESHED') return
+
       clearCurrentUserProfileCache()
       clearCurrentTenantIdCache()
       if (!session?.access_token) {
