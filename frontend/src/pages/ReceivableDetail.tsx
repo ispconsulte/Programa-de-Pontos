@@ -193,8 +193,8 @@ export default function ReceivableDetailPage() {
                           <InfoField icon={FileText} label="CPF/CNPJ">{cliente.documento || '-'}</InfoField>
                           <InfoField icon={Hash} label="ID IXC">{cliente.ixc_cliente_id}</InfoField>
                           <InfoField icon={Briefcase} label="Contrato IXC">{row.ixc_contrato_id || cliente.ixc_contrato_id || '-'}</InfoField>
+                        </div>
                       </div>
-
                     ) : (
                       <div className="grid gap-3 sm:grid-cols-2">
                         <InfoField icon={Hash} label="ID Cliente IXC">{row.ixc_cliente_id}</InfoField>
