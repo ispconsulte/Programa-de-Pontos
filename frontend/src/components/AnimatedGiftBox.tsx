@@ -54,9 +54,9 @@ export default function AnimatedGiftBox({ size = 96, className = '' }: { size?: 
 
   // Floating reward symbols that pop out
   const rewards = useMemo(() => [
-    { id: 0, emoji: '⭐', angle: -50, dist: 55, delay: 150 },
-    { id: 1, emoji: '🎯', angle: 30, dist: 50, delay: 300 },
-    { id: 2, emoji: '💎', angle: -130, dist: 48, delay: 200 },
+    { id: 0, emoji: '⭐', angle: 40, dist: 55, delay: 150 },
+    { id: 1, emoji: '🎯', angle: 130, dist: 50, delay: 300 },
+    { id: 2, emoji: '💎', angle: 80, dist: 48, delay: 200 },
   ], [])
 
   const s = size
