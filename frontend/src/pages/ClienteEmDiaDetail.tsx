@@ -78,17 +78,6 @@ export default function ClienteEmDiaDetailPage() {
             Adicionar pontos manualmente
           </Button>
           <RegisterRedemptionDialog
-            defaultCustomerId={customer?.ixcClienteId}
-            customers={customer ? [{
-              id: customer.ixcClienteId,
-              name: customer.nomeCliente,
-              availablePoints: customer.pontosDisponiveis,
-            }] : []}
-            gifts={rewards.filter((reward) => reward.ativo).map((reward) => ({
-              id: reward.id,
-              name: reward.nome,
-              requiredPoints: reward.pontosNecessarios,
-            }))}
             trigger={
               <Button variant="outline" className="border-[hsl(var(--border))]">
                 <Gift className="h-3.5 w-3.5" />

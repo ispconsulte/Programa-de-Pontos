@@ -10,13 +10,12 @@ import { Gift, Package, Sparkles, Truck } from 'lucide-react'
 import { supabase } from '@/lib/supabase-client'
 import { getCurrentTenantId } from '@/lib/supabase-queries'
 
-type RedemptionStatus = 'pendente' | 'em_preparo' | 'entregue' | 'cancelado'
+type RedemptionStatus = 'pendente' | 'entregue' | 'cancelado'
 
 const STATUS_TABS: { value: RedemptionStatus | 'all'; label: string }[] = [
   { value: 'all', label: 'Todos' },
-  { value: 'pendente', label: 'Pendente' },
-  { value: 'em_preparo', label: 'Em preparo' },
   { value: 'entregue', label: 'Entregue' },
+  { value: 'pendente', label: 'Pendente' },
 ]
 
 interface RedemptionRow {
@@ -46,6 +45,7 @@ function statusColor(s: string) {
 }
 
 export default function ResgatesPage() {
+  const [reloadKey, setReloadKey] = useState(0)
   const [tab, setTab] = useState<RedemptionStatus | 'all'>('all')
   const [rows, setRows] = useState<RedemptionRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -100,7 +100,7 @@ export default function ResgatesPage() {
     }
     load()
     return () => { mounted = false }
-  }, [])
+  }, [reloadKey])
 
   const filtered = tab === 'all' ? rows : rows.filter((r) => r.status_resgate === tab)
 
@@ -115,6 +115,7 @@ export default function ResgatesPage() {
               <p className="text-xs text-muted-foreground">Acompanhe os resgates dos clientes</p>
             </div>
             <RegisterRedemptionDialog
+              onRedemptionComplete={() => setReloadKey(k => k + 1)}
               trigger={
                 <Button size="sm">
                   <Sparkles className="h-3.5 w-3.5" />

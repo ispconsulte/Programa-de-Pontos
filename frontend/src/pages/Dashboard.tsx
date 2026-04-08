@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import RegisterRedemptionDialog from '@/components/RegisterRedemptionDialog'
 import { useThrottledAction } from '@/hooks/useThrottledAction'
 import { Link } from 'react-router-dom'
 import {
@@ -311,7 +312,28 @@ export default function DashboardPage() {
                 <PointCard label="Disponíveis" value={selectedClient.pontos_disponiveis ?? 0} icon={Coins} variant="primary" />
               </div>
 
-              {/* Info — clean grid */}
+              {/* Quick actions */}
+              {(selectedClient.pontos_disponiveis ?? 0) > 0 && (
+                <div className="flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04] p-4">
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-foreground">
+                      {selectedClient.nome_cliente} tem <span className="text-emerald-400">{(selectedClient.pontos_disponiveis ?? 0).toLocaleString('pt-BR')} pts</span> disponíveis
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Registre um resgate diretamente aqui.</p>
+                  </div>
+                  <RegisterRedemptionDialog
+                    preselectedClient={selectedClient}
+                    onRedemptionComplete={() => void throttledClientRefresh()}
+                    trigger={
+                      <Button className="bg-emerald-600 text-white hover:bg-emerald-500 shrink-0">
+                        <Gift className="h-3.5 w-3.5 mr-1.5" />
+                        Resgatar
+                      </Button>
+                    }
+                  />
+                </div>
+              )}
+
               <Card className="overflow-hidden">
                 <CardHeader className="py-3.5 px-5 border-b border-border">
                   <CardTitle className="text-sm font-bold">Informações</CardTitle>
