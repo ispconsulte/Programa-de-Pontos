@@ -207,12 +207,12 @@ export default function ReceivablesPage() {
   )
 
   const scoreSummary = {
-    fivePoints: visibleReceivables.filter((item) => getPaymentScore(item) === 5).length,
-    fourPoints: visibleReceivables.filter((item) => getPaymentScore(item) === 4).length,
-    twoPoints: visibleReceivables.filter((item) => getPaymentScore(item) === 2).length,
+    fivePoints: visibleReceivables.filter((item) => item.pontos_gerados === 5).length,
+    fourPoints: visibleReceivables.filter((item) => item.pontos_gerados === 4).length,
+    twoPoints: visibleReceivables.filter((item) => item.pontos_gerados === 2).length,
   }
 
-  const totalPoints = visibleReceivables.reduce((sum, item) => sum + getPaymentScore(item), 0)
+  const totalPoints = visibleReceivables.reduce((sum, item) => sum + (item.pontos_gerados ?? 0), 0)
 
   return (
     <ProtectedRoute>
