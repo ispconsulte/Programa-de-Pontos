@@ -118,13 +118,18 @@ function RotatingMessageCard({ mounted }: { mounted: boolean }) {
 
   return (
     <div
-      className="w-[300px]"
+      className="w-[340px]"
       style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(8px)', transition: 'all 700ms ease 850ms' }}
     >
-      <div className="group relative h-[64px] flex items-center justify-center overflow-hidden rounded-2xl border border-foreground/[0.06] bg-[hsl(225_25%_8%_/_0.45)] px-5 backdrop-blur-md transition-all duration-300 hover:border-foreground/[0.1] hover:bg-[hsl(225_25%_9%_/_0.55)] hover:scale-[1.02]">
-        <div className="pointer-events-none absolute -top-px left-[10%] right-[10%] h-px bg-gradient-to-r from-transparent via-primary/15 to-transparent" />
+      <div className="group relative flex h-[56px] items-center justify-center gap-2.5 overflow-hidden rounded-full border border-foreground/[0.06] bg-gradient-to-r from-[hsl(225_25%_8%_/_0.6)] to-[hsl(225_20%_10%_/_0.4)] px-6 backdrop-blur-xl transition-all duration-400 hover:border-primary/15 hover:shadow-[0_0_24px_-4px_hsl(217_91%_60%_/_0.15)]">
+        {/* Animated border shimmer */}
+        <div className="pointer-events-none absolute inset-0 rounded-full opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+          style={{ background: 'conic-gradient(from 0deg, transparent 0%, hsl(217 91% 60% / 0.08) 25%, transparent 50%, hsl(45 90% 55% / 0.06) 75%, transparent 100%)', animation: 'shimmerLine 6s linear infinite' }} />
+        {/* Inner glow */}
+        <div className="pointer-events-none absolute -top-px left-[15%] right-[15%] h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+        <span className="text-[13px]">🏆</span>
         <p
-          className="text-center text-[12px] font-medium leading-relaxed text-foreground/55 transition-opacity duration-500"
+          className="text-center text-[12.5px] font-medium leading-snug text-foreground/60 transition-opacity duration-500"
           style={{ opacity: fade ? 1 : 0 }}
         >
           {motivationalMessages[index]}
@@ -133,6 +138,8 @@ function RotatingMessageCard({ mounted }: { mounted: boolean }) {
     </div>
   )
 }
+
+
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -217,7 +224,7 @@ export default function LoginPage() {
               <img
                 src={logoPrincipal}
                 alt="Bonifica - Plataforma de Recompensas"
-                className="relative w-[200px] object-contain lg:w-[260px]"
+                className="relative w-[280px] object-contain lg:w-[340px] xl:w-[380px]"
                 style={{
                   filter: 'drop-shadow(0 16px 32px hsl(0 0% 0% / 0.35)) drop-shadow(0 0 20px hsl(0 75% 50% / 0.1))',
                   animation: mounted ? 'loginHero3DFloat 6s ease-in-out infinite' : 'none',
