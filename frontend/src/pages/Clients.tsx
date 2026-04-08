@@ -177,7 +177,7 @@ export default function ClientsPage() {
                             <TableHead>Email</TableHead>
                             <TableHead>Telefone</TableHead>
                             <TableHead className="text-right">Pontos</TableHead>
-                            <TableHead>Status</TableHead>
+                            <TableHead className="text-center">Status</TableHead>
                             <TableHead className="text-right" />
                           </TableRow>
                         </TableHeader>
