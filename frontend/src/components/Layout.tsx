@@ -161,7 +161,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState(() => {
     const cachedProfile = getCachedCurrentUserProfile()
     if (!cachedProfile) {
-      return { name: 'Usuário', email: 'Sem e-mail', role: 'operator' }
+      return { name: 'Usuário', email: 'Sem e-mail', role: '' }
     }
     return {
       name: cachedProfile.name,
@@ -170,6 +170,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     }
   })
   const [tenantName, setTenantName] = useState('Empresa')
+  const [profileLoading, setProfileLoading] = useState(() => !getCachedCurrentUserProfile())
   const [headerSearchType, setHeaderSearchType] = useState<DashboardSearchType>('name')
   const [headerSearchValue, setHeaderSearchValue] = useState('')
   const navSections = useMemo(() => {
@@ -196,8 +197,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true
     const apply = async () => {
+      setProfileLoading(true)
       try {
-        const currentUser = await fetchCurrentUserProfile()
+        const currentUser = await fetchCurrentUserProfile({ force: true })
         if (!mounted) return
         setProfile({
           name: currentUser.name,
@@ -218,8 +220,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         setProfile({
           name: String(m.full_name || m.name || m.display_name || user?.email?.split('@')[0] || 'Usuário'),
           email: user?.email || 'Sem e-mail',
-          role: 'operator',
+          role: '',
         })
+      } finally {
+        if (mounted) setProfileLoading(false)
       }
     }
     apply()
@@ -228,11 +232,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       clearCurrentTenantIdCache()
       setTenantName('Empresa')
       if (!session?.user) {
-        setProfile({ name: 'Usuário', email: 'Sem e-mail', role: 'operator' })
+        setProfile({ name: 'Usuário', email: 'Sem e-mail', role: '' })
+        setProfileLoading(false)
         return
       }
-      // Re-fetch real profile (including role from DB)
-      fetchCurrentUserProfile()
+      setProfileLoading(true)
+      fetchCurrentUserProfile({ force: true })
         .then((currentUser) => {
           if (!mounted) return
           setProfile({ name: currentUser.name, email: currentUser.email, role: currentUser.role })
@@ -251,8 +256,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           setProfile({
             name: String(m.full_name || m.name || m.display_name || user?.email?.split('@')[0] || 'Usuário'),
             email: user?.email || 'Sem e-mail',
-            role: 'operator',
+            role: '',
           })
+        })
+        .finally(() => {
+          if (mounted) setProfileLoading(false)
         })
     })
     return () => {
@@ -463,7 +471,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         <p className="truncate text-[13px] font-semibold text-foreground">{profile.name}</p>
                         <p className="truncate text-[11.5px] text-muted-foreground">{profile.email}</p>
                         <span className="mt-1 inline-block rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-primary">
-                          {profile.role === 'admin' ? 'Administrador' : 'Operador'}
+                          {profileLoading ? 'Carregando' : isAdminUiRole(profile.role) ? 'Administrador' : profile.role ? 'Operador' : 'Perfil'}
                         </span>
                       </div>
                     </div>
