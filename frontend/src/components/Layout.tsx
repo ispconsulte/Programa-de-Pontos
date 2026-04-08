@@ -471,7 +471,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         <p className="truncate text-[13px] font-semibold text-foreground">{profile.name}</p>
                         <p className="truncate text-[11.5px] text-muted-foreground">{profile.email}</p>
                         <span className="mt-1 inline-block rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-primary">
-                          {profile.role === 'admin' ? 'Administrador' : 'Operador'}
+                          {profileLoading ? 'Carregando' : isAdminUiRole(profile.role) ? 'Administrador' : profile.role ? 'Operador' : 'Perfil'}
                         </span>
                       </div>
                     </div>
