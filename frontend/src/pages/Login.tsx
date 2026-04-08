@@ -201,7 +201,7 @@ export default function LoginPage() {
       <RewardParticles />
 
       {/* ── Main layout: 40/60 split ── */}
-      <div className="relative z-10 flex w-full flex-col items-center justify-center px-4 py-8 md:flex-row md:items-center md:gap-0 md:px-0 md:py-0">
+      <div className="relative z-10 flex w-full flex-col items-center justify-center px-4 py-8 md:flex-row md:items-center md:justify-center md:gap-0 md:px-0 md:py-0 min-h-[100dvh]">
 
         {/* ── LEFT: Visual / Brand (40%) ── */}
         <div
