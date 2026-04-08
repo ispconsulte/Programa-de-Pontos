@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, Coins, ShieldAlert, Users, Mail, Phone, FileText, Hash, Briefcase, TrendingUp, Gift, CalendarDays, Receipt } from 'lucide-react'
+import { ArrowLeft, Coins, ShieldAlert, Users, Mail, Phone, FileText, Hash, Briefcase, TrendingUp, Gift, CalendarDays, Receipt } from 'lucide-react'
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import PageHeader from '@/components/PageHeader'
