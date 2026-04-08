@@ -327,7 +327,7 @@ export default function LoginPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
                       autoComplete="current-password"
-                      className="h-[50px] rounded-xl border-primary/[0.08] bg-[hsl(225_25%_10%_/_0.5)] px-4 pr-11 text-[14px] transition-all duration-300 placeholder:text-muted-foreground/20 focus-visible:border-primary/25 focus-visible:bg-[hsl(225_25%_11%_/_0.6)] focus-visible:shadow-[0_0_0_3px_hsl(var(--primary)_/_0.1),0_4px_16px_-4px_hsl(var(--primary)_/_0.1)]"
+                      className="h-[50px] rounded-xl border-primary/[0.08] bg-[hsl(225_25%_10%_/_0.5)] px-4 pr-11 text-[14px] transition-all duration-300 placeholder:text-muted-foreground/20 focus-visible:outline-none focus-visible:ring-0 focus-visible:border-primary/25 focus-visible:bg-[hsl(225_25%_11%_/_0.6)] focus-visible:shadow-[0_0_0_3px_hsl(var(--primary)_/_0.1),0_4px_16px_-4px_hsl(var(--primary)_/_0.1)]"
                     />
                     <button
                       type="button"
