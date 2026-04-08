@@ -701,20 +701,11 @@ function KpiCard({ label, value, helper, icon: Icon, gradient, iconClass }: {
   )
 }
 
-function SummaryChip({ icon: Icon, value, label, color }: {
-  icon: React.ElementType; value: string; label: string; color: 'emerald' | 'sky' | 'rose'
-}) {
-  const styles = { emerald: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20', sky: 'bg-sky-500/10 text-sky-500 border-sky-500/20', rose: 'bg-rose-500/10 text-rose-500 border-rose-500/20' }
-  const iconBg = { emerald: 'bg-emerald-500/15 text-emerald-500', sky: 'bg-sky-500/15 text-sky-500', rose: 'bg-rose-500/15 text-rose-500' }
-  return (
-    <div className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${styles[color]}`}>
-      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${iconBg[color]}`}><Icon className="h-3.5 w-3.5" /></div>
-      <div className="min-w-0">
-        <p className="text-xl font-bold">{value}</p>
-        <p className="truncate text-[11px] opacity-70">{label}</p>
-      </div>
-    </div>
-  )
+function RankBadge({ position }: { position: number }) {
+  if (position === 1) return <span className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-500/20 text-xs font-bold text-amber-400">🥇</span>
+  if (position === 2) return <span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-400/20 text-xs font-bold text-slate-300">🥈</span>
+  if (position === 3) return <span className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-700/20 text-xs font-bold text-amber-600">🥉</span>
+  return <span className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">{position}</span>
 }
 
 function PointCard({ label, value, icon: Icon, variant }: { label: string; value: number; icon: React.ElementType; variant: 'emerald' | 'amber' | 'primary' }) {
