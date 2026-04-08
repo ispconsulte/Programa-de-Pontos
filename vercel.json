@@ -34,6 +34,18 @@
   ],
   "rewrites": [
     {
+      "source": "/users/(.*)",
+      "destination": "/api/users/$1"
+    },
+    {
+      "source": "/settings",
+      "destination": "/api/settings"
+    },
+    {
+      "source": "/campaign/(.*)",
+      "destination": "/api/campaign/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
