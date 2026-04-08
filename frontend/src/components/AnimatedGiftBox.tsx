@@ -15,7 +15,7 @@ export default function AnimatedGiftBox({ size = 96, className = '' }: { size?: 
         setPhase('open')
         setCycle(c => c + 1)
       }, 1400)
-      const t3 = setTimeout(() => setPhase('idle'), 4200)
+      const t3 = setTimeout(() => setPhase('idle'), 2600)
       timers.push(t1, t2, t3)
     }
 
