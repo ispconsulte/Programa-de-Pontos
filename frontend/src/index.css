@@ -190,6 +190,16 @@
       stroke 0.35s ease;
   }
 
+  /* Remove all focus outlines / rings globally */
+  *:focus,
+  *:focus-visible,
+  *:focus-within {
+    outline: none !important;
+    box-shadow: none !important;
+    --tw-ring-shadow: 0 0 #0000 !important;
+    --tw-ring-offset-shadow: 0 0 #0000 !important;
+  }
+
   /* Exclude animations/transforms from theme transition to avoid jank */
   [class*="animate-"],
   [class*="transition-transform"],
