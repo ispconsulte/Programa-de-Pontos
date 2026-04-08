@@ -165,7 +165,7 @@ export default function AnimatedGiftBox({ size = 96, className = '' }: { size?: 
             zIndex: 10,
           }}
         >
-          <div className="absolute inset-0 rounded-t-md" style={{ background: 'linear-gradient(180deg, #dc3545 0%, #b52a37 100%)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, #dc3545 0%, #b52a37 100%)' }} />
           <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0" style={{ width: ribbonW, background: '#7bb8d4' }} />
           {/* Bow */}
           <div className="absolute left-1/2 -translate-x-1/2" style={{ top: -ribbonW * 1.2 }}>
