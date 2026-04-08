@@ -458,8 +458,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* ── Main area ── */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {/* Header */}
-        <header className="sticky top-0 z-30 flex h-16 flex-shrink-0 items-center gap-3 border-b border-border bg-surface-1/90 backdrop-blur-xl px-4 lg:px-5">
-          {/* Left: toggle + title */}
+        <header className="sticky top-0 z-30 flex h-14 flex-shrink-0 items-center gap-3 border-b border-border bg-surface-1/90 backdrop-blur-xl px-4 lg:px-5">
+          {/* Left: toggle + page title */}
           <div className="flex items-center gap-2">
             {/* Desktop collapse toggle */}
             <button
@@ -478,57 +478,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <Menu className="h-5 w-5" />
             </button>
 
-            {/* Desktop: user/org name */}
-            <div className="hidden lg:flex items-center gap-3">
-              <div className="flex items-center gap-2 rounded-lg border border-border bg-surface-2 px-3 py-1.5">
-                <Building2 className="h-4 w-4 text-muted-foreground" />
-                <div className="min-w-0">
-                  <p className="truncate text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Escopo</p>
-                  <p className="truncate text-[12.5px] font-medium text-foreground">{tenantName}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-muted-foreground" />
-                <span className="text-[13px] font-medium text-foreground">{profile.name}</span>
-              </div>
-            </div>
-
-            {/* Mobile: page title */}
-            <span className="text-[13px] font-semibold text-foreground lg:hidden">
+            {/* Page title */}
+            <span className="text-sm font-semibold text-foreground">
               {getPageTitle(pathname)}
             </span>
           </div>
 
-          {/* Center: search bar */}
-          <div className="mx-auto hidden max-w-sm flex-1 px-4 lg:block">
-            <div className="flex items-center gap-2">
-              <select
-                value={headerSearchType}
-                onChange={(e) => setHeaderSearchType(e.target.value as DashboardSearchType)}
-                className="h-9 rounded-lg border border-border bg-surface-2 px-2.5 text-[11px] text-foreground outline-none transition-colors focus:border-primary/50"
-              >
-                <option value="name">Nome</option>
-                <option value="cpfCnpj">CPF/CNPJ</option>
-                <option value="id">ID</option>
-              </select>
-              <label className="flex flex-1 items-center gap-2 rounded-lg border border-border bg-surface-2 px-3 py-[7px] transition-colors focus-within:border-primary/50 focus-within:bg-surface-3">
-                <Search className="h-3.5 w-3.5 text-muted-foreground" />
-                <input
-                  value={headerSearchValue}
-                  onChange={(e) => setHeaderSearchValue(e.target.value)}
-                  placeholder="Buscar clientes"
-                  className="w-full bg-transparent text-[12.5px] text-foreground outline-none placeholder:text-muted-foreground"
-                />
-              </label>
-            </div>
-          </div>
-
           {/* Right: actions */}
           <div className="ml-auto flex items-center gap-1">
-            {/* Mobile search */}
-            <button className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground lg:hidden">
-              <Search className="h-4 w-4" />
-            </button>
 
             {/* Notifications removed — not functional */}
 
