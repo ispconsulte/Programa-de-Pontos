@@ -294,11 +294,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       >
         {/* Logo area — compact */}
         <div className={cn(
-          'relative flex flex-shrink-0 items-center justify-center border-b border-sidebar-border transition-all duration-300',
-          collapsed ? 'h-14 px-2' : 'h-20 px-4'
+          'relative flex flex-shrink-0 items-center justify-center border-b border-sidebar-border overflow-visible transition-all duration-300',
+          collapsed ? 'h-14 px-2' : 'h-24 px-4'
         )}>
           <div className={cn(
-            'flex items-center justify-center transition-all duration-300',
+            'flex items-center justify-center transition-all duration-300 mt-3',
             collapsed ? 'h-9 w-9' : 'h-16 w-16'
           )}>
             <AnimatedGiftBox size={collapsed ? 32 : 64} />
