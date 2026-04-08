@@ -1,6 +1,6 @@
 import { useState, FormEvent, useEffect, useMemo } from 'react'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
-import { Eye, EyeOff, AlertCircle, CheckCircle, ArrowRight, Trophy, Medal, Crown } from 'lucide-react'
+import { Eye, EyeOff, AlertCircle, CheckCircle, ArrowRight, Sparkles } from 'lucide-react'
 import { supabase } from '@/lib/supabase-client'
 import Spinner from '@/components/Spinner'
 import { Input } from '@/components/ui/input'
@@ -47,12 +47,50 @@ function RewardParticles() {
   )
 }
 
-/* ── Tier data ── */
-const tiers = [
-  { name: 'Bronze', icon: Medal, color: 'hsl(30 70% 50%)', bg: 'hsl(30 70% 50% / 0.08)', border: 'hsl(30 70% 50% / 0.2)', desc: 'Início da jornada' },
-  { name: 'Prata', icon: Trophy, color: 'hsl(220 20% 72%)', bg: 'hsl(220 20% 72% / 0.08)', border: 'hsl(220 20% 72% / 0.2)', desc: 'Cliente fiel' },
-  { name: 'Ouro', icon: Crown, color: 'hsl(45 95% 55%)', bg: 'hsl(45 95% 55% / 0.08)', border: 'hsl(45 95% 55% / 0.2)', desc: 'Recompensa máxima' },
+/* ── Rotating motivational messages ── */
+const motivationalMessages = [
+  '💰 Manter suas contas em dia gera recompensas!',
+  '🎁 Seja um bom pagador e desfrute de benefícios constantes!',
+  '⭐ Pontue a cada pagamento e troque por prêmios incríveis!',
+  '🚀 Quanto antes você pagar, mais pontos você ganha!',
+  '🏆 Clientes fiéis são sempre recompensados!',
 ]
+
+function RotatingMessageCard({ mounted }: { mounted: boolean }) {
+  const [index, setIndex] = useState(0)
+  const [fade, setFade] = useState(true)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFade(false)
+      setTimeout(() => {
+        setIndex((prev) => (prev + 1) % motivationalMessages.length)
+        setFade(true)
+      }, 400)
+    }, 4000)
+    return () => clearInterval(interval)
+  }, [])
+
+  return (
+    <div
+      className="w-full max-w-[380px]"
+      style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(8px)', transition: 'all 700ms ease 550ms' }}
+    >
+      <div className="relative overflow-hidden rounded-xl border border-primary/10 bg-primary/[0.04] px-5 py-4 backdrop-blur-sm">
+        <div className="pointer-events-none absolute -top-px left-[15%] right-[15%] h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+        <div className="flex items-center gap-3">
+          <Sparkles className="h-4 w-4 flex-shrink-0 text-primary/60" />
+          <p
+            className="text-[13px] font-medium leading-relaxed text-foreground/70 transition-opacity duration-400"
+            style={{ opacity: fade ? 1 : 0 }}
+          >
+            {motivationalMessages[index]}
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -157,30 +195,7 @@ export default function LoginPage() {
             Sua plataforma completa de fidelização, pontuação e recompensas.
           </p>
 
-          {/* Tier cards */}
-          <div
-            className="flex flex-wrap items-center justify-center gap-3 md:gap-4"
-            style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(8px)', transition: 'all 700ms ease 550ms' }}
-          >
-            {tiers.map((tier) => {
-              const Icon = tier.icon
-              return (
-                <div
-                  key={tier.name}
-                  className="flex items-center gap-2.5 rounded-xl border px-3.5 py-2.5 backdrop-blur-sm transition-all duration-300 hover:scale-[1.04]"
-                  style={{ borderColor: tier.border, background: tier.bg }}
-                >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: `${tier.color.replace(')', ' / 0.15)')}` }}>
-                    <Icon className="h-4 w-4" style={{ color: tier.color }} />
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-bold uppercase tracking-[0.08em]" style={{ color: tier.color }}>{tier.name}</p>
-                    <p className="text-[10px] text-muted-foreground/40">{tier.desc}</p>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+          <RotatingMessageCard mounted={mounted} />
         </div>
 
         {/* ── RIGHT: Login Form ── */}
