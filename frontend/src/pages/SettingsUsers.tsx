@@ -199,12 +199,12 @@ export default function SettingsUsersPage() {
   const isAdmin = isAdminUiRole(currentUser?.role)
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute allowRoles={['admin']}>
       <Layout>
         <PageHeader
           icon={UserCog}
           title="Usuários"
-          subtitle="Administre administradores e operadores do tenant com segurança e rastreabilidade."
+          subtitle="Administre administradores e operadores da empresa com segurança e rastreabilidade."
           actions={isAdmin ? (
             <Button onClick={openCreateDialog}>
               <UserPlus className="h-4 w-4" />
@@ -273,9 +273,9 @@ export default function SettingsUsersPage() {
 
                   <Card>
                     <CardHeader>
-                      <CardTitle>Equipe do tenant</CardTitle>
+                      <CardTitle>Equipe da empresa</CardTitle>
                       <CardDescription>
-                        Crie acessos, ajuste papéis, revogue sessões e retire usuários da operação quando necessário.
+                        Crie acessos, ajuste papéis, revogue sessões e mantenha o escopo operacional separado da administração.
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="p-0 sm:p-6">

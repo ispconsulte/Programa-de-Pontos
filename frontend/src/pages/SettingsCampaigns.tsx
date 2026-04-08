@@ -78,20 +78,20 @@ export default function SettingsCampaignsPage() {
   }
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute allowRoles={['admin']}>
       <Layout>
         <PageHeader
           icon={Settings2}
           title="Campanhas"
-          subtitle="Defina as regras de pontuação que serão aplicadas na sincronização"
+          subtitle="Defina as regras e a lógica de pontos válidas para a empresa atual."
         />
 
         <div className="space-y-6">
           <div>
             <Button asChild variant="ghost" size="sm" className="gap-2">
-              <Link to="/settings">
+              <Link to="/admin/empresa">
                 <ArrowLeft className="h-4 w-4" />
-                Voltar para Configurações
+                Voltar para Administração
               </Link>
             </Button>
           </div>

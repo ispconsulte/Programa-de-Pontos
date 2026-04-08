@@ -5,15 +5,22 @@ import {
   clearCurrentUserProfileCache,
   fetchCurrentUserProfile,
   getCachedCurrentUserProfile,
+  isAdminUiRole,
 } from '@/lib/user-management'
 import { clearCurrentTenantIdCache } from '@/lib/supabase-queries'
 import Spinner from './Spinner'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
+  allowRoles?: Array<'admin' | 'operator'>
+  redirectTo?: string
 }
 
-export default function ProtectedRoute({ children }: ProtectedRouteProps) {
+export default function ProtectedRoute({
+  children,
+  allowRoles,
+  redirectTo = '/operacao',
+}: ProtectedRouteProps) {
   const navigate = useNavigate()
   const [checking, setChecking] = useState(() => !getCachedCurrentUserProfile())
 
@@ -32,7 +39,13 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       }
 
       try {
-        await fetchCurrentUserProfile()
+        const profile = await fetchCurrentUserProfile()
+        const normalizedRole: 'admin' | 'operator' = isAdminUiRole(profile.role) ? 'admin' : 'operator'
+
+        if (allowRoles?.length && !allowRoles.includes(normalizedRole)) {
+          navigate(redirectTo, { replace: true })
+          return
+        }
       } catch (profileError) {
         const message = profileError instanceof Error ? profileError.message.toLowerCase() : ''
         if (message.includes('unauthorized') || message.includes('session revoked') || message.includes('user disabled') || message.includes('forbidden')) {

@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import {
+  Building2,
   Camera,
   ChevronDown,
   ChevronsLeft,
@@ -27,7 +28,7 @@ import {
   getCachedCurrentUserProfile,
   isAdminUiRole,
 } from '@/lib/user-management'
-import { clearCurrentTenantIdCache } from '@/lib/supabase-queries'
+import { clearCurrentTenantIdCache, fetchTenantSettings, getCurrentTenantId } from '@/lib/supabase-queries'
 
 export type DashboardSearchType = 'name' | 'cpfCnpj' | 'id'
 export const DASHBOARD_CLIENT_SEARCH_EVENT = 'dashboard:client-search'
@@ -47,49 +48,42 @@ interface NavSection {
 
 const baseNavSections: NavSection[] = [
   {
-    label: 'DASHBOARD',
-    items: [{ href: '/dashboard', label: 'Dashboard', icon: Home }],
-  },
-  {
-    label: 'GESTÃO',
+    label: 'OPERAÇÃO',
     items: [
+      { href: '/operacao', label: 'Operação', icon: Home },
       { href: '/clients', label: 'Clientes', icon: Users },
-      { href: '/receivables', label: 'Pontuação', icon: Coins },
-      {
-        href: '/cliente-em-dia',
-        label: 'Cliente em Dia',
-        icon: Gift,
-        children: [
-          { href: '/cliente-em-dia', label: 'Visão Geral' },
-          { href: '/cliente-em-dia/resgates', label: 'Resgates' },
-        ],
-      },
+      { href: '/resgates', label: 'Resgates', icon: Coins },
+      { href: '/catalogo', label: 'Catálogo', icon: Gift },
     ],
   },
+]
+
+const adminNavSections: NavSection[] = [
+  ...baseNavSections,
   {
-    label: 'CONFIGURAÇÕES',
+    label: 'ADMINISTRAÇÃO',
     items: [{
-      href: '/settings',
-        label: 'Configurações',
-        icon: Settings,
-        children: [
-          { href: '/settings', label: 'Integrações' },
-          { href: '/settings/campaigns', label: 'Campanhas' },
-          { href: '/settings/users', label: 'Usuários' },
-        ],
-      }],
+      href: '/admin/empresa',
+      label: 'Administração',
+      icon: Settings,
+      children: [
+        { href: '/admin/empresa', label: 'Empresa e integrações' },
+        { href: '/admin/campanhas', label: 'Campanhas' },
+        { href: '/admin/usuarios', label: 'Usuários' },
+      ],
+    }],
   },
 ]
 
 const pageTitles: Record<string, string> = {
-  '/dashboard': 'Dashboard',
+  '/operacao': 'Operação',
   '/clients': 'Clientes',
-  '/cliente-em-dia': 'Cliente em Dia',
-  '/cliente-em-dia/resgates': 'Resgates',
+  '/resgates': 'Resgates',
+  '/catalogo': 'Catálogo',
   '/receivables': 'Pontuação',
-  '/settings': 'Configurações',
-  '/settings/campaigns': 'Campanhas',
-  '/settings/users': 'Usuários',
+  '/admin/empresa': 'Empresa e Integrações',
+  '/admin/campanhas': 'Campanhas',
+  '/admin/usuarios': 'Usuários',
 }
 
 function getPageTitle(pathname: string): string {
@@ -255,18 +249,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       role: cachedProfile.role,
     }
   })
+  const [tenantName, setTenantName] = useState('Empresa')
   const [headerSearchType, setHeaderSearchType] = useState<DashboardSearchType>('name')
   const [headerSearchValue, setHeaderSearchValue] = useState('')
   const navSections = useMemo(() => {
-    if (isAdminUiRole(profile.role)) return baseNavSections
-
-    return baseNavSections.map((section) => ({
-      ...section,
-      items: section.items.map((item) => ({
-        ...item,
-        children: item.children?.filter((child) => child.href !== '/settings/users'),
-      })),
-    }))
+    return isAdminUiRole(profile.role) ? adminNavSections : baseNavSections
   }, [profile.role])
 
   const toggleCollapse = () => {
@@ -297,6 +284,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           email: currentUser.email,
           role: currentUser.role,
         })
+
+        const tenantId = await getCurrentTenantId()
+        if (!mounted || !tenantId) return
+        const tenant = await fetchTenantSettings(tenantId)
+        if (!mounted || !tenant?.name) return
+        setTenantName(tenant.name)
       } catch {
         const { data } = await supabase.auth.getSession()
         if (!mounted) return
@@ -313,6 +306,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       clearCurrentUserProfileCache()
       clearCurrentTenantIdCache()
+      setTenantName('Empresa')
       const user = session?.user
       const m = user?.user_metadata ?? {}
       setProfile({
@@ -398,6 +392,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <AnimatedGiftBox size={collapsed ? 40 : 110} />
           </div>
 
+          {!collapsed && (
+            <div className="absolute bottom-3 left-4 right-4 rounded-xl border border-sidebar-border bg-sidebar-accent/40 px-3 py-2">
+              <p className="truncate text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Empresa ativa</p>
+              <p className="mt-1 truncate text-sm font-medium text-foreground">{tenantName}</p>
+            </div>
+          )}
+
           {/* Mobile close */}
           <button
             onClick={() => setMobileOpen(false)}
@@ -480,9 +481,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </button>
 
             {/* Desktop: user/org name */}
-            <div className="hidden lg:flex items-center gap-2">
-              <User className="h-4 w-4 text-muted-foreground" />
-              <span className="text-[13px] font-medium text-foreground">{profile.name}</span>
+            <div className="hidden lg:flex items-center gap-3">
+              <div className="flex items-center gap-2 rounded-lg border border-border bg-surface-2 px-3 py-1.5">
+                <Building2 className="h-4 w-4 text-muted-foreground" />
+                <div className="min-w-0">
+                  <p className="truncate text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Escopo</p>
+                  <p className="truncate text-[12.5px] font-medium text-foreground">{tenantName}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4 text-muted-foreground" />
+                <span className="text-[13px] font-medium text-foreground">{profile.name}</span>
+              </div>
             </div>
 
             {/* Mobile: page title */}
@@ -576,12 +586,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       Alterar foto
                     </button>
                     <Link
-                      to="/settings"
+                      to={isAdminUiRole(profile.role) ? '/admin/empresa' : '/operacao'}
                       onClick={() => setUserMenuOpen(false)}
                       className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
                     >
                       <Settings className="h-4 w-4" />
-                      Configurações
+                      {isAdminUiRole(profile.role) ? 'Administração' : 'Operação'}
                     </Link>
                   </div>
                   <div className="border-t border-border p-1.5">

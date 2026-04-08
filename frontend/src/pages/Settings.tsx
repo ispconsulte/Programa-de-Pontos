@@ -106,9 +106,9 @@ export default function SettingsPage() {
   }
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute allowRoles={['admin']}>
       <Layout>
-        <PageHeader icon={Settings} title="Ajustes" subtitle="Configurações e integrações" />
+        <PageHeader icon={Settings} title="Empresa e integrações" subtitle="Área administrativa da empresa, integrações e escopo operacional." />
 
         <div className="space-y-6">
           {loading ? (
@@ -116,7 +116,7 @@ export default function SettingsPage() {
           ) : (
             <div className="grid gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
               <div className="space-y-3">
-                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground px-1">Integrações</p>
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground px-1">Administração</p>
                 <div className="rounded-xl border border-primary/20 bg-primary/[0.05] p-4 transition-all duration-200">
                   <div className="flex items-center gap-3">
                     <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
@@ -135,14 +135,23 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <Button asChild variant="outline" className="w-full justify-start">
-                  <Link to="/settings/campaigns">Campanhas e regras de pontos</Link>
+                  <Link to="/admin/campanhas">Campanhas e regras de pontos</Link>
                 </Button>
                 <Button asChild variant="outline" className="w-full justify-start">
-                  <Link to="/settings/users">Usuários e permissões</Link>
+                  <Link to="/admin/usuarios">Usuários e permissões</Link>
                 </Button>
               </div>
 
               <div className="space-y-5">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Escopo da empresa</CardTitle>
+                    <CardDescription>
+                      Tudo que é configurado aqui afeta somente a empresa atual e define o que operadores e clientes dessa base podem acessar.
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+
                 <Card>
                   <CardHeader>
                     <div className="flex items-center gap-3">

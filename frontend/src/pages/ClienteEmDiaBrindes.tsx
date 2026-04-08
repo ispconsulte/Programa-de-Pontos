@@ -1,5 +1,6 @@
 import PageHeader from '@/components/PageHeader'
 import Layout from '@/components/Layout'
+import ProtectedRoute from '@/components/ProtectedRoute'
 import EmptyState from '@/components/EmptyState'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -16,7 +17,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useClienteEmDia } from '@/hooks/useClienteEmDia'
 import { Gift, Plus } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { fetchCurrentUserProfile, isAdminUiRole } from '@/lib/user-management'
 
 type CatalogFormState = {
   name: string
@@ -84,15 +86,23 @@ function GiftCatalogDialog({ trigger }: { trigger: React.ReactNode }) {
 
 export default function ClienteEmDiaBrindesPage() {
   const { loading, error, rewards } = useClienteEmDia({ rewardsOnly: true })
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  useEffect(() => {
+    void fetchCurrentUserProfile()
+      .then((profile) => setIsAdmin(isAdminUiRole(profile.role)))
+      .catch(() => setIsAdmin(false))
+  }, [])
 
   return (
-    <Layout>
-      <div className="space-y-6">
+    <ProtectedRoute>
+      <Layout>
+        <div className="space-y-6">
         <PageHeader
           icon={Gift}
-          title="Catálogo de Brindes"
-          subtitle="Gerencie o portfólio de recompensas da campanha Cliente em Dia com uma visão clara de pontos e disponibilidade."
-          actions={
+          title="Catálogo"
+          subtitle="Recompensas disponíveis para consulta operacional e gestão administrativa da empresa."
+          actions={isAdmin ? (
             <GiftCatalogDialog
               trigger={
                 <Button className="bg-emerald-600 text-white hover:bg-emerald-500">
@@ -101,7 +111,7 @@ export default function ClienteEmDiaBrindesPage() {
                 </Button>
               }
             />
-          }
+          ) : undefined}
         />
 
         <Card className="overflow-hidden border-emerald-500/10 bg-[linear-gradient(135deg,rgba(16,185,129,0.12),rgba(8,10,15,0)_46%),hsl(var(--surface-1))]">
@@ -163,7 +173,8 @@ export default function ClienteEmDiaBrindesPage() {
             )}
           </CardContent>
         </Card>
-      </div>
-    </Layout>
+        </div>
+      </Layout>
+    </ProtectedRoute>
   )
 }

@@ -1,4 +1,5 @@
 import Layout from '@/components/Layout'
+import ProtectedRoute from '@/components/ProtectedRoute'
 import PageHeader from '@/components/PageHeader'
 import RegisterRedemptionDialog from '@/components/RegisterRedemptionDialog'
 import EmptyState from '@/components/EmptyState'
@@ -65,12 +66,13 @@ const allStatuses: RedemptionStatus[] = ['elegivel', 'solicitado', 'preparo', 'e
 
 export default function ResgatesPage() {
   return (
-    <Layout>
-      <div className="space-y-6">
+    <ProtectedRoute>
+      <Layout>
+        <div className="space-y-6">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Link to="/cliente-em-dia" className="inline-flex items-center gap-1 transition-colors hover:text-foreground">
+          <Link to="/operacao" className="inline-flex items-center gap-1 transition-colors hover:text-foreground">
             <ArrowLeft className="h-3.5 w-3.5" />
-            Cliente em Dia
+            Operação
           </Link>
           <ChevronRight className="h-3 w-3" />
           <span className="text-foreground">Resgates</span>
@@ -78,8 +80,8 @@ export default function ResgatesPage() {
 
         <PageHeader
           icon={Gift}
-          title="Pipeline de Resgates"
-          subtitle="Painel operacional para acompanhar elegibilidade, solicitacoes, preparacao, entrega e encerramento do ciclo da campanha."
+          title="Resgates"
+          subtitle="Fluxo operacional para acompanhar pedidos, separação, entrega e conclusão dos resgates."
           actions={
             <>
               <Button variant="outline" size="sm" className="border-emerald-500/20 bg-emerald-500/[0.04] text-emerald-200 hover:bg-emerald-500/[0.08] hover:text-foreground">
@@ -132,7 +134,8 @@ export default function ResgatesPage() {
             )
           })}
         </div>
-      </div>
-    </Layout>
+        </div>
+      </Layout>
+    </ProtectedRoute>
   )
 }

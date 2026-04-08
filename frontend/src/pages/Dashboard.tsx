@@ -3,9 +3,15 @@ import { useThrottledAction } from '@/hooks/useThrottledAction'
 import { Link } from 'react-router-dom'
 import {
   ArrowRight,
+  Building2,
   Coins,
+  Gift,
   LayoutDashboard,
   RefreshCw,
+  Settings2,
+  ShoppingBag,
+  Ticket,
+  Users,
   Wallet,
   Zap,
   Clock,
@@ -26,6 +32,8 @@ import {
   getCurrentTenantId,
   type DashboardHistoryRow,
 } from '@/lib/supabase-queries'
+import { fetchCurrentUserProfile, isAdminUiRole } from '@/lib/user-management'
+import { useClienteEmDia } from '@/hooks/useClienteEmDia'
 
 type Classification = 'antecipado' | 'vencimento' | 'atraso' | 'indefinido'
 
@@ -142,6 +150,8 @@ export default function DashboardPage() {
   })
   const [searchType, setSearchType] = useState<HeaderSearchType>('name')
   const [searchQuery, setSearchQuery] = useState('')
+  const [isAdmin, setIsAdmin] = useState(false)
+  const { rewards, overview } = useClienteEmDia()
 
   const period = useMemo(() => monthDateRange(), [])
 
@@ -219,13 +229,19 @@ export default function DashboardPage() {
     void fetchData()
   }, [fetchData])
 
+  useEffect(() => {
+    void fetchCurrentUserProfile()
+      .then((profile) => setIsAdmin(isAdminUiRole(profile.role)))
+      .catch(() => setIsAdmin(false))
+  }, [])
+
   return (
     <ProtectedRoute>
       <Layout>
         <PageHeader
           icon={LayoutDashboard}
-          title="Painel"
-          subtitle="Visão geral da pontuação"
+          title="Operação"
+          subtitle="Acesso rápido para clientes, catálogo, resgates e histórico da empresa atual."
           actions={
             <Button variant="outline" size="sm" disabled={refreshBusy} onClick={() => void throttledFetch()}>
               <RefreshCw className={`h-3.5 w-3.5 transition-transform ${refreshBusy ? 'animate-spin' : ''}`} />
@@ -235,6 +251,67 @@ export default function DashboardPage() {
         />
 
         <div className="page-stack">
+          <section className="grid gap-4 lg:grid-cols-[1.35fr_0.65fr]">
+            <div className="rounded-xl border border-[hsl(var(--border))] bg-[linear-gradient(135deg,hsl(var(--success)/0.08),transparent_55%),hsl(var(--surface-1))] p-5 lg:p-6">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[hsl(var(--success))]">Fluxo diário</p>
+              <h2 className="mt-3 text-2xl font-bold tracking-tight text-foreground">Tudo o que a operação mais usa, sem entrar em telas administrativas.</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                Consulte clientes, acompanhe pontos, veja o catálogo disponível e processe resgates em menos cliques.
+              </p>
+              <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <Button asChild variant="outline" className="justify-between">
+                  <Link to="/clients">
+                    Clientes
+                    <Users className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="justify-between">
+                  <Link to="/catalogo">
+                    Catálogo
+                    <Gift className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="justify-between">
+                  <Link to="/resgates">
+                    Resgates
+                    <Ticket className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="justify-between">
+                  <Link to="/receivables">
+                    Histórico
+                    <ShoppingBag className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-5">
+              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <Building2 className="h-4 w-4 text-primary" />
+                Escopo da empresa
+              </div>
+              <div className="mt-4 space-y-3">
+                <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3">
+                  <p className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">Clientes visíveis</p>
+                  <p className="mt-1 text-lg font-semibold text-foreground">{overview.length.toLocaleString('pt-BR')}</p>
+                </div>
+                <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3">
+                  <p className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">Recompensas disponíveis</p>
+                  <p className="mt-1 text-lg font-semibold text-foreground">{rewards.filter((reward) => reward.ativo).length.toLocaleString('pt-BR')}</p>
+                </div>
+                {isAdmin && (
+                  <Button asChild className="w-full">
+                    <Link to="/admin/empresa">
+                      Administração da empresa
+                      <Settings2 className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                )}
+              </div>
+            </div>
+          </section>
+
           <div className="grid gap-4 sm:grid-cols-3 [&>*]:h-full">
             <StatCard
               label="Pontuação geral acumulada"
