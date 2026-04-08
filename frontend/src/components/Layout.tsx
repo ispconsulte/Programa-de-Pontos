@@ -531,13 +531,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <Search className="h-4 w-4" />
             </button>
 
-            {/* Notifications */}
-            <button className="relative flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground">
-              <Bell className="h-4 w-4" />
-              <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
-                4
-              </span>
-            </button>
+            {/* Notifications removed — not functional */}
 
             {/* Theme toggle */}
             <button
