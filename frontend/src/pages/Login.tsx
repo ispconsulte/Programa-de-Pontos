@@ -1,6 +1,6 @@
 import { useState, FormEvent, useEffect, useMemo } from 'react'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
-import { Eye, EyeOff, AlertCircle, CheckCircle, ArrowRight, Trophy, TrendingUp, Gift } from 'lucide-react'
+import { Eye, EyeOff, AlertCircle, CheckCircle, ArrowRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase-client'
 import Spinner from '@/components/Spinner'
 import { Input } from '@/components/ui/input'
@@ -100,37 +100,6 @@ const motivationalMessages = [
   '🏆 Clientes fiéis são sempre recompensados!',
 ]
 
-/* ── Reward info card ── */
-const rewardCards = [
-  { icon: Trophy, label: 'Pontuação', desc: 'Ganhe pontos a cada pagamento em dia', accent: 'hsl(45 90% 55%)' },
-  { icon: TrendingUp, label: 'Fidelidade', desc: 'Suba de nível e desbloqueie vantagens', accent: 'hsl(217 91% 60%)' },
-  { icon: Gift, label: 'Recompensas', desc: 'Troque seus pontos por prêmios reais', accent: 'hsl(160 60% 45%)' },
-]
-
-function RewardInfoCard({ icon: Icon, label, desc, accent, delay, mounted }: {
-  icon: typeof Trophy; label: string; desc: string; accent: string; delay: number; mounted: boolean
-}) {
-  return (
-    <div
-      className="group relative flex h-[88px] w-[300px] items-center gap-4 overflow-hidden rounded-2xl border border-foreground/[0.06] bg-[hsl(225_25%_8%_/_0.45)] px-5 backdrop-blur-md transition-all duration-300 hover:border-foreground/[0.1] hover:bg-[hsl(225_25%_9%_/_0.55)] hover:scale-[1.02] hover:shadow-[0_12px_40px_-12px_rgba(0,0,0,0.4)]"
-      style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(10px)', transition: `all 600ms ease ${delay}ms` }}
-    >
-      {/* Top glow line */}
-      <div className="pointer-events-none absolute -top-px left-[15%] right-[15%] h-px bg-gradient-to-r from-transparent to-transparent opacity-60 transition-opacity duration-300 group-hover:opacity-100"
-        style={{ backgroundImage: `linear-gradient(to right, transparent, ${accent.replace(')', ' / 0.25)')}, transparent)` }} />
-      {/* Icon */}
-      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110"
-        style={{ background: `linear-gradient(135deg, ${accent.replace(')', ' / 0.15)')}, ${accent.replace(')', ' / 0.05)')})` }}>
-        <Icon className="h-[18px] w-[18px]" style={{ color: accent }} />
-      </div>
-      {/* Text */}
-      <div className="min-w-0">
-        <p className="text-[13px] font-semibold text-foreground/80">{label}</p>
-        <p className="mt-0.5 text-[11.5px] leading-snug text-muted-foreground/50">{desc}</p>
-      </div>
-    </div>
-  )
-}
 
 function RotatingMessageCard({ mounted }: { mounted: boolean }) {
   const [index, setIndex] = useState(0)
@@ -258,13 +227,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Reward info cards */}
-          <div className="flex flex-col items-center gap-3">
-            {rewardCards.map((card, i) => (
-              <RewardInfoCard key={card.label} {...card} delay={450 + i * 120} mounted={mounted} />
-            ))}
-            <RotatingMessageCard mounted={mounted} />
-          </div>
+          <RotatingMessageCard mounted={mounted} />
         </div>
 
         {/* ── RIGHT: Login Form (60%) ── */}
