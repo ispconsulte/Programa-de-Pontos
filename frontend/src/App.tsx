@@ -40,7 +40,7 @@ function App() {
           <Route path="/portal/meus-pontos" element={<PortalPointsPage />} />
           <Route path="/operacao" element={<DashboardPage />} />
           <Route path="/dashboard" element={<Navigate to="/operacao" replace />} />
-          <Route path="/clients" element={<ClientsPage />} />
+          <Route path="/clients" element={<Navigate to="/operacao" replace />} />
           <Route path="/clients/:id" element={<ClientDetailPage />} />
           <Route path="/catalogo" element={<ClienteEmDiaBrindesPage />} />
           <Route path="/cliente-em-dia" element={<Navigate to="/operacao" replace />} />

@@ -69,7 +69,6 @@ const adminNavSections: NavSection[] = [
 
 const pageTitles: Record<string, string> = {
   '/operacao': 'Operação',
-  '/clients': 'Clientes',
   '/resgates': 'Resgates',
   '/catalogo': 'Catálogo',
   '/receivables': 'Pontuação',
