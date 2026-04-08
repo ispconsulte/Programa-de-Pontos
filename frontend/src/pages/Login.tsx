@@ -1,6 +1,6 @@
 import { useState, FormEvent, useEffect, useMemo } from 'react'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
-import { Eye, EyeOff, AlertCircle, CheckCircle, ArrowRight, Sparkles } from 'lucide-react'
+import { Eye, EyeOff, AlertCircle, CheckCircle, ArrowRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase-client'
 import Spinner from '@/components/Spinner'
 import { Input } from '@/components/ui/input'
@@ -76,17 +76,15 @@ function RotatingMessageCard({ mounted }: { mounted: boolean }) {
       className="w-full max-w-[380px]"
       style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(8px)', transition: 'all 700ms ease 550ms' }}
     >
-      <div className="relative overflow-hidden rounded-xl border border-primary/10 bg-primary/[0.04] px-5 py-4 backdrop-blur-sm">
-        <div className="pointer-events-none absolute -top-px left-[15%] right-[15%] h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
-        <div className="flex items-center gap-3">
-          <Sparkles className="h-4 w-4 flex-shrink-0 text-primary/60" />
-          <p
-            className="text-[13px] font-medium leading-relaxed text-foreground/70 transition-opacity duration-400"
-            style={{ opacity: fade ? 1 : 0 }}
-          >
-            {motivationalMessages[index]}
-          </p>
-        </div>
+      <div className="relative overflow-hidden rounded-2xl border border-foreground/[0.06] bg-[hsl(225_25%_8%_/_0.5)] px-6 py-4 backdrop-blur-md shadow-[0_8px_32px_-8px_rgba(0,0,0,0.3)]">
+        <div className="pointer-events-none absolute -top-px left-[10%] right-[10%] h-px bg-gradient-to-r from-transparent via-primary/15 to-transparent" />
+        <div className="pointer-events-none absolute -bottom-px left-[20%] right-[20%] h-px bg-gradient-to-r from-transparent via-[hsl(45_90%_55%_/_0.1)] to-transparent" />
+        <p
+          className="text-center text-[13px] font-medium leading-relaxed text-foreground/60 transition-opacity duration-500"
+          style={{ opacity: fade ? 1 : 0 }}
+        >
+          {motivationalMessages[index]}
+        </p>
       </div>
     </div>
   )
