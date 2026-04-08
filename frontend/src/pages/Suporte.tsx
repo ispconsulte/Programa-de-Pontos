@@ -304,11 +304,8 @@ export default function SuportePage() {
                   >
                     {/* Gradient accent */}
                     <div className={cn('absolute inset-0 rounded-xl bg-gradient-to-br opacity-0 transition-opacity group-hover:opacity-100', section.gradient)} />
-                    <div className="relative flex flex-col items-center gap-1">
-                      <span className="text-2xl">{section.emoji}</span>
-                      <div className={cn('flex h-9 w-9 items-center justify-center rounded-lg bg-muted/50', section.color)}>
-                        <Icon className="h-4 w-4" />
-                      </div>
+                    <div className="relative">
+                      <span className="text-3xl">{section.emoji}</span>
                     </div>
                     <div className="relative min-w-0 flex-1">
                       <div className="flex items-center gap-2">
