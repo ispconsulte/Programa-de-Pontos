@@ -377,7 +377,7 @@ export default function ReceivablesPage() {
                             <span className="font-semibold text-emerald-400">{formatBRL(item.valor_recebido)}</span>
                           </div>
                           <div className="mt-2 flex items-center justify-between">
-                            <span className="text-xs text-muted-foreground">{getPaymentBehaviorLabel(item)}</span>
+                            <span className="text-xs text-muted-foreground">{getBehaviorLabelFromPoints(item.pontos_gerados)}</span>
                             {statusBadge(item.status)}
                           </div>
                         </Link>
