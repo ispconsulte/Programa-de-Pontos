@@ -4,15 +4,20 @@ import type { Database } from '@/integrations/supabase/types'
 declare const __PUBLIC_SUPABASE_URL__: string
 declare const __PUBLIC_SUPABASE_ANON_KEY__: string
 
+const FALLBACK_SUPABASE_URL = 'https://bdbzxreipglgrybdowyp.supabase.co'
+const FALLBACK_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJkYnp4cmVpcGdsZ3J5YmRvd3lwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzODAwMjIsImV4cCI6MjA4OTk1NjAyMn0.uzEqq2iuVvfVedDb0yV5uimNdUtH9gDzpN2zWoJIo24'
+
 const supabaseUrl = (
-  import.meta.env.VITE_SUPABASE_URL ??
-  __PUBLIC_SUPABASE_URL__
+  import.meta.env.VITE_SUPABASE_URL ||
+  __PUBLIC_SUPABASE_URL__ ||
+  FALLBACK_SUPABASE_URL
 ) as string | undefined
 
 const supabaseAnonKey = (
-  import.meta.env.VITE_SUPABASE_ANON_KEY ??
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
-  __PUBLIC_SUPABASE_ANON_KEY__
+  import.meta.env.VITE_SUPABASE_ANON_KEY ||
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  __PUBLIC_SUPABASE_ANON_KEY__ ||
+  FALLBACK_SUPABASE_ANON_KEY
 ) as string | undefined
 
 export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey)
