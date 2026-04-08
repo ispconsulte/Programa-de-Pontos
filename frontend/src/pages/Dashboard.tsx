@@ -5,10 +5,8 @@ import {
   ArrowLeft,
   ArrowRight,
   Briefcase,
-  CalendarCheck,
   ChevronDown,
   ChevronUp,
-  Clock,
   Coins,
   FileText,
   Gift,
@@ -22,7 +20,7 @@ import {
   Wallet,
   Zap,
 } from 'lucide-react'
-import Layout, { DASHBOARD_CLIENT_SEARCH_EVENT, type DashboardSearchType as HeaderSearchType } from '@/components/Layout'
+import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import AlertBanner from '@/components/AlertBanner'
 import Spinner from '@/components/Spinner'
