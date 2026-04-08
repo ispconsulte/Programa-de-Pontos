@@ -95,6 +95,26 @@ function getPageTitle(pathname: string): string {
   return 'Painel'
 }
 
+function resolveFallbackRole(user: any): string {
+  const appRole = String(user?.app_metadata?.role ?? '').trim()
+  if (appRole) return appRole
+
+  const metadataRole = String(user?.user_metadata?.role ?? '').trim()
+  if (metadataRole) return metadataRole
+
+  return ''
+}
+
+function buildFallbackProfile(user: any) {
+  const m = user?.user_metadata ?? {}
+
+  return {
+    name: String(m.full_name || m.name || m.display_name || user?.email?.split('@')[0] || 'Usuário'),
+    email: user?.email || 'Sem e-mail',
+    role: resolveFallbackRole(user),
+  }
+}
+
 /* ─── Sidebar item (flat, no accordion) ─── */
 function SidebarItem({
   item,
@@ -209,19 +229,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
         const tenantId = await getCurrentTenantId()
         if (!mounted || !tenantId) return
-        const tenant = await fetchTenantSettings(tenantId)
-        if (!mounted || !tenant?.name) return
-        setTenantName(tenant.name)
+        try {
+          const tenant = await fetchTenantSettings(tenantId)
+          if (!mounted || !tenant?.name) return
+          setTenantName(tenant.name)
+        } catch {
+          // Keep the authenticated profile even if company settings are temporarily unavailable.
+        }
       } catch {
         const { data } = await supabase.auth.getSession()
         if (!mounted) return
         const user = data.session?.user
-        const m = user?.user_metadata ?? {}
-        setProfile({
-          name: String(m.full_name || m.name || m.display_name || user?.email?.split('@')[0] || 'Usuário'),
-          email: user?.email || 'Sem e-mail',
-          role: '',
-        })
+        setProfile(buildFallbackProfile(user))
       } finally {
         if (mounted) setProfileLoading(false)
       }
@@ -251,13 +270,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         })
         .catch(() => {
           const user = session.user
-          const m = user?.user_metadata ?? {}
           if (!mounted) return
-          setProfile({
-            name: String(m.full_name || m.name || m.display_name || user?.email?.split('@')[0] || 'Usuário'),
-            email: user?.email || 'Sem e-mail',
-            role: '',
-          })
+          setProfile(buildFallbackProfile(user))
         })
         .finally(() => {
           if (mounted) setProfileLoading(false)
