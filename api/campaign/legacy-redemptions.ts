@@ -24,15 +24,49 @@ export default async function handler(request: any, response: any) {
     if (request.method === 'GET') {
       const limit = Math.max(1, Math.min(200, Number(request.query.limit ?? 100)))
       const customerId = typeof request.query.customerId === 'string' ? request.query.customerId : undefined
+      const dateFrom = typeof request.query.dateFrom === 'string' && request.query.dateFrom.trim()
+        ? `${request.query.dateFrom.trim()}T00:00:00.000Z`
+        : undefined
+      const dateTo = typeof request.query.dateTo === 'string' && request.query.dateTo.trim()
+        ? `${request.query.dateTo.trim()}T23:59:59.999Z`
+        : undefined
+
+      let tenantCustomersQuery = supabaseAdmin
+        .from('pontuacao_campanha_clientes')
+        .select('ixc_cliente_id, nome_cliente')
+        .eq('tenant_id', auth.tenantId)
+        .limit(10000)
+
+      if (customerId) {
+        tenantCustomersQuery = tenantCustomersQuery.eq('ixc_cliente_id', customerId)
+      }
+
+      const tenantCustomers = await tenantCustomersQuery
+
+      if (tenantCustomers.error) {
+        return sendJson(response, 500, { error: tenantCustomers.error.message })
+      }
+
+      const customerRows = tenantCustomers.data ?? []
+      const customerIds = Array.from(new Set(customerRows.map((row) => String(row.ixc_cliente_id ?? '')).filter(Boolean)))
+
+      if (customerIds.length === 0) {
+        return sendJson(response, 200, { data: [], meta: { total: 0 } })
+      }
 
       let query = supabaseAdmin
         .from('pontuacao_resgates')
-        .select('*')
+        .select('*', { count: 'exact' })
         .order('created_at', { ascending: false })
+        .in('ixc_cliente_id', customerIds)
         .limit(limit)
 
-      if (customerId) {
-        query = query.eq('ixc_cliente_id', customerId)
+      if (dateFrom) {
+        query = query.gte('created_at', dateFrom)
+      }
+
+      if (dateTo) {
+        query = query.lte('created_at', dateTo)
       }
 
       const resgates = await query
@@ -41,30 +75,18 @@ export default async function handler(request: any, response: any) {
       }
 
       const rows = resgates.data ?? []
-      const customerIds = Array.from(new Set(rows.map((row) => String(row.ixc_cliente_id ?? '')).filter(Boolean)))
-
-      let customerNameMap = new Map<string, string>()
-      if (customerIds.length > 0) {
-        const customers = await supabaseAdmin
-          .from('pontuacao_campanha_clientes')
-          .select('ixc_cliente_id, nome_cliente')
-          .eq('tenant_id', auth.tenantId)
-          .in('ixc_cliente_id', customerIds)
-
-        if (customers.error) {
-          return sendJson(response, 500, { error: customers.error.message })
-        }
-
-        customerNameMap = new Map(
-          (customers.data ?? []).map((row) => [String(row.ixc_cliente_id), String(row.nome_cliente ?? '').trim()]),
-        )
-      }
+      const customerNameMap = new Map(
+        customerRows.map((row) => [String(row.ixc_cliente_id), String(row.nome_cliente ?? '').trim()]),
+      )
 
       return sendJson(response, 200, {
         data: rows.map((row) => ({
           ...row,
           cliente_nome: customerNameMap.get(String(row.ixc_cliente_id)) || null,
         })),
+        meta: {
+          total: Number(resgates.count ?? rows.length),
+        },
       })
     }
 
@@ -96,6 +118,7 @@ export default async function handler(request: any, response: any) {
       const client = clientResult.data
       const availablePoints = Number(client.pontos_disponiveis ?? 0)
       const spentPoints = Number(reward.pontos_necessarios ?? 0)
+      const remainingAvailablePoints = Math.max(0, availablePoints - spentPoints)
       const currentStock = reward.estoque == null ? null : Number(reward.estoque)
 
       if (!reward.ativo) {
@@ -133,6 +156,7 @@ export default async function handler(request: any, response: any) {
         .from('pontuacao_campanha_clientes')
         .update({
           pontos_resgatados: Number(client.pontos_resgatados ?? 0) + spentPoints,
+          pontos_disponiveis: remainingAvailablePoints,
           ultimo_resgate: deliveredAt,
           ultima_sincronizacao_em: deliveredAt,
         })
@@ -168,7 +192,7 @@ export default async function handler(request: any, response: any) {
 
       return sendJson(response, 201, {
         redemption: redemptionInsert.data,
-        remainingPoints: Math.max(0, Number(client.pontos_acumulados ?? 0) - (Number(client.pontos_resgatados ?? 0) + spentPoints)),
+        remainingPoints: remainingAvailablePoints,
         remainingStock: currentStock == null ? null : Math.max(0, currentStock - 1),
       })
     }

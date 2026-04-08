@@ -128,7 +128,7 @@ export default function DashboardPage() {
   /* --- Dashboard state --- */
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [metrics, setMetrics] = useState({ totalPoints: 0, redemptionsCount: 0, redeemedPoints: 0 })
+  const [metrics, setMetrics] = useState({ totalPoints: 0, redemptionsCount: 0, availablePoints: 0 })
   const [ranking, setRanking] = useState<RankingClientRow[]>([])
   const [showCalmModal, setShowCalmModal] = useState(false)
   const [rankingOpen, setRankingOpen] = useState(true)
@@ -510,7 +510,7 @@ export default function DashboardPage() {
               <div className="grid gap-4 sm:grid-cols-3">
                 <KpiCard label="Pontos acumulados" value={formatPoints(metrics.totalPoints)} helper={period.label} icon={Coins} gradient="from-emerald-500/10 to-emerald-500/[0.02]" iconClass="bg-emerald-500/15 text-emerald-500" />
                 <KpiCard label="Resgates realizados" value={formatPoints(metrics.redemptionsCount)} helper={period.label} icon={Wallet} gradient="from-amber-500/10 to-amber-500/[0.02]" iconClass="bg-amber-500/15 text-amber-500" />
-                <KpiCard label="Pontos resgatados" value={formatPoints(metrics.redeemedPoints)} helper={period.label} icon={Zap} gradient="from-primary/10 to-primary/[0.02]" iconClass="bg-primary/15 text-primary" />
+                <KpiCard label="Pontos disponíveis" value={formatPoints(metrics.availablePoints)} helper={period.label} icon={Zap} gradient="from-primary/10 to-primary/[0.02]" iconClass="bg-primary/15 text-primary" />
               </div>
 
               {/* Search bar */}
