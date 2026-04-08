@@ -125,8 +125,8 @@ function sortReceivables(items: Receivable[], sortBy: SortOption) {
       case 'payment_desc': return toComparableDate(b.data_pagamento) - toComparableDate(a.data_pagamento)
       case 'received_asc': return (toNumber(a.valor_recebido) ?? 0) - (toNumber(b.valor_recebido) ?? 0)
       case 'received_desc': return (toNumber(b.valor_recebido) ?? 0) - (toNumber(a.valor_recebido) ?? 0)
-      case 'points_asc': return getPaymentScore(a) - getPaymentScore(b)
-      case 'points_desc': return getPaymentScore(b) - getPaymentScore(a)
+      case 'points_asc': return (a.pontos_gerados ?? 0) - (b.pontos_gerados ?? 0)
+      case 'points_desc': return (b.pontos_gerados ?? 0) - (a.pontos_gerados ?? 0)
       default: return 0
     }
   })
