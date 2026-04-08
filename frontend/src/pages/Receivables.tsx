@@ -362,7 +362,7 @@ export default function ReceivablesPage() {
                   {/* Mobile cards */}
                   <div className="grid gap-2 p-4 md:hidden">
                     {visibleReceivables.map((item) => {
-                      const score = getPaymentScore(item)
+                      const score = item.pontos_gerados ?? 0
                       return (
                         <Link key={item.id} to={`/receivables/${item.id}`} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 transition-all duration-200 hover:bg-[hsl(var(--muted))]">
                           <div className="flex items-start justify-between">
