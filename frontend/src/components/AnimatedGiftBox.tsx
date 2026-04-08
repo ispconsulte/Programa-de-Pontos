@@ -144,7 +144,7 @@ export default function AnimatedGiftBox({ size = 96, className = '' }: { size?: 
       <div
         className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[45%]"
         style={{
-          width: boxW + 6, height: boxH + lidH + 6,
+          width: boxW + 6, height: boxH + lidH,
           animation: isShaking ? 'giftShake 0.12s ease-in-out infinite' : 'none',
         }}
       >
