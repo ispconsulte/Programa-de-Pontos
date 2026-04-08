@@ -268,6 +268,7 @@ export default function DashboardPage() {
   const clearSelection = useCallback(() => {
     setSelectedClient(null)
     setFaturas([])
+    setRedemptions([])
     ac.setQuery('')
     setClientError('')
   }, [ac])
