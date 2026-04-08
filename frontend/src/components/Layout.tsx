@@ -19,7 +19,7 @@ import {
   X,
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Gift as GiftIcon } from 'lucide-react'
+import menuLateralImg from '@/assets/menu-lateral.png'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase-client'
 import {
