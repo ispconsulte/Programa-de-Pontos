@@ -214,7 +214,7 @@ export default function LoginPage() {
             style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(10px)', transition: 'all 700ms ease 100ms' }}
           >
             <span className="bg-gradient-to-r from-primary via-[hsl(45,90%,60%)] to-[hsl(160,60%,50%)] bg-clip-text text-transparent">
-              Sistema de Recompensas
+              Sistema de Recompensas!
             </span>
           </h2>
 
