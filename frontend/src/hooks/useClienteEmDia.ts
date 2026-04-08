@@ -42,6 +42,7 @@ export interface ClienteEmDiaRewardItem {
   pontosNecessarios: number
   ativo: boolean
   estoqueDisponivel: number | null
+  imagemUrl: string | null
   createdAt: string
   updatedAt: string
   metadata: Record<string, unknown>
@@ -170,6 +171,7 @@ function normalizeRewardItem(row: Record<string, unknown>): ClienteEmDiaRewardIt
         : row.estoque_disponivel === null || row.estoque === null
           ? null
           : Number(row.estoque_disponivel ?? row.estoque ?? 0),
+    imagemUrl: typeof row.imagem_url === 'string' ? row.imagem_url : null,
     createdAt: String(row.created_at ?? ''),
     updatedAt: String(row.updated_at ?? ''),
     metadata: asRecord(row.metadata),
