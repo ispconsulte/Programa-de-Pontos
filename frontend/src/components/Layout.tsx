@@ -1,8 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import {
-  Building2,
   Camera,
-  ChevronDown,
   ChevronsLeft,
   ChevronsRight,
   Coins,
@@ -13,9 +11,11 @@ import {
   Moon,
   Settings,
   Sun,
-  User,
   Users,
   X,
+  Briefcase,
+  Megaphone,
+  UserCog,
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import AnimatedGiftBox from '@/components/AnimatedGiftBox'
@@ -31,12 +31,12 @@ import { clearCurrentTenantIdCache, fetchTenantSettings, getCurrentTenantId } fr
 
 export type DashboardSearchType = 'name' | 'cpfCnpj' | 'id'
 export const DASHBOARD_CLIENT_SEARCH_EVENT = 'dashboard:client-search'
+
 /* ─── Nav data ─── */
 interface NavItem {
   href: string
   label: string
   icon: React.ElementType
-  children?: { href: string; label: string }[]
 }
 
 interface NavSection {
@@ -60,16 +60,11 @@ const adminNavSections: NavSection[] = [
   ...baseNavSections,
   {
     label: 'ADMINISTRAÇÃO',
-    items: [{
-      href: '/admin/empresa',
-      label: 'Administração',
-      icon: Settings,
-      children: [
-        { href: '/admin/empresa', label: 'Empresa e integrações' },
-        { href: '/admin/campanhas', label: 'Campanhas' },
-        { href: '/admin/usuarios', label: 'Usuários' },
-      ],
-    }],
+    items: [
+      { href: '/admin/empresa', label: 'Empresa', icon: Briefcase },
+      { href: '/admin/campanhas', label: 'Campanhas', icon: Megaphone },
+      { href: '/admin/usuarios', label: 'Usuários', icon: UserCog },
+    ],
   },
 ]
 
@@ -92,7 +87,7 @@ function getPageTitle(pathname: string): string {
   return 'Painel'
 }
 
-/* ─── Sidebar item ─── */
+/* ─── Sidebar item (flat, no accordion) ─── */
 function SidebarItem({
   item,
   pathname,
@@ -105,89 +100,8 @@ function SidebarItem({
   collapsed?: boolean
 }) {
   const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
-  const hasChildren = !!item.children?.length
-  const isChildActive = hasChildren && item.children!.some((c) => pathname === c.href || pathname.startsWith(c.href + '/'))
-  const [open, setOpen] = useState(isActive || isChildActive)
-
-  useEffect(() => {
-    if (isActive || isChildActive) setOpen(true)
-  }, [isActive, isChildActive])
-
   const Icon = item.icon
-  const active = isActive || isChildActive
 
-  /* Collapsed with children → single icon link */
-  if (hasChildren && collapsed) {
-    return (
-      <Link
-        to={item.href}
-        onClick={onNav}
-        title={item.label}
-        className={cn(
-          'group flex items-center justify-center rounded-xl p-2.5 transition-all duration-200',
-          active
-            ? 'bg-primary/12 text-primary shadow-sm'
-            : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'
-        )}
-      >
-        <Icon className="h-[18px] w-[18px] flex-shrink-0" />
-      </Link>
-    )
-  }
-
-  /* Expanded with children → accordion */
-  if (hasChildren) {
-    return (
-      <div>
-        <button
-          onClick={() => setOpen(!open)}
-          className={cn(
-            'group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all duration-200',
-            active
-              ? 'bg-primary/12 text-primary shadow-sm'
-              : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'
-          )}
-        >
-          <Icon className="h-[18px] w-[18px] flex-shrink-0" />
-          <span className="flex-1 text-[13px] font-medium">{item.label}</span>
-          <ChevronDown
-            className={cn(
-              'h-3.5 w-3.5 text-muted-foreground transition-transform duration-200',
-              open && 'rotate-180'
-            )}
-          />
-        </button>
-
-        <div
-          className={cn(
-            'ml-[18px] mt-0.5 space-y-0.5 overflow-hidden border-l border-border pl-3.5 transition-all duration-200',
-            open ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
-          )}
-        >
-          {item.children!.map((child) => {
-            const childActive = pathname === child.href || pathname.startsWith(child.href + '/')
-            return (
-              <Link
-                key={child.href}
-                to={child.href}
-                onClick={onNav}
-                className={cn(
-                  'block rounded-lg px-3 py-2 text-[12.5px] font-medium transition-all duration-150',
-                  childActive
-                    ? 'bg-primary/10 text-primary'
-                    : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-                )}
-              >
-                {child.label}
-              </Link>
-            )
-          })}
-        </div>
-      </div>
-    )
-  }
-
-  /* Simple item */
   return (
     <Link
       to={item.href}
@@ -376,24 +290,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             ? 'translate-x-0 shadow-2xl shadow-black/30'
             : '-translate-x-full'
         )}
-        style={{ width: collapsed ? '4rem' : mobileOpen ? '18rem' : '16rem' }}
+        style={{ width: collapsed ? '4rem' : mobileOpen ? '18rem' : '15rem' }}
       >
-        {/* Logo area */}
+        {/* Logo area — compact */}
         <div className={cn(
-          'relative flex flex-shrink-0 items-center justify-center border-b border-sidebar-border transition-all duration-300',
-          collapsed ? 'h-20 px-2' : 'h-36 px-4'
+          'relative flex flex-shrink-0 items-center border-b border-sidebar-border transition-all duration-300',
+          collapsed ? 'h-14 justify-center px-2' : 'h-14 gap-3 px-4'
         )}>
-          <div className={cn(
-            'relative flex items-center justify-center transition-all duration-300',
-            collapsed ? 'h-10 w-10' : 'h-28 w-28'
-          )}>
-            <AnimatedGiftBox size={collapsed ? 40 : 110} />
+          <div className="flex h-9 w-9 items-center justify-center flex-shrink-0">
+            <AnimatedGiftBox size={collapsed ? 32 : 36} />
           </div>
-
           {!collapsed && (
-            <div className="absolute bottom-3 left-4 right-4 rounded-xl border border-sidebar-border bg-sidebar-accent/40 px-3 py-2">
-              <p className="truncate text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Empresa ativa</p>
-              <p className="mt-1 truncate text-sm font-medium text-foreground">{tenantName}</p>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-foreground leading-tight">Bonifica</p>
+              <p className="truncate text-[10px] text-muted-foreground">{tenantName}</p>
             </div>
           )}
 
@@ -414,7 +324,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="space-y-6">
             {navSections.map((section: NavSection, si: number) => (
               <div key={section.label || si}>
-                {/* Section label */}
                 {section.label && !collapsed && (
                   <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                     {section.label}
@@ -459,9 +368,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {/* Header */}
         <header className="sticky top-0 z-30 flex h-14 flex-shrink-0 items-center gap-3 border-b border-border bg-surface-1/90 backdrop-blur-xl px-4 lg:px-5">
-          {/* Left: toggle + page title */}
           <div className="flex items-center gap-2">
-            {/* Desktop collapse toggle */}
             <button
               onClick={toggleCollapse}
               className="hidden lg:flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
@@ -470,7 +377,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               {collapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
             </button>
 
-            {/* Mobile hamburger */}
             <button
               onClick={() => setMobileOpen(true)}
               className="rounded-lg p-1.5 text-muted-foreground hover:text-foreground lg:hidden"
@@ -478,18 +384,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <Menu className="h-5 w-5" />
             </button>
 
-            {/* Page title */}
             <span className="text-sm font-semibold text-foreground">
               {getPageTitle(pathname)}
             </span>
           </div>
 
-          {/* Right: actions */}
           <div className="ml-auto flex items-center gap-1">
-
-            {/* Notifications removed — not functional */}
-
-            {/* Theme toggle */}
             <button
               onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
               className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
@@ -498,7 +398,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
 
-            {/* Avatar / user menu */}
             <div className="relative ml-1" ref={userMenuRef}>
               <button
                 onClick={() => setUserMenuOpen((o) => !o)}

@@ -3,15 +3,9 @@ import { useThrottledAction } from '@/hooks/useThrottledAction'
 import { Link } from 'react-router-dom'
 import {
   ArrowRight,
-  Building2,
   Coins,
-  Gift,
   LayoutDashboard,
   RefreshCw,
-  Settings2,
-  ShoppingBag,
-  Ticket,
-  Users,
   Wallet,
   Zap,
   Clock,
@@ -19,7 +13,6 @@ import {
 } from 'lucide-react'
 import Layout, { DASHBOARD_CLIENT_SEARCH_EVENT, type DashboardSearchType as HeaderSearchType } from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
-import PageHeader from '@/components/PageHeader'
 import StatCard from '@/components/StatCard'
 import AlertBanner from '@/components/AlertBanner'
 import Spinner from '@/components/Spinner'
@@ -33,7 +26,6 @@ import {
   type DashboardHistoryRow,
 } from '@/lib/supabase-queries'
 import { fetchCurrentUserProfile, isAdminUiRole } from '@/lib/user-management'
-import { useClienteEmDia } from '@/hooks/useClienteEmDia'
 
 type Classification = 'antecipado' | 'vencimento' | 'atraso' | 'indefinido'
 
@@ -89,10 +81,10 @@ function classifyByDates(delta: number | null): Classification {
 }
 
 function classificationLabel(value: Classification): string {
-  if (value === 'antecipado') return 'Pagamento antecipado'
-  if (value === 'vencimento') return 'Pagamento no vencimento'
-  if (value === 'atraso') return 'Pagamento após o vencimento'
-  return 'Classificação indisponível'
+  if (value === 'antecipado') return 'Antecipado'
+  if (value === 'vencimento') return 'No vencimento'
+  if (value === 'atraso') return 'Após vencimento'
+  return '—'
 }
 
 function formatDelta(delta: number | null): string {
@@ -108,30 +100,6 @@ function monthDateRange(): { from: string; to: string; label: string } {
   const from = first.toISOString().slice(0, 10)
   const to = last.toISOString().slice(0, 10)
   return { from, to, label: 'Mês atual' }
-}
-
-function ScoreSummaryCard({
-  icon: Icon,
-  label,
-  value,
-  color,
-}: {
-  icon: typeof Zap
-  label: string
-  value: number
-  color: string
-}) {
-  return (
-    <div className="flex items-center gap-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3">
-      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${color}`}>
-        <Icon className="h-3.5 w-3.5" />
-      </div>
-      <div className="min-w-0">
-        <p className="text-lg font-semibold text-foreground">{formatPoints(value)}</p>
-        <p className="truncate text-[11px] text-muted-foreground">{label}</p>
-      </div>
-    </div>
-  )
 }
 
 export default function DashboardPage() {
@@ -150,8 +118,6 @@ export default function DashboardPage() {
   })
   const [searchType, setSearchType] = useState<HeaderSearchType>('name')
   const [searchQuery, setSearchQuery] = useState('')
-  const [isAdmin, setIsAdmin] = useState(false)
-  const { rewards, overview } = useClienteEmDia()
 
   const period = useMemo(() => monthDateRange(), [])
 
@@ -229,92 +195,14 @@ export default function DashboardPage() {
     void fetchData()
   }, [fetchData])
 
-  useEffect(() => {
-    void fetchCurrentUserProfile()
-      .then((profile) => setIsAdmin(isAdminUiRole(profile.role)))
-      .catch(() => setIsAdmin(false))
-  }, [])
-
   return (
     <ProtectedRoute>
       <Layout>
-        <PageHeader
-          icon={LayoutDashboard}
-          title="Operação"
-          subtitle="Acesso rápido para clientes, catálogo, resgates e histórico da empresa atual."
-          actions={
-            <Button variant="outline" size="sm" disabled={refreshBusy} onClick={() => void throttledFetch()}>
-              <RefreshCw className={`h-3.5 w-3.5 transition-transform ${refreshBusy ? 'animate-spin' : ''}`} />
-              {refreshBusy ? 'Atualizando…' : 'Atualizar'}
-            </Button>
-          }
-        />
-
         <div className="page-stack">
-          <section className="grid gap-4 lg:grid-cols-[1.35fr_0.65fr]">
-            <div className="rounded-xl border border-[hsl(var(--border))] bg-[linear-gradient(135deg,hsl(var(--success)/0.08),transparent_55%),hsl(var(--surface-1))] p-5 lg:p-6">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[hsl(var(--success))]">Fluxo diário</p>
-              <h2 className="mt-3 text-2xl font-bold tracking-tight text-foreground">Tudo o que a operação mais usa, sem entrar em telas administrativas.</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                Consulte clientes, acompanhe pontos, veja o catálogo disponível e processe resgates em menos cliques.
-              </p>
-              <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                <Button asChild variant="outline" className="justify-between">
-                  <Link to="/clients">
-                    Clientes
-                    <Users className="h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="justify-between">
-                  <Link to="/catalogo">
-                    Catálogo
-                    <Gift className="h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="justify-between">
-                  <Link to="/resgates">
-                    Resgates
-                    <Ticket className="h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="justify-between">
-                  <Link to="/receivables">
-                    Histórico
-                    <ShoppingBag className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-5">
-              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <Building2 className="h-4 w-4 text-primary" />
-                Escopo da empresa
-              </div>
-              <div className="mt-4 space-y-3">
-                <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3">
-                  <p className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">Clientes visíveis</p>
-                  <p className="mt-1 text-lg font-semibold text-foreground">{overview.length.toLocaleString('pt-BR')}</p>
-                </div>
-                <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3">
-                  <p className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">Recompensas disponíveis</p>
-                  <p className="mt-1 text-lg font-semibold text-foreground">{rewards.filter((reward) => reward.ativo).length.toLocaleString('pt-BR')}</p>
-                </div>
-                {isAdmin && (
-                  <Button asChild className="w-full">
-                    <Link to="/admin/empresa">
-                      Administração da empresa
-                      <Settings2 className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                )}
-              </div>
-            </div>
-          </section>
-
+          {/* KPI cards */}
           <div className="grid gap-4 sm:grid-cols-3 [&>*]:h-full">
             <StatCard
-              label="Pontuação geral acumulada"
+              label="Pontos acumulados"
               value={formatPoints(metrics.totalPoints)}
               helper={period.label}
               icon={Coins}
@@ -322,7 +210,7 @@ export default function DashboardPage() {
               iconBg="bg-[hsl(var(--success)/0.1)]"
             />
             <StatCard
-              label="Resgates no período"
+              label="Resgates realizados"
               value={formatPoints(metrics.redemptionsCount)}
               helper={period.label}
               icon={Wallet}
@@ -330,7 +218,7 @@ export default function DashboardPage() {
               iconBg="bg-[hsl(var(--warning)/0.1)]"
             />
             <StatCard
-              label="Pontos resgatados no período"
+              label="Pontos resgatados"
               value={formatPoints(metrics.redeemedPoints)}
               helper={period.label}
               icon={Zap}
@@ -339,95 +227,114 @@ export default function DashboardPage() {
             />
           </div>
 
-          <section className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
-            <div className="flex flex-col gap-3 border-b border-[hsl(var(--border))] p-5 sm:flex-row sm:items-center sm:justify-between lg:p-6">
-              <div className="min-w-0">
-                <h2 className="text-sm font-semibold text-foreground">Últimos registros de pontuação</h2>
-                <p className="mt-0.5 text-[13px] text-muted-foreground">
-                  Histórico recente de pontuação gerada no período selecionado.
-                </p>
+          {/* Summary chips */}
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))]">
+                <Zap className="h-3.5 w-3.5" />
               </div>
-              <Button asChild variant="outline" size="sm" className="w-full sm:w-fit">
-                <Link to="/receivables">
-                  Ver todos
-                  <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-                </Link>
-              </Button>
+              <div className="min-w-0">
+                <p className="text-lg font-semibold text-foreground">{formatPoints(summary.antecipado)}</p>
+                <p className="truncate text-[11px] text-muted-foreground">Antecipados</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <CalendarCheck className="h-3.5 w-3.5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-lg font-semibold text-foreground">{formatPoints(summary.vencimento)}</p>
+                <p className="truncate text-[11px] text-muted-foreground">No vencimento</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))]">
+                <Clock className="h-3.5 w-3.5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-lg font-semibold text-foreground">{formatPoints(summary.atraso)}</p>
+                <p className="truncate text-[11px] text-muted-foreground">Após vencimento</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent history table */}
+          <section className="rounded-xl border border-border bg-card">
+            <div className="flex items-center justify-between border-b border-border px-5 py-4">
+              <h2 className="text-sm font-semibold text-foreground">Últimos registros</h2>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" disabled={refreshBusy} onClick={() => void throttledFetch()}>
+                  <RefreshCw className={`h-3.5 w-3.5 ${refreshBusy ? 'animate-spin' : ''}`} />
+                </Button>
+                <Button asChild variant="outline" size="sm">
+                  <Link to="/receivables">
+                    Ver todos
+                    <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                  </Link>
+                </Button>
+              </div>
             </div>
 
             {loading ? (
-              <div className="flex items-center justify-center py-20">
+              <div className="flex items-center justify-center py-16">
                 <Spinner size="md" />
               </div>
             ) : error ? (
               <div className="p-5">
                 <AlertBanner variant="error" message={error} actionLabel="Tentar novamente" onAction={() => void fetchData()} />
               </div>
+            ) : rows.length === 0 ? (
+              <div className="p-5">
+                <EmptyState icon={<Coins className="h-5 w-5" />} title="Nenhum registro" description="Não há registros de pontuação para este período." />
+              </div>
             ) : (
               <>
-                <div className="grid gap-3 border-b border-[hsl(var(--border))] px-5 py-4 sm:grid-cols-3 lg:px-6">
-                  <ScoreSummaryCard icon={Zap} label="Pagamentos antecipados" value={summary.antecipado} color="bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))]" />
-                  <ScoreSummaryCard icon={CalendarCheck} label="Pagamentos no vencimento" value={summary.vencimento} color="bg-primary/10 text-primary" />
-                  <ScoreSummaryCard icon={Clock} label="Pagamentos após o vencimento" value={summary.atraso} color="bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))]" />
+                {/* Mobile list */}
+                <div className="divide-y divide-border md:hidden">
+                  {rows.map((item) => (
+                    <Link key={item.id} to={`/receivables/${item.id}`} className="block px-5 py-3.5 transition-colors hover:bg-muted">
+                      <div className="flex items-center justify-between">
+                        <p className="truncate text-sm font-medium text-foreground">{item.cliente_nome?.trim() || `#${item.ixc_cliente_id}`}</p>
+                        <span className="ml-2 text-xs font-semibold text-[hsl(var(--success))]">+{formatPoints(item.pontos_gerados)}</span>
+                      </div>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {classificationLabel(item.classificacao)} · {formatDate(item.data_pagamento)}
+                      </p>
+                    </Link>
+                  ))}
                 </div>
 
-                {rows.length === 0 ? (
-                  <div className="p-5">
-                    <EmptyState icon={<Coins className="h-5 w-5" />} title="Nenhum registro" description="Não há registros de pontuação para o período e filtros atuais." />
-                  </div>
-                ) : (
-                  <>
-                    <div className="divide-y divide-[hsl(var(--border))] md:hidden">
+                {/* Desktop table */}
+                <div className="table-responsive hidden md:block">
+                  <table className="w-full min-w-[48rem] text-sm">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="px-5 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Cliente</th>
+                        <th className="px-3 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Classificação</th>
+                        <th className="px-3 py-3 text-center text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Pontos</th>
+                        <th className="px-3 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Vencimento</th>
+                        <th className="px-3 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Pago em</th>
+                        <th className="px-3 py-3 text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Valor</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
                       {rows.map((item) => (
-                        <Link key={item.id} to={`/receivables/${item.id}`} className="block px-5 py-3.5 transition-colors hover:bg-[hsl(var(--muted))]">
-                          <p className="truncate text-sm font-medium text-foreground">{item.cliente_nome?.trim() || `Cliente #${item.ixc_cliente_id}`}</p>
-                          <p className="mt-0.5 text-xs text-muted-foreground">
-                            {classificationLabel(item.classificacao)} · {formatDelta(item.deltaVencimento)} · +{formatPoints(item.pontos_gerados)} pts
-                          </p>
-                        </Link>
+                        <tr key={item.id} className="transition-colors hover:bg-muted">
+                          <td className="px-5 py-3">
+                            <Link to={`/receivables/${item.id}`} className="font-medium text-foreground hover:text-primary">
+                              {item.cliente_nome?.trim() || `#${item.ixc_cliente_id}`}
+                            </Link>
+                          </td>
+                          <td className="px-3 py-3">{categoryBadge(item.classificacao)}</td>
+                          <td className="px-3 py-3 text-center font-semibold text-[hsl(var(--success))]">+{formatPoints(item.pontos_gerados)}</td>
+                          <td className="px-3 py-3 text-muted-foreground">{formatDate(item.data_vencimento)}</td>
+                          <td className="px-3 py-3 text-muted-foreground">{formatDate(item.data_pagamento)}</td>
+                          <td className="px-3 py-3 text-right text-muted-foreground">{formatBRL(Number(item.valor_pago ?? 0))}</td>
+                        </tr>
                       ))}
-                    </div>
-
-                    <div className="table-responsive hidden md:block">
-                      <table className="w-full min-w-[52rem] text-sm">
-                        <thead>
-                          <tr className="border-b border-[hsl(var(--border))]">
-                            <th className="px-5 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground lg:px-6">Cliente</th>
-                            <th className="px-3 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Classificação</th>
-                            <th className="px-3 py-3 text-center text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Pontos</th>
-                            <th className="px-3 py-3 text-center text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Δ vencimento</th>
-                            <th className="px-3 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Vencimento</th>
-                            <th className="px-3 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Pago em</th>
-                            <th className="px-3 py-3 text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Valor pago</th>
-                            <th className="px-5 py-3 lg:px-6"><span className="sr-only">Ações</span></th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[hsl(var(--border))]">
-                          {rows.map((item) => (
-                            <tr key={item.id} className="transition-colors hover:bg-[hsl(var(--muted))]">
-                              <td className="px-5 py-3 lg:px-6">
-                                <p className="font-medium text-foreground">{item.cliente_nome?.trim() || `Cliente #${item.ixc_cliente_id}`}</p>
-                                <p className="mt-0.5 font-mono text-[11px] text-muted-foreground/70">#{item.ixc_cliente_id}</p>
-                              </td>
-                              <td className="px-3 py-3">{categoryBadge(classificationLabel(item.classificacao))}</td>
-                              <td className="px-3 py-3 text-center font-semibold text-foreground">+{formatPoints(item.pontos_gerados)}</td>
-                              <td className="px-3 py-3 text-center font-mono text-xs text-muted-foreground">{formatDelta(item.deltaVencimento)}</td>
-                              <td className="px-3 py-3 text-muted-foreground">{formatDate(item.data_vencimento)}</td>
-                              <td className="px-3 py-3 text-muted-foreground">{formatDate(item.data_pagamento)}</td>
-                              <td className="px-3 py-3 text-right font-medium text-[hsl(var(--success))]">{formatBRL(item.valor_pago)}</td>
-                              <td className="px-5 py-3 text-right lg:px-6">
-                                <Link to={`/receivables/${item.id}`} className="inline-flex items-center gap-1 text-[13px] text-primary transition-colors hover:text-primary/80">
-                                  Detalhe
-                                  <ArrowRight className="h-3 w-3" />
-                                </Link>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </>
-                )}
+                    </tbody>
+                  </table>
+                </div>
               </>
             )}
           </section>

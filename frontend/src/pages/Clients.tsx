@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, RefreshCw, Search, Users } from 'lucide-react'
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
-import PageHeader from '@/components/PageHeader'
 import Spinner from '@/components/Spinner'
 import AlertBanner from '@/components/AlertBanner'
 import EmptyState from '@/components/EmptyState'
@@ -12,7 +11,6 @@ import { statusBadge } from '@/components/Badge'
 import { searchCampaignClients, getCurrentTenantId, type CampaignClientRow } from '@/lib/supabase-queries'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent } from '@/components/ui/card'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
@@ -27,7 +25,7 @@ const SEARCH_TYPES: { value: SearchType; label: string; placeholder: string }[] 
 ]
 
 export default function ClientsPage() {
-  const [searchType, setSearchType] = useState<SearchType>('name')
+  const [searchType, setSearchType] = useState<SearchType>('cpfCnpj')
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -45,7 +43,6 @@ export default function ClientsPage() {
         setError('Usuário não associado a um tenant.')
         return
       }
-
       const list = await searchCampaignClients({ tenantId, searchType, query: query.trim() })
       setClients(list)
     } catch (err) {
@@ -68,60 +65,51 @@ export default function ClientsPage() {
   return (
     <ProtectedRoute>
       <Layout>
-        <PageHeader icon={Users} title="Clientes" subtitle="Base de clientes" />
-
         <div className="page-stack">
-          <form onSubmit={handleSearch} className="space-y-4">
-            <Card className="border-[hsl(var(--border))] bg-[hsl(var(--card))]">
-              <CardContent className="space-y-5 p-4 pt-5 sm:p-6 sm:pt-6">
-                <div className="rounded-[1.75rem] border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-3 sm:px-4 sm:py-4">
-                  <div className="flex flex-wrap gap-2.5">
-                    {SEARCH_TYPES.map((type) => (
-                      <button
-                        key={type.value}
-                        type="button"
-                        onClick={() => { setSearchType(type.value); setQuery('') }}
-                        className={cn(
-                          'min-h-11 rounded-xl border px-4 py-2 text-xs font-semibold tracking-wide uppercase transition-all duration-200',
-                          searchType === type.value
-                            ? 'border-primary/20 bg-primary text-primary-foreground shadow-sm ring-1 ring-primary/20'
-                            : 'border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-muted-foreground hover:bg-[hsl(var(--surface-1))] hover:text-foreground'
-                        )}
-                      >
-                        {type.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+          {/* Search bar */}
+          <form onSubmit={handleSearch}>
+            <div className="rounded-xl border border-border bg-card p-4">
+              {/* Tabs inline */}
+              <div className="mb-3 flex gap-1">
+                {SEARCH_TYPES.map((type) => (
+                  <button
+                    key={type.value}
+                    type="button"
+                    onClick={() => { setSearchType(type.value); setQuery('') }}
+                    className={cn(
+                      'rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
+                      searchType === type.value
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                    )}
+                  >
+                    {type.label}
+                  </button>
+                ))}
+              </div>
 
-                <div className="rounded-[1.75rem] border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 sm:p-4">
-                  <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
-                    <div className="relative min-w-0">
-                      <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        type="text"
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        placeholder={SEARCH_TYPES.find((type) => type.value === searchType)?.placeholder}
-                        className="h-12 border-[hsl(var(--border))] bg-[hsl(var(--background))] pl-10 placeholder:text-muted-foreground"
-                      />
-                    </div>
-
-                    <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center lg:justify-end">
-                      <Button type="submit" size="lg" disabled={loading || !query.trim()} className="w-full sm:min-w-[8.5rem]">
-                        {loading ? <Spinner size="sm" /> : <Search className="h-3.5 w-3.5" />}
-                        Buscar
-                      </Button>
-                      {searched && (
-                        <Button type="button" variant="outline" size="icon" className="h-12 w-12 self-end sm:self-auto" disabled={refreshBusy} onClick={() => void throttledSearch()}>
-                          <RefreshCw className={`h-3.5 w-3.5 transition-transform ${refreshBusy ? 'animate-spin' : ''}`} />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
+              {/* Input + button */}
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder={SEARCH_TYPES.find((t) => t.value === searchType)?.placeholder}
+                    className="h-11 pl-10 bg-background border-border"
+                  />
                 </div>
-              </CardContent>
-            </Card>
+                <Button type="submit" disabled={loading || !query.trim()} className="h-11 px-5">
+                  {loading ? <Spinner size="sm" /> : 'Buscar'}
+                </Button>
+                {searched && (
+                  <Button type="button" variant="outline" size="icon" className="h-11 w-11" disabled={refreshBusy} onClick={() => void throttledSearch()}>
+                    <RefreshCw className={`h-3.5 w-3.5 ${refreshBusy ? 'animate-spin' : ''}`} />
+                  </Button>
+                )}
+              </div>
+            </div>
           </form>
 
           {error && <AlertBanner variant="error" message={error} />}
@@ -133,87 +121,87 @@ export default function ClientsPage() {
           )}
 
           {!loading && searched && clients !== null && (
-            <Card>
-              <div className="border-b border-[hsl(var(--border))] px-5 py-4">
+            <div className="rounded-xl border border-border bg-card">
+              <div className="border-b border-border px-5 py-3">
                 <p className="text-sm font-medium text-foreground">
                   {clients.length === 0 ? 'Nenhum cliente encontrado' : `${clients.length} cliente${clients.length !== 1 ? 's' : ''}`}
                 </p>
               </div>
-              <CardContent className="p-0">
-                {clients.length === 0 ? (
-                  <div className="p-5">
-                    <EmptyState icon={<Users className="h-5 w-5" />} title="Nenhum resultado" description="Nenhum resultado para esta busca." />
-                  </div>
-                ) : (
-                  <>
-                    {/* Mobile */}
-                    <div className="grid gap-2 p-4 md:hidden">
-                      {clients.map((client) => (
-                        <Link
-                          key={client.id}
-                          to={`/clients/${client.id}`}
-                          className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 transition-all duration-200 hover:bg-[hsl(var(--muted))]"
-                        >
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <p className="text-sm font-medium text-foreground">{client.nome_cliente}</p>
-                              <p className="mt-0.5 text-xs text-muted-foreground">IXC #{client.ixc_cliente_id}</p>
-                            </div>
-                            <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-                          </div>
-                          <div className="mt-3 space-y-1 text-sm text-muted-foreground">
-                            <p>{client.email || 'Sem e-mail'}</p>
-                            <p>{client.telefone || '—'}</p>
-                          </div>
-                          <div className="mt-2 flex items-center gap-2">
-                            {statusBadge(getClientStatus(client))}
-                            <span className="text-xs text-emerald-400 font-medium">{client.pontos_disponiveis ?? 0} pts</span>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
 
-                    {/* Desktop */}
-                    <div className="hidden md:block">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>ID IXC</TableHead>
-                            <TableHead>Nome</TableHead>
-                            <TableHead>CPF/CNPJ</TableHead>
-                            <TableHead>Email</TableHead>
-                            <TableHead>Telefone</TableHead>
-                            <TableHead className="text-right">Pontos</TableHead>
-                            <TableHead className="text-center">Status</TableHead>
-                            <TableHead className="text-right" />
+              {clients.length === 0 ? (
+                <div className="p-5">
+                  <EmptyState icon={<Users className="h-5 w-5" />} title="Nenhum resultado" description="Nenhum resultado para esta busca." />
+                </div>
+              ) : (
+                <>
+                  {/* Mobile cards */}
+                  <div className="grid gap-2 p-3 md:hidden">
+                    {clients.map((client) => (
+                      <Link
+                        key={client.id}
+                        to={`/clients/${client.id}`}
+                        className="rounded-xl border border-border bg-background p-4 transition-colors hover:bg-muted"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-semibold text-foreground">{client.nome_cliente}</p>
+                            <p className="mt-0.5 text-xs text-muted-foreground">{client.documento || 'Sem documento'}</p>
+                          </div>
+                          <span className="ml-2 text-sm font-bold text-[hsl(var(--success))]">{client.pontos_disponiveis ?? 0} pts</span>
+                        </div>
+                        <div className="mt-2 flex items-center gap-2">
+                          {statusBadge(getClientStatus(client))}
+                          <ArrowRight className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+
+                  {/* Desktop table */}
+                  <div className="hidden md:block">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Nome</TableHead>
+                          <TableHead>CPF/CNPJ</TableHead>
+                          <TableHead>Contato</TableHead>
+                          <TableHead className="text-right">Pontos</TableHead>
+                          <TableHead className="text-center">Status</TableHead>
+                          <TableHead className="w-[80px]" />
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {clients.map((client) => (
+                          <TableRow key={client.id}>
+                            <TableCell className="font-medium text-foreground">{client.nome_cliente}</TableCell>
+                            <TableCell className="font-mono text-xs text-muted-foreground">{client.documento || '—'}</TableCell>
+                            <TableCell className="text-muted-foreground text-xs">
+                              <div>{client.email || '—'}</div>
+                              <div>{client.telefone || ''}</div>
+                            </TableCell>
+                            <TableCell className="text-right font-semibold text-[hsl(var(--success))]">{client.pontos_disponiveis ?? 0}</TableCell>
+                            <TableCell className="text-center">{statusBadge(getClientStatus(client))}</TableCell>
+                            <TableCell>
+                              <Link to={`/clients/${client.id}`} className="text-xs text-primary hover:text-primary/80">Ver →</Link>
+                            </TableCell>
                           </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {clients.map((client) => (
-                            <TableRow key={client.id}>
-                              <TableCell className="font-mono text-xs text-foreground">{client.ixc_cliente_id}</TableCell>
-                              <TableCell className="font-medium text-foreground">{client.nome_cliente}</TableCell>
-                              <TableCell className="font-mono text-xs text-muted-foreground">{client.documento || '—'}</TableCell>
-                              <TableCell className="text-muted-foreground">{client.email || '—'}</TableCell>
-                              <TableCell className="text-muted-foreground">{client.telefone || '—'}</TableCell>
-                              <TableCell className="text-right font-semibold text-emerald-400">{client.pontos_disponiveis ?? 0}</TableCell>
-                              <TableCell className="text-center">{statusBadge(getClientStatus(client))}</TableCell>
-                              <TableCell className="text-right">
-                                <Link to={`/clients/${client.id}`} className="text-sm text-primary transition-colors hover:text-primary/80">Ver perfil</Link>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </>
+              )}
+            </div>
           )}
 
           {!loading && !searched && (
-            <EmptyState icon={<Search className="h-5 w-5" />} title="Buscar clientes" description="Use a busca acima para localizar clientes." />
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
+                <Search className="h-5 w-5" />
+              </div>
+              <p className="text-sm font-medium text-foreground">Busque um cliente</p>
+              <p className="mt-1 text-xs text-muted-foreground">Digite o CPF, nome ou ID para localizar rapidamente.</p>
+            </div>
           )}
         </div>
       </Layout>

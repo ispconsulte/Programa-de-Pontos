@@ -1,38 +1,39 @@
 
+# Plano de Reestruturação Front-End
 
-## Diagnóstico
+## Problemas identificados
+1. **Sidebar**: Card "Empresa ativa" sobrepõe o ícone do presente, ocupa espaço excessivo (h-36)
+2. **Dashboard (Operação)**: Hero com texto longo + card "Escopo da empresa" redundante + 4 botões de atalho desnecessários (já estão na sidebar)
+3. **Clientes**: Formulário de busca com 2 containers aninhados `rounded-[1.75rem]` excessivamente complexo; atendente precisa de acesso rápido por CPF
+4. **Resgates**: Kanban mostra apenas status genéricos sem nomes/itens; falta controle de estoque visível
+5. **Excesso de botões e informação**: muitos elementos competindo visualmente
 
-O campo `ixc_user` na tabela `ixc_connections` está salvo como `api_user`, mas a API do IXC espera o **ID numérico do usuário** como username. No Postman que funciona, o username é `2`.
+## Etapas de implementação
 
-Resultado: o header `Authorization: Basic base64(api_user:token)` falha com 401. O correto seria `Basic base64(2:token)`.
+### Etapa 1 — Sidebar compacta (Layout.tsx)
+- Reduzir logo area de `h-36` para `h-16` (expanded) / `h-14` (collapsed)
+- **Remover** card "Empresa ativa" que sobrepõe o ícone
+- Mover nome da empresa para o rodapé da sidebar (pequeno, discreto)
+- Achatar accordion de Administração → links diretos
 
-## Plano de Correção
+### Etapa 2 — Dashboard simplificado (Dashboard.tsx)
+- **Remover** hero section inteiro (texto longo + 4 botões de atalho)
+- **Remover** card "Escopo da empresa" (redundante)
+- Manter apenas: 3 StatCards + tabela de histórico recente
+- Layout mais limpo e direto
 
-### 1. Atualizar o `ixc_user` no banco de dados
-Executar um UPDATE direto na tabela `ixc_connections` para trocar `api_user` por `2` para a conexão existente.
+### Etapa 3 — Clientes focado no atendente (Clients.tsx)
+- Simplificar busca: 1 input com tabs inline (Nome/CPF/ID) — sem containers aninhados
+- Resultado mostra: nome, CPF, pontos disponíveis, status de pagamento
+- Visual de card rápido para mobile (atendente na loja)
 
-```sql
-UPDATE ixc_connections 
-SET ixc_user = '2', updated_at = now()
-WHERE id = 'd6cfe53f-8608-436a-a277-b047c0e47885';
-```
+### Etapa 4 — Resgates com nomes e itens (Resgates.tsx)
+- Substituir Kanban vazio por tabela/lista com: nome do cliente, item resgatado, pontos gastos, status, data
+- Cada linha mostra claramente "Lourenço resgatou Mouse — 50 pts"
+- Adicionar coluna de estoque restante quando disponível
+- Filtros por status em tabs simples (não botões flutuantes)
 
-Também atualizar na tabela `tenants` (legacy mirror):
-```sql
-UPDATE tenants 
-SET ixc_user = '2'
-WHERE id = 'ae559ee9-40d4-47f8-b5ba-09ca3744f612';
-```
-
-### 2. Rodar a sync novamente
-Após a correção, invocar `sync-ixc-pagamentos` com `{"tenantId":"ae559ee9-40d4-47f8-b5ba-09ca3744f612"}` para validar que a autenticação funciona.
-
-### 3. (Opcional) Melhorar o formulário de configurações
-Adicionar orientação no frontend (placeholder ou help text) indicando que o campo "Usuário IXC" deve ser o **ID numérico** do usuário da API, não o nome.
-
-## Detalhes Técnicos
-
-- O fluxo de autenticação em `sync-ixc-pagamentos` e `ixc-proxy.ts` monta: `Authorization: Basic base64(ixc_user:decrypted_token)`
-- O token está correto (começa com `c1fee...`), apenas o username está errado
-- Nenhuma mudança de código é necessária — apenas correção de dados
-
+### Etapa 5 — Limpeza geral
+- Remover `PageHeader` subtitles longos (manter só título)
+- Padronizar espaçamento e remover bordas redundantes
+- Garantir que tema claro/escuro funcione em todos os componentes alterados
