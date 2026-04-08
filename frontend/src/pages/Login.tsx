@@ -274,12 +274,7 @@ export default function LoginPage() {
 
           <div className="w-full max-w-[440px]">
             {/* Glass card */}
-            <div className="login-card group/card relative rounded-3xl border border-primary/[0.08] bg-gradient-to-b from-[hsl(225_25%_9%_/_0.8)] to-[hsl(225_25%_6%_/_0.7)] p-8 shadow-[0_32px_80px_-20px_rgba(0,0,0,0.6),0_0_0_1px_hsl(217_91%_60%_/_0.04)] backdrop-blur-2xl sm:p-9 lg:p-10">
-              {/* Animated top border glow */}
-              <div className="pointer-events-none absolute -top-px left-[8%] right-[8%] h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
-              {/* Corner accents */}
-              <div className="pointer-events-none absolute left-0 top-0 h-16 w-px bg-gradient-to-b from-primary/15 to-transparent" />
-              <div className="pointer-events-none absolute right-0 top-0 h-16 w-px bg-gradient-to-b from-primary/15 to-transparent" />
+            <div className="login-card group/card relative rounded-3xl border border-white/[0.06] bg-[hsl(225_25%_8%_/_0.75)] p-8 shadow-[0_32px_80px_-20px_rgba(0,0,0,0.6)] backdrop-blur-2xl sm:p-9 lg:p-10">
 
               <div className="mb-8 text-center">
                 <h2 className="text-[clamp(1.3rem,3vw,1.6rem)] font-bold tracking-tight text-foreground">
