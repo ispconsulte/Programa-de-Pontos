@@ -33,7 +33,7 @@ export default function AnimatedGiftBox({ size = 96, className = '' }: { size?: 
         id: i,
         color: ['#ef4444', '#eab308', '#3b82f6', '#10b981', '#a855f7', '#f97316', '#ec4899', '#06b6d4'][i % 8],
         tx: Math.cos(rad) * dist,
-        ty: Math.sin(rad) * dist - 20,
+        ty: Math.sin(rad) * dist + 10,
         size: 3 + Math.random() * 4,
         delay: Math.random() * 250,
         rot: Math.random() * 720 - 360,
