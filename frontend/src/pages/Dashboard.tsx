@@ -182,6 +182,19 @@ export default function DashboardPage() {
 
   const [throttledFetch, refreshBusy] = useThrottledAction(fetchData)
 
+  const handleRefresh = () => {
+    clickCountRef.current += 1
+    if (clickTimerRef.current) clearTimeout(clickTimerRef.current)
+    clickTimerRef.current = setTimeout(() => { clickCountRef.current = 0 }, 4000)
+
+    if (clickCountRef.current >= 3) {
+      setShowCalmModal(true)
+      clickCountRef.current = 0
+      return
+    }
+    void throttledFetch()
+  }
+
   useEffect(() => {
     const handler = (event: Event) => {
       const detail = (event as CustomEvent<{ searchType: HeaderSearchType; query: string }>).detail
