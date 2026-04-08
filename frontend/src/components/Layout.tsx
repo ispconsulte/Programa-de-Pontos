@@ -304,7 +304,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <AnimatedGiftBox size={collapsed ? 32 : 72} />
           </div>
           {!collapsed && (
-            <span className="mt-1 text-[13px] font-semibold tracking-wide bg-gradient-to-r from-emerald-400 via-yellow-400 to-blue-400 bg-clip-text text-transparent">
+            <span className="-mt-1 text-[13px] font-semibold tracking-wide bg-gradient-to-r from-emerald-400 via-yellow-400 to-blue-400 bg-clip-text text-transparent">
               Sistema de Recompensas!
             </span>
           )}
