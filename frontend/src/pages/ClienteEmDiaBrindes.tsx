@@ -16,7 +16,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useClienteEmDia } from '@/hooks/useClienteEmDia'
-import { Gift, Plus } from 'lucide-react'
+import { Award, Box, CheckCircle, Gift, Package, Plus, Star, Zap } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { fetchCurrentUserProfile, isAdminUiRole } from '@/lib/user-management'
 
@@ -84,6 +84,20 @@ function GiftCatalogDialog({ trigger }: { trigger: React.ReactNode }) {
   )
 }
 
+const tierIcon = (pts: number) => {
+  if (pts >= 50) return <Star className="h-4 w-4" />
+  if (pts >= 20) return <Award className="h-4 w-4" />
+  if (pts >= 10) return <Zap className="h-4 w-4" />
+  return <Gift className="h-4 w-4" />
+}
+
+const tierColor = (pts: number) => {
+  if (pts >= 50) return { bg: 'bg-amber-500/15', text: 'text-amber-400', border: 'border-amber-500/25', accent: 'from-amber-500/10' }
+  if (pts >= 20) return { bg: 'bg-violet-500/15', text: 'text-violet-400', border: 'border-violet-500/25', accent: 'from-violet-500/10' }
+  if (pts >= 10) return { bg: 'bg-sky-500/15', text: 'text-sky-400', border: 'border-sky-500/25', accent: 'from-sky-500/10' }
+  return { bg: 'bg-emerald-500/15', text: 'text-emerald-400', border: 'border-emerald-500/25', accent: 'from-emerald-500/10' }
+}
+
 export default function ClienteEmDiaBrindesPage() {
   const { loading, error, rewards } = useClienteEmDia({ rewardsOnly: true })
   const [isAdmin, setIsAdmin] = useState(false)
@@ -94,85 +108,128 @@ export default function ClienteEmDiaBrindesPage() {
       .catch(() => setIsAdmin(false))
   }, [])
 
+  const activeCount = rewards.filter((item) => item.ativo).length
+  const minPts = rewards[0]?.pontosNecessarios
+  const maxPts = rewards.length > 0 ? rewards[rewards.length - 1]?.pontosNecessarios : null
+
   return (
     <ProtectedRoute>
       <Layout>
         <div className="space-y-6">
-        <PageHeader
-          icon={Gift}
-          title="Catálogo"
-          subtitle="Recompensas disponíveis para consulta operacional e gestão administrativa da empresa."
-          actions={isAdmin ? (
-            <GiftCatalogDialog
-              trigger={
-                <Button className="bg-emerald-600 text-white hover:bg-emerald-500">
-                  <Plus className="h-3.5 w-3.5" />
-                  Adicionar brinde
-                </Button>
-              }
-            />
-          ) : undefined}
-        />
+          <PageHeader
+            icon={Gift}
+            title="Catálogo"
+            subtitle="Recompensas disponíveis para consulta operacional e gestão administrativa da empresa."
+            actions={isAdmin ? (
+              <GiftCatalogDialog
+                trigger={
+                  <Button className="bg-emerald-600 text-white hover:bg-emerald-500">
+                    <Plus className="h-3.5 w-3.5" />
+                    Adicionar brinde
+                  </Button>
+                }
+              />
+            ) : undefined}
+          />
 
-        <Card className="overflow-hidden border-emerald-500/10 bg-[linear-gradient(135deg,rgba(16,185,129,0.12),rgba(8,10,15,0)_46%),hsl(var(--surface-1))]">
-          <CardContent className="p-5 lg:p-6">
-            {loading ? (
-              <EmptyState title="Carregando catálogo" description="Buscando brindes reais no Supabase." />
-            ) : error ? (
-              <EmptyState title="Falha ao carregar catálogo" description={error} />
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl border border-[hsl(var(--border))] bg-black/10 px-4 py-4 backdrop-blur-sm">
-                  <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Itens cadastrados</p>
-                  <p className="mt-2 text-2xl font-semibold text-foreground">{rewards.length}</p>
-                </div>
-                <div className="rounded-2xl border border-[hsl(var(--border))] bg-black/10 px-4 py-4 backdrop-blur-sm">
-                  <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Ativos</p>
-                  <p className="mt-2 text-2xl font-semibold text-foreground">{rewards.filter((item) => item.ativo).length}</p>
-                </div>
-                <div className="rounded-2xl border border-[hsl(var(--border))] bg-black/10 px-4 py-4 backdrop-blur-sm">
-                  <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Faixa inicial</p>
-                  <p className="mt-2 text-2xl font-semibold text-foreground">
-                    {rewards[0] ? `${rewards[0].pontosNecessarios} pts` : '--'}
-                  </p>
-                </div>
+          {/* KPI cards */}
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-emerald-500/10 to-emerald-500/[0.02] p-5">
+              <div className="flex items-start justify-between">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Itens cadastrados</p>
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15"><Package className="h-4 w-4 text-emerald-500" /></div>
               </div>
-            )}
-          </CardContent>
-        </Card>
+              <p className="mt-2 text-3xl font-extrabold tracking-tight text-foreground">{rewards.length}</p>
+              <p className="mt-1 text-xs text-muted-foreground">Total no catálogo</p>
+            </div>
+            <div className="relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-sky-500/10 to-sky-500/[0.02] p-5">
+              <div className="flex items-start justify-between">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Ativos</p>
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500/15"><CheckCircle className="h-4 w-4 text-sky-500" /></div>
+              </div>
+              <p className="mt-2 text-3xl font-extrabold tracking-tight text-foreground">{activeCount}</p>
+              <p className="mt-1 text-xs text-muted-foreground">Disponíveis para resgate</p>
+            </div>
+            <div className="relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-amber-500/10 to-amber-500/[0.02] p-5">
+              <div className="flex items-start justify-between">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Faixa de pontos</p>
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/15"><Zap className="h-4 w-4 text-amber-500" /></div>
+              </div>
+              <p className="mt-2 text-3xl font-extrabold tracking-tight text-foreground">
+                {minPts != null ? `${minPts}` : '--'}
+                {maxPts != null && maxPts !== minPts ? <span className="text-lg font-bold text-muted-foreground"> – {maxPts}</span> : ''}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">Pontos necessários</p>
+            </div>
+          </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Catálogo oficial de brindes</CardTitle>
-            <CardDescription>
-              Esta área exibirá nome, pontuação, estoque, imagem e status assim que houver dados reais cadastrados.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <EmptyState title="Carregando catálogo" description="Consultando dados reais do catálogo." />
-            ) : error ? (
-              <EmptyState title="Falha ao carregar catálogo" description={error} />
-            ) : rewards.length === 0 ? (
-              <EmptyState title="Ainda não há registros aqui" description="Nenhum brinde foi cadastrado no Supabase." />
-            ) : (
-              <div className="space-y-3">
-                {rewards.map((reward) => (
-                  <div key={reward.id} className="flex items-center justify-between gap-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3">
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{reward.nome}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">{reward.descricao ?? 'Sem descrição cadastrada.'}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-semibold text-emerald-300">{reward.pontosNecessarios} pts</p>
-                      <p className="mt-1 text-xs text-muted-foreground">{reward.ativo ? 'Ativo' : 'Inativo'}</p>
-                    </div>
-                  </div>
-                ))}
+          {/* Catalog list */}
+          <Card className="overflow-hidden">
+            <CardHeader className="border-b border-border px-5 py-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-sm font-bold">Catálogo de brindes</CardTitle>
+                  <CardDescription className="mt-0.5 text-xs">
+                    Nome, pontuação e status de cada recompensa cadastrada.
+                  </CardDescription>
+                </div>
+                <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-bold text-muted-foreground">{rewards.length}</span>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent className="p-0">
+              {loading ? (
+                <div className="p-8"><EmptyState title="Carregando catálogo" description="Consultando dados reais do catálogo." /></div>
+              ) : error ? (
+                <div className="p-8"><EmptyState title="Falha ao carregar catálogo" description={error} /></div>
+              ) : rewards.length === 0 ? (
+                <div className="p-8"><EmptyState title="Ainda não há registros aqui" description="Nenhum brinde foi cadastrado." /></div>
+              ) : (
+                <div className="divide-y divide-border/50">
+                  {rewards.map((reward, index) => {
+                    const tier = tierColor(reward.pontosNecessarios)
+                    return (
+                      <div
+                        key={reward.id}
+                        className={`group flex items-center gap-4 px-5 py-4 transition-colors hover:bg-muted/30`}
+                      >
+                        {/* Icon with tier color */}
+                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${tier.bg} ${tier.text}`}>
+                          {tierIcon(reward.pontosNecessarios)}
+                        </div>
+
+                        {/* Info */}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-semibold text-foreground">{reward.nome}</p>
+                            {reward.estoque != null && (
+                              <span className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                                <Box className="h-2.5 w-2.5" />{reward.estoque}
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-0.5 text-xs text-muted-foreground">{reward.descricao ?? 'Sem descrição cadastrada.'}</p>
+                        </div>
+
+                        {/* Points & status */}
+                        <div className="flex items-center gap-3 shrink-0">
+                          <div className={`rounded-lg border ${tier.border} bg-gradient-to-r ${tier.accent} to-transparent px-3 py-1.5`}>
+                            <p className={`text-sm font-bold ${tier.text}`}>{reward.pontosNecessarios} pts</p>
+                          </div>
+                          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
+                            reward.ativo
+                              ? 'bg-emerald-500/10 text-emerald-400'
+                              : 'bg-rose-500/10 text-rose-400'
+                          }`}>
+                            {reward.ativo ? 'Ativo' : 'Inativo'}
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </Layout>
     </ProtectedRoute>
