@@ -159,39 +159,55 @@ export default function AnimatedGiftBox({ size = 96, className = '' }: { size?: 
             zIndex: 10,
           }}
         >
-          {/* Lid face with gradient & shine */}
           <div className="absolute inset-0 rounded-sm overflow-hidden">
             <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, #e63946 0%, #c1121f 100%)' }} />
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.25) 0%, transparent 50%)' }} />
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.22) 0%, transparent 50%)' }} />
           </div>
-          {/* Ribbon horizontal */}
-          <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0" style={{ width: ribbonW, background: 'linear-gradient(180deg, #90cdf4, #63b3ed)' }} />
-          {/* Bow */}
-          <div className="absolute left-1/2 -translate-x-1/2" style={{ top: -ribbonW * 1.2 }}>
-            <div className="relative" style={{ width: ribbonW * 3.5, height: ribbonW * 2 }}>
-              <div className="absolute rounded-full" style={{ left: 0, top: 0, width: ribbonW * 1.6, height: ribbonW * 1.8, background: 'linear-gradient(135deg, #90cdf4, #63b3ed)', transform: 'rotate(-25deg)' }} />
-              <div className="absolute rounded-full" style={{ right: 0, top: 0, width: ribbonW * 1.6, height: ribbonW * 1.8, background: 'linear-gradient(135deg, #63b3ed, #4299e1)', transform: 'rotate(25deg)' }} />
-              <div className="absolute rounded-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ width: ribbonW * 0.7, height: ribbonW * 0.7, background: '#bee3f8' }} />
+          {/* Gold ribbon horizontal */}
+          <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0" style={{ width: ribbonW, background: 'linear-gradient(180deg, #f5d060, #c9a530)' }}>
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.35) 0%, transparent 40%, rgba(0,0,0,0.1) 100%)' }} />
+          </div>
+          {/* Gold bow */}
+          <div className="absolute left-1/2 -translate-x-1/2" style={{ top: -ribbonW * 1.6 }}>
+            <div className="relative" style={{ width: ribbonW * 4.5, height: ribbonW * 2.8 }}>
+              {/* Left loop */}
+              <div className="absolute rounded-full" style={{ left: 0, top: ribbonW * 0.2, width: ribbonW * 2, height: ribbonW * 2.2, background: 'linear-gradient(150deg, #f5d060 0%, #c9a530 60%, #a8860c 100%)', transform: 'rotate(-20deg)', border: '1px solid rgba(160,120,20,0.3)' }} />
+              {/* Right loop */}
+              <div className="absolute rounded-full" style={{ right: 0, top: ribbonW * 0.2, width: ribbonW * 2, height: ribbonW * 2.2, background: 'linear-gradient(210deg, #f5d060 0%, #c9a530 60%, #a8860c 100%)', transform: 'rotate(20deg)', border: '1px solid rgba(160,120,20,0.3)' }} />
+              {/* Center knot */}
+              <div className="absolute rounded-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/3" style={{ width: ribbonW * 1, height: ribbonW * 1, background: 'radial-gradient(circle at 35% 35%, #ffe08a, #c9a530)', border: '1px solid rgba(160,120,20,0.4)' }} />
+              {/* Tail left */}
+              <div className="absolute" style={{ left: ribbonW * 0.5, bottom: -ribbonW * 0.4, width: ribbonW * 0.6, height: ribbonW * 1, background: 'linear-gradient(180deg, #d4aa35, #b8922a)', transform: 'rotate(15deg)', borderRadius: '0 0 3px 3px' }} />
+              {/* Tail right */}
+              <div className="absolute" style={{ right: ribbonW * 0.5, bottom: -ribbonW * 0.4, width: ribbonW * 0.6, height: ribbonW * 1, background: 'linear-gradient(180deg, #d4aa35, #b8922a)', transform: 'rotate(-15deg)', borderRadius: '0 0 3px 3px' }} />
             </div>
           </div>
         </div>
 
         {/* Box body */}
         <div className="absolute left-1/2 -translate-x-1/2 bottom-0 overflow-hidden rounded-sm" style={{ width: boxW, height: boxH }}>
-          {/* Main gradient */}
+          {/* Main red gradient */}
           <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, #e63946 0%, #a4161a 100%)' }} />
+          {/* Subtle pattern overlay */}
+          <div className="absolute inset-0 opacity-[0.08]" style={{ backgroundImage: 'radial-gradient(circle, #f5d060 1px, transparent 1px)', backgroundSize: `${boxW * 0.18}px ${boxH * 0.22}px` }} />
           {/* Shine overlay */}
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 40%)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.18) 0%, transparent 45%)' }} />
           {/* Left edge highlight */}
-          <div className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.3), rgba(255,255,255,0.05))' }} />
+          <div className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.25), rgba(255,255,255,0.05))' }} />
           {/* Right edge shadow */}
-          <div className="absolute right-0 top-0 bottom-0 w-[3px]" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.1), rgba(0,0,0,0.2))' }} />
-          {/* Ribbon vertical */}
-          <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0" style={{ width: ribbonW, background: 'linear-gradient(180deg, #90cdf4, #63b3ed)' }} />
+          <div className="absolute right-0 top-0 bottom-0 w-[3px]" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.18))' }} />
+          {/* Gold ribbon vertical */}
+          <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0" style={{ width: ribbonW, background: 'linear-gradient(180deg, #f5d060, #c9a530)' }}>
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.3) 0%, transparent 40%, rgba(0,0,0,0.1) 100%)' }} />
+          </div>
+          {/* Gold horizontal ribbon */}
+          <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2" style={{ height: ribbonW, background: 'linear-gradient(90deg, #c9a530, #f5d060 50%, #c9a530)' }}>
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.3) 0%, transparent 40%, rgba(0,0,0,0.1) 100%)' }} />
+          </div>
           {/* Top shadow */}
-          <div className="absolute top-0 left-0 right-0 h-1.5" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.15), transparent)' }} />
+          <div className="absolute top-0 left-0 right-0 h-1.5" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.12), transparent)' }} />
           {/* Bottom edge */}
-          <div className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ background: 'rgba(0,0,0,0.2)' }} />
+          <div className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ background: 'rgba(0,0,0,0.15)' }} />
         </div>
       </div>
 
