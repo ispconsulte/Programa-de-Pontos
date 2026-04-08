@@ -144,9 +144,14 @@ Observacao importante: parte dos fluxos auditados e validados neste trabalho e r
 
 ## Deploy
 
-- GitHub: pronto para push e commit final desta entrega
+- GitHub: alteracoes publicadas em `origin/main`
+- commit principal da entrega: `df57a6f`
+- ajuste final de producao (rewrite SPA): `bb76050`
 - Vercel: projeto local identificado como `programa-de-pontos`
-- status final de deploy sera atualizado apos publicacao
+- deployment de producao pronto: `https://programa-de-pontos-jbhtpj0fq-ispconsulte.vercel.app`
+- alias ativo: `https://pontos-isp.vercel.app`
+- validacao de rota em producao via `vercel curl /login`: `200 OK`
+- observacao: o ambiente de producao esta com Vercel Authentication habilitado
 
 ## Estado final
 
