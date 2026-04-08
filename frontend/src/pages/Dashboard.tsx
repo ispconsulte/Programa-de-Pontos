@@ -160,12 +160,9 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [metrics, setMetrics] = useState({ totalPoints: 0, redemptionsCount: 0, redeemedPoints: 0 })
-  const [rows, setRows] = useState<DashboardRow[]>([])
-  const [summary, setSummary] = useState({ antecipado: 0, vencimento: 0, atraso: 0 })
-  const [searchType, setSearchType] = useState<HeaderSearchType>('name')
-  const [searchQuery, setSearchQuery] = useState('')
+  const [ranking, setRanking] = useState<RankingClientRow[]>([])
   const [showCalmModal, setShowCalmModal] = useState(false)
-  const [historyOpen, setHistoryOpen] = useState(true)
+  const [rankingOpen, setRankingOpen] = useState(true)
   const clickCountRef = useRef(0)
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const period = useMemo(() => monthDateRange(), [])
@@ -185,27 +182,16 @@ export default function DashboardPage() {
     try {
       const tenantId = await getCurrentTenantId()
       if (!tenantId) { setError('Usuário não associado a um tenant.'); return }
-      const [metricData, fullRows, latestRows] = await Promise.all([
+      const [metricData, rankingData] = await Promise.all([
         fetchDashboardMetrics({ tenantId, dateFrom: period.from, dateTo: period.to }),
-        fetchDashboardHistory({ tenantId, dateFrom: period.from, dateTo: period.to, limit: 10000 }),
-        fetchDashboardHistory({ tenantId, dateFrom: period.from, dateTo: period.to, limit: 8, searchType, searchQuery }),
+        fetchClientRanking(tenantId, 10),
       ])
-      const classify = (row: DashboardHistoryRow) => {
-        const delta = getDeltaVencimento(row.data_pagamento, row.data_vencimento)
-        return { ...row, deltaVencimento: delta, classificacao: classifyByDates(delta) }
-      }
-      const full = fullRows.map(classify)
       setMetrics(metricData)
-      setRows(latestRows.map(classify))
-      setSummary({
-        antecipado: full.filter(r => r.classificacao === 'antecipado').reduce((s, r) => s + Number(r.pontos_gerados || 0), 0),
-        vencimento: full.filter(r => r.classificacao === 'vencimento').reduce((s, r) => s + Number(r.pontos_gerados || 0), 0),
-        atraso: full.filter(r => r.classificacao === 'atraso').reduce((s, r) => s + Number(r.pontos_gerados || 0), 0),
-      })
+      setRanking(rankingData)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar dados.')
     } finally { setLoading(false) }
-  }, [period.from, period.to, searchType, searchQuery])
+  }, [period.from, period.to])
 
   const [throttledFetch, refreshBusy] = useThrottledAction(fetchData)
 
