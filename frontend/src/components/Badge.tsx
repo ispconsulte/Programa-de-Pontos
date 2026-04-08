@@ -28,29 +28,33 @@ export default function Badge({ variant, label, className }: BadgeProps & { clas
 }
 
 export function categoryBadge(category: string) {
+  const badgeClass = 'min-w-[6.5rem] justify-center text-center'
   switch (category?.toLowerCase()) {
+    case 'antecipado':
     case 'pagamento antecipado':
-      return <Badge variant="green" label="Pagamento antecipado" />
+      return <Badge variant="green" label="antecipado" className={badgeClass} />
+    case 'vencimento':
     case 'pagamento no vencimento':
-      return <Badge variant="blue" label="Pagamento no vencimento" />
+      return <Badge variant="blue" label="no vencimento" className={badgeClass} />
+    case 'atraso':
     case 'pagamento após o vencimento':
     case 'pagamento apos o vencimento':
-      return <Badge variant="yellow" label="Pagamento após o vencimento" />
+      return <Badge variant="red" label="atraso" className={badgeClass} />
     case 'received':
     case 'recebido':
-      return <Badge variant="green" label="Recebido" />
+      return <Badge variant="green" label="Recebido" className={badgeClass} />
     case 'renegotiated':
     case 'renegociado':
-      return <Badge variant="yellow" label="Renegociado" />
+      return <Badge variant="yellow" label="Renegociado" className={badgeClass} />
     case 'open':
     case 'em aberto':
     case 'aberto':
-      return <Badge variant="blue" label="Em aberto" />
+      return <Badge variant="blue" label="Em aberto" className={badgeClass} />
     case 'cancelled':
     case 'cancelado':
-      return <Badge variant="red" label="Cancelado" />
+      return <Badge variant="red" label="Cancelado" className={badgeClass} />
     default:
-      return <Badge variant="gray" label={category || 'Não encontrado'} />
+      return <Badge variant="gray" label={category || 'Não encontrado'} className={badgeClass} />
   }
 }
 
