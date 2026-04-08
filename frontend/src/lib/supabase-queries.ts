@@ -699,8 +699,8 @@ export async function fetchDashboardMetrics(opts: {
     .limit(10000)
   if (pointsError) throw new Error(pointsError.message)
 
-  const legacyResponse = await backendRequest<{ data: any[] }>('/campaign/legacy-redemptions?limit=200')
-  const redemptionRows = (legacyResponse.data ?? []).filter((row: any) => {
+  const legacyResponse = await backendRequest<{ data: any[] } | null>('/campaign/legacy-redemptions?limit=200').catch(() => null)
+  const redemptionRows = (legacyResponse?.data ?? []).filter((row: any) => {
     const status = String(row.status ?? row.status_resgate ?? '').toLowerCase()
     if (status === 'cancelado' || status === 'cancelled') return false
     const createdAt = String(row.created_at ?? '')
