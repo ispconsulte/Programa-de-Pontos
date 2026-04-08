@@ -283,81 +283,64 @@ export default function DashboardPage() {
     <ProtectedRoute>
       <Layout>
         <div className="page-stack">
-          {/* ═══ CLIENT SEARCH — primary section ═══ */}
-          <section className="rounded-xl border border-border bg-card p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-                <Search className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <h2 className="text-sm font-bold text-foreground">Buscar cliente</h2>
-                <p className="text-[11px] text-muted-foreground">Digite o nome ou CPF/CNPJ</p>
-              </div>
-            </div>
-            <div className="relative" onBlur={(e) => {
-              if (!e.currentTarget.contains(e.relatedTarget as Node)) ac.close()
-            }}>
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-              <Input
-                type="text"
-                value={ac.query}
-                onChange={(e) => {
-                  ac.handleChange(e.target.value)
-                  if (selectedClient) clearSelection()
-                }}
-                onFocus={() => { if (ac.suggestions.length > 0) ac.setShowDropdown(true) }}
-                placeholder="Ex: João Silva ou 123.456.789-00"
-                className="h-12 pl-10 text-base bg-background border-border"
-                autoComplete="off"
-              />
-              {ac.loading && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2"><Spinner size="sm" /></div>
-              )}
-
-              {/* Dropdown */}
-              {ac.showDropdown && ac.suggestions.length > 0 && (
-                <div className="absolute z-50 mt-1 w-full rounded-xl border border-border bg-card shadow-lg max-h-72 overflow-y-auto">
-                  {ac.suggestions.map((client) => (
-                    <button
-                      key={client.id}
-                      type="button"
-                      onMouseDown={() => selectClient(client)}
-                      className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-muted first:rounded-t-xl last:rounded-b-xl"
-                    >
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${avatarColor(client.nome_cliente || '#')}`}>
-                          {(client.nome_cliente?.trim()?.[0] || '#').toUpperCase()}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-foreground">{client.nome_cliente}</p>
-                          <p className="text-xs text-muted-foreground">{client.documento || 'Sem documento'}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className="text-sm font-bold text-[hsl(var(--success))]">{client.pontos_disponiveis ?? 0} pts</span>
-                        {statusBadge(client.status ?? '—')}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            {ac.query.trim().length > 0 && ac.query.trim().length < 2 && (
-              <p className="mt-1.5 text-[11px] text-muted-foreground">Digite ao menos 2 caracteres.</p>
-            )}
-          </section>
-
           {/* ═══ SELECTED CLIENT — inline detail ═══ */}
           {selectedClient && (
             <div className="space-y-4 animate-in fade-in-0 slide-in-from-top-2 duration-300">
               {clientError && <AlertBanner variant="error" message={clientError} />}
 
-              {/* Header */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+              {/* Search stays visible at top */}
+              <section className="rounded-xl border border-border bg-card p-4">
+                <div className="flex items-center gap-2 mb-3">
                   <Button variant="ghost" size="icon" className="h-8 w-8" onClick={clearSelection}>
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
+                  <div>
+                    <h2 className="text-sm font-bold text-foreground">Buscar outro cliente</h2>
+                    <p className="text-[11px] text-muted-foreground">Digite o nome ou CPF/CNPJ</p>
+                  </div>
+                </div>
+                <div className="relative" onBlur={(e) => {
+                  if (!e.currentTarget.contains(e.relatedTarget as Node)) ac.close()
+                }}>
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                  <Input
+                    type="text"
+                    value={ac.query}
+                    onChange={(e) => { ac.handleChange(e.target.value); clearSelection() }}
+                    onFocus={() => { if (ac.suggestions.length > 0) ac.setShowDropdown(true) }}
+                    placeholder="Ex: João Silva ou 123.456.789-00"
+                    className="h-12 pl-10 text-base bg-background border-border"
+                    autoComplete="off"
+                  />
+                  {ac.loading && <div className="absolute right-3 top-1/2 -translate-y-1/2"><Spinner size="sm" /></div>}
+                  {ac.showDropdown && ac.suggestions.length > 0 && (
+                    <div className="absolute z-50 mt-1 w-full rounded-xl border border-border bg-card shadow-lg max-h-72 overflow-y-auto">
+                      {ac.suggestions.map((client) => (
+                        <button key={client.id} type="button" onMouseDown={() => selectClient(client)}
+                          className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-muted first:rounded-t-xl last:rounded-b-xl">
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${avatarColor(client.nome_cliente || '#')}`}>
+                              {(client.nome_cliente?.trim()?.[0] || '#').toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-semibold text-foreground">{client.nome_cliente}</p>
+                              <p className="text-xs text-muted-foreground">{client.documento || 'Sem documento'}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <span className="text-sm font-bold text-[hsl(var(--success))]">{client.pontos_disponiveis ?? 0} pts</span>
+                            {statusBadge(client.status ?? '—')}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              {/* Client header */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
                   <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ${avatarColor(selectedClient.nome_cliente || '#')}`}>
                     {(selectedClient.nome_cliente?.trim()?.[0] || '#').toUpperCase()}
                   </div>
@@ -461,20 +444,78 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* ═══ KPI CARDS ═══ */}
+          {/* ═══ DASHBOARD VIEW (no client selected) ═══ */}
           {!selectedClient && (
             <>
+              {/* KPI cards */}
               <div className="grid gap-4 sm:grid-cols-3">
                 <KpiCard label="Pontos acumulados" value={formatPoints(metrics.totalPoints)} helper={period.label} icon={Coins} gradient="from-emerald-500/10 to-emerald-500/[0.02]" iconClass="bg-emerald-500/15 text-emerald-500" />
                 <KpiCard label="Resgates realizados" value={formatPoints(metrics.redemptionsCount)} helper={period.label} icon={Wallet} gradient="from-amber-500/10 to-amber-500/[0.02]" iconClass="bg-amber-500/15 text-amber-500" />
                 <KpiCard label="Pontos resgatados" value={formatPoints(metrics.redeemedPoints)} helper={period.label} icon={Zap} gradient="from-primary/10 to-primary/[0.02]" iconClass="bg-primary/15 text-primary" />
               </div>
 
+              {/* Summary chips */}
               <div className="grid gap-3 sm:grid-cols-3">
                 <SummaryChip icon={Zap} value={formatPoints(summary.antecipado)} label="Antecipados" color="emerald" />
                 <SummaryChip icon={CalendarCheck} value={formatPoints(summary.vencimento)} label="No vencimento" color="sky" />
                 <SummaryChip icon={Clock} value={formatPoints(summary.atraso)} label="Após vencimento" color="rose" />
               </div>
+
+              {/* Search bar — right above history */}
+              <section className="rounded-xl border border-border bg-card p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                    <Search className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-bold text-foreground">Buscar cliente</h2>
+                    <p className="text-[11px] text-muted-foreground">Digite o nome ou CPF/CNPJ</p>
+                  </div>
+                </div>
+                <div className="relative" onBlur={(e) => {
+                  if (!e.currentTarget.contains(e.relatedTarget as Node)) ac.close()
+                }}>
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                  <Input
+                    type="text"
+                    value={ac.query}
+                    onChange={(e) => {
+                      ac.handleChange(e.target.value)
+                      if (selectedClient) clearSelection()
+                    }}
+                    onFocus={() => { if (ac.suggestions.length > 0) ac.setShowDropdown(true) }}
+                    placeholder="Ex: João Silva ou 123.456.789-00"
+                    className="h-12 pl-10 text-base bg-background border-border"
+                    autoComplete="off"
+                  />
+                  {ac.loading && <div className="absolute right-3 top-1/2 -translate-y-1/2"><Spinner size="sm" /></div>}
+                  {ac.showDropdown && ac.suggestions.length > 0 && (
+                    <div className="absolute z-50 mt-1 w-full rounded-xl border border-border bg-card shadow-lg max-h-72 overflow-y-auto">
+                      {ac.suggestions.map((client) => (
+                        <button key={client.id} type="button" onMouseDown={() => selectClient(client)}
+                          className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-muted first:rounded-t-xl last:rounded-b-xl">
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${avatarColor(client.nome_cliente || '#')}`}>
+                              {(client.nome_cliente?.trim()?.[0] || '#').toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-semibold text-foreground">{client.nome_cliente}</p>
+                              <p className="text-xs text-muted-foreground">{client.documento || 'Sem documento'}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <span className="text-sm font-bold text-[hsl(var(--success))]">{client.pontos_disponiveis ?? 0} pts</span>
+                            {statusBadge(client.status ?? '—')}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {ac.query.trim().length > 0 && ac.query.trim().length < 2 && (
+                  <p className="mt-1.5 text-[11px] text-muted-foreground">Digite ao menos 2 caracteres.</p>
+                )}
+              </section>
 
               {/* ═══ COLLAPSIBLE HISTORY ═══ */}
               <section className="rounded-xl border border-border bg-card overflow-hidden">
