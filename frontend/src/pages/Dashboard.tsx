@@ -505,14 +505,7 @@ export default function DashboardPage() {
                 <KpiCard label="Pontos resgatados" value={formatPoints(metrics.redeemedPoints)} helper={period.label} icon={Zap} gradient="from-primary/10 to-primary/[0.02]" iconClass="bg-primary/15 text-primary" />
               </div>
 
-              {/* Summary chips */}
-              <div className="grid gap-3 sm:grid-cols-3">
-                <SummaryChip icon={Zap} value={formatPoints(summary.antecipado)} label="Antecipados" color="emerald" />
-                <SummaryChip icon={CalendarCheck} value={formatPoints(summary.vencimento)} label="No vencimento" color="sky" />
-                <SummaryChip icon={Clock} value={formatPoints(summary.atraso)} label="Após vencimento" color="rose" />
-              </div>
-
-              {/* Search bar — right above history */}
+              {/* Search bar */}
               <section className="rounded-xl border border-border bg-card p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
@@ -568,49 +561,52 @@ export default function DashboardPage() {
                 )}
               </section>
 
-              {/* ═══ COLLAPSIBLE HISTORY ═══ */}
+              {/* ═══ RANKING DE CLIENTES ═══ */}
               <section className="rounded-xl border border-border bg-card overflow-hidden">
                 <button
                   type="button"
-                  onClick={() => setHistoryOpen(!historyOpen)}
+                  onClick={() => setRankingOpen(!rankingOpen)}
                   className="flex w-full items-center justify-between border-b border-border px-5 py-4 transition-colors hover:bg-muted/30"
                 >
-                  <h2 className="text-sm font-bold text-foreground">Últimos registros</h2>
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/15">
+                      <TrendingUp className="h-3.5 w-3.5 text-amber-500" />
+                    </div>
+                    <h2 className="text-sm font-bold text-foreground">Ranking de recompensas</h2>
+                  </div>
                   <div className="flex items-center gap-2">
                     <Button variant="ghost" size="icon" className="h-8 w-8" disabled={refreshBusy} onClick={(e) => { e.stopPropagation(); handleRefresh() }}>
                       <RefreshCw className={`h-3.5 w-3.5 ${refreshBusy ? 'animate-spin' : ''}`} />
                     </Button>
-                    {historyOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                    {rankingOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
                   </div>
                 </button>
 
-                {historyOpen && (
+                {rankingOpen && (
                   <>
                     {loading ? (
                       <div className="flex items-center justify-center py-12"><Spinner size="md" /></div>
                     ) : error ? (
                       <div className="p-5"><AlertBanner variant="error" message={error} actionLabel="Tentar novamente" onAction={() => void fetchData()} /></div>
-                    ) : rows.length === 0 ? (
-                      <div className="p-5"><EmptyState icon={<Coins className="h-5 w-5" />} title="Nenhum registro" description="Sem registros de pontuação neste período." /></div>
+                    ) : ranking.length === 0 ? (
+                      <div className="p-5"><EmptyState icon={<Coins className="h-5 w-5" />} title="Nenhum participante" description="Ainda não há clientes no programa." /></div>
                     ) : (
                       <>
                         {/* Mobile */}
-                        <div className="divide-y divide-border md:hidden">
-                          {rows.map((item) => (
-                            <div
-                              key={item.id}
-                              className={`flex items-center gap-3 border-l-[3px] px-4 py-3.5 ${classificationAccent(item.classificacao)}`}
-                            >
-                              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${avatarColor(item.cliente_nome || '#')}`}>
-                                {(item.cliente_nome?.trim()?.[0] || '#').toUpperCase()}
+                        <div className="divide-y divide-border/50 md:hidden">
+                          {ranking.map((client, index) => (
+                            <div key={client.id} className="flex items-center gap-3 px-4 py-3.5">
+                              <RankBadge position={index + 1} />
+                              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${avatarColor(client.nome_cliente || '#')}`}>
+                                {(client.nome_cliente?.trim()?.[0] || '#').toUpperCase()}
                               </div>
                               <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm font-semibold text-foreground">{item.cliente_nome?.trim() || `#${item.ixc_cliente_id}`}</p>
-                                <p className="mt-0.5 text-[11px] text-muted-foreground">{classificationLabel(item.classificacao)} · {formatDate(item.data_pagamento)}</p>
+                                <p className="truncate text-sm font-semibold text-foreground">{client.nome_cliente}</p>
+                                <p className="mt-0.5 text-[11px] text-muted-foreground">{client.documento || 'Sem documento'}</p>
                               </div>
                               <div className="text-right shrink-0">
-                                <p className="text-sm font-bold text-[hsl(var(--success))]">+{formatPoints(item.pontos_gerados)}</p>
-                                <p className="text-[10px] text-muted-foreground">{formatBRL(Number(item.valor_pago ?? 0))}</p>
+                                <p className="text-sm font-bold text-[hsl(var(--success))]">{formatPoints(client.pontos_acumulados)} pts</p>
+                                <p className="text-[10px] text-muted-foreground">Disponível: {formatPoints(client.pontos_disponiveis ?? 0)}</p>
                               </div>
                             </div>
                           ))}
@@ -621,32 +617,35 @@ export default function DashboardPage() {
                           <table className="w-full text-sm">
                             <thead>
                               <tr className="border-b border-border bg-muted/30">
+                                <th className="w-14 px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">#</th>
                                 <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Cliente</th>
-                                <th className="px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Classificação</th>
-                                <th className="px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Pontos</th>
-                                <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Vencimento</th>
-                                <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Pago em</th>
-                                <th className="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Valor</th>
+                                <th className="px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Acumulados</th>
+                                <th className="px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Resgatados</th>
+                                <th className="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Disponíveis</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-border/50">
-                              {rows.map((item) => (
-                                <tr key={item.id} className={`group border-l-[3px] transition-colors hover:bg-muted/40 ${classificationAccent(item.classificacao)}`}>
+                              {ranking.map((client, index) => (
+                                <tr key={client.id} className="group transition-colors hover:bg-muted/40">
+                                  <td className="px-3 py-3.5 text-center"><RankBadge position={index + 1} /></td>
                                   <td className="px-5 py-3.5">
                                     <div className="flex items-center gap-3">
-                                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${avatarColor(item.cliente_nome || '#')}`}>
-                                        {(item.cliente_nome?.trim()?.[0] || '#').toUpperCase()}
+                                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${avatarColor(client.nome_cliente || '#')}`}>
+                                        {(client.nome_cliente?.trim()?.[0] || '#').toUpperCase()}
                                       </div>
-                                      <span className="font-medium text-foreground">{item.cliente_nome?.trim() || `#${item.ixc_cliente_id}`}</span>
+                                      <div className="min-w-0">
+                                        <span className="font-medium text-foreground">{client.nome_cliente}</span>
+                                        <p className="text-[11px] text-muted-foreground">{client.documento || ''}</p>
+                                      </div>
                                     </div>
                                   </td>
-                                  <td className="px-3 py-3.5 text-center">{categoryBadge(item.classificacao)}</td>
                                   <td className="px-3 py-3.5 text-center">
-                                    <span className="inline-flex items-center rounded-md bg-[hsl(var(--success)/0.1)] px-2 py-0.5 text-xs font-bold text-[hsl(var(--success))]">+{formatPoints(item.pontos_gerados)}</span>
+                                    <span className="inline-flex items-center rounded-md bg-[hsl(var(--success)/0.1)] px-2 py-0.5 text-xs font-bold text-[hsl(var(--success))]">{formatPoints(client.pontos_acumulados)}</span>
                                   </td>
-                                  <td className="px-3 py-3.5 text-muted-foreground">{formatDate(item.data_vencimento)}</td>
-                                  <td className="px-3 py-3.5 text-muted-foreground">{formatDate(item.data_pagamento)}</td>
-                                  <td className="px-5 py-3.5 text-right font-semibold text-foreground">{formatBRL(Number(item.valor_pago ?? 0))}</td>
+                                  <td className="px-3 py-3.5 text-center">
+                                    <span className="text-xs font-semibold text-amber-400">{formatPoints(client.pontos_resgatados)}</span>
+                                  </td>
+                                  <td className="px-5 py-3.5 text-right font-bold text-foreground">{formatPoints(client.pontos_disponiveis ?? 0)}</td>
                                 </tr>
                               ))}
                             </tbody>
@@ -663,11 +662,6 @@ export default function DashboardPage() {
                   </>
                 )}
               </section>
-            </>
-          )}
-        </div>
-
-        {/* Anti-spam modal */}
         {showCalmModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowCalmModal(false)}>
             <div className="mx-4 w-full max-w-sm rounded-xl border border-border bg-card p-6 text-center shadow-2xl animate-scale-in" onClick={(e) => e.stopPropagation()}>
