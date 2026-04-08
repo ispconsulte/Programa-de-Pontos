@@ -4,6 +4,7 @@
  */
 import { supabase } from './supabase-client'
 import { getCachedCurrentUserProfile } from './user-management'
+import { backendRequest } from './backend-client'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -225,35 +226,35 @@ export interface TenantSettings {
 }
 
 export async function fetchTenantSettings(tenantId: string): Promise<TenantSettings | null> {
-  const { data: tenant, error: tenantErr } = await supabase
-    .from('tenants')
-    .select('id, name')
-    .eq('id', tenantId)
-    .maybeSingle()
+  const response = await backendRequest<{
+    name: string
+    ixc_base_url: string | null
+    ixc_user: string | null
+    ixc_configured: boolean
+    ixc_connection_id: string | null
+    ixc_connection_name: string | null
+  }>('/settings')
 
-  if (tenantErr) throw new Error(tenantErr.message)
-  if (!tenant) return null
-
-  const { data: conn, error: connErr } = await supabase
-    .from('ixc_connections')
-    .select('id, name, ixc_base_url, ixc_user, active')
-    .eq('tenant_id', tenantId)
-    .order('active', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-
-  if (connErr) throw new Error(connErr.message)
+  const conn = response.ixc_configured
+    ? {
+        id: response.ixc_connection_id,
+        name: response.ixc_connection_name,
+        ixc_base_url: response.ixc_base_url,
+        ixc_user: response.ixc_user,
+        active: true,
+      }
+    : null
 
   return {
-    id: tenant.id,
-    name: tenant.name,
+    id: tenantId,
+    name: response.name,
     ixcConnection: conn as IxcConnection | null,
-    ixc_configured: !!conn,
+    ixc_configured: response.ixc_configured,
   }
 }
 
 export async function saveTenantSettings(
-  tenantId: string,
+  _tenantId: string,
   opts: {
     tenantName?: string
     ixcBaseUrl: string
@@ -262,74 +263,17 @@ export async function saveTenantSettings(
     connectionId?: string | null
   }
 ): Promise<void> {
-  // Atualiza nome e os dados espelhados do IXC no próprio tenant (legado/compatibilidade)
-  const tenantUpdateData: Record<string, string> = {}
-  if (opts.tenantName?.trim()) tenantUpdateData.name = opts.tenantName.trim()
-  if (opts.ixcBaseUrl) tenantUpdateData.ixc_base_url = opts.ixcBaseUrl
-  if (opts.ixcUser) tenantUpdateData.ixc_user = opts.ixcUser
-
-  if (opts.ixcToken) {
-    const hexToken = '\\x' + Array.from(opts.ixcToken).map(c => c.charCodeAt(0).toString(16).padStart(2, '0')).join('')
-    tenantUpdateData.ixc_token_enc = hexToken
-    tenantUpdateData.ixc_token_iv = '\\x00'
-  }
-
-  if (Object.keys(tenantUpdateData).length > 0) {
-    const { error } = await supabase
-      .from('tenants')
-      .update(tenantUpdateData)
-      .eq('id', tenantId)
-    if (error) throw new Error(error.message)
-  }
-
-  // Upsert da conexão IXC (sem token, pois criptografia ocorre na Edge Function)
-  // Se token for fornecido, deve ser enviado para a Edge Function de configuração
-  if (opts.connectionId) {
-    const updateData: Record<string, unknown> = {
-      ixc_base_url: opts.ixcBaseUrl,
-      ixc_user: opts.ixcUser,
-    }
-    const { error } = await supabase
-      .from('ixc_connections')
-      .update(updateData)
-      .eq('id', opts.connectionId)
-      .eq('tenant_id', tenantId)
-    if (error) throw new Error(error.message)
-
-    // Se a intenção era também atualizar o token, faríamos aqui.
-    // Opcionalmente atualizamos o token no registro existente
-    if (opts.ixcToken) {
-      const hexToken = '\\x' + Array.from(opts.ixcToken).map(c => c.charCodeAt(0).toString(16).padStart(2, '0')).join('')
-      const { error: updErr } = await supabase
-        .from('ixc_connections')
-        .update({ ixc_token_enc: hexToken, ixc_token_iv: '\\x00' })
-        .eq('id', opts.connectionId)
-      if (updErr) throw new Error(updErr.message)
-    }
-
-  } else {
-    // Se não houver connectionId, insere um novo registro diretamente (CRUD)
-    // Converte o token string para formato aceito pelo col bytea no PostgREST (\x...)
-    const hexToken = opts.ixcToken
-      ? '\\x' + Array.from(opts.ixcToken).map(c => c.charCodeAt(0).toString(16).padStart(2, '0')).join('')
-      : null
-
-    const insertData: Record<string, unknown> = {
-      tenant_id: tenantId,
-      name: opts.tenantName || 'Integração Padrão',
-      ixc_base_url: opts.ixcBaseUrl,
-      ixc_user: opts.ixcUser,
-      active: true,
-    }
-
-    if (hexToken) {
-      insertData.ixc_token_enc = hexToken
-      insertData.ixc_token_iv = '\\x00' // IV dummy devido à obrigação de formato
-    }
-
-    const { error: insertError } = await (supabase as any).from('ixc_connections').insert(insertData)
-    if (insertError) throw new Error(insertError.message)
-  }
+  await backendRequest('/settings', {
+    method: 'PUT',
+    body: JSON.stringify({
+      tenantName: opts.tenantName?.trim() || undefined,
+      ixcConnectionId: opts.connectionId ?? undefined,
+      connectionName: opts.tenantName || 'Integração Padrão',
+      ixcBaseUrl: opts.ixcBaseUrl,
+      ixcUser: opts.ixcUser,
+      ixcToken: opts.ixcToken || undefined,
+    }),
+  })
 }
 
 // ── Campanhas (regras de pontuação) ─────────────────────────────────────────

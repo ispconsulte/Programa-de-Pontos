@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase-client'
+import { backendRequest } from '@/lib/backend-client'
 
 type ClienteEmDiaCampaignStatus = 'ativo' | 'inativo' | 'bloqueado'
 
@@ -260,34 +261,31 @@ export function useClienteEmDia(options: UseClienteEmDiaOptions = {}): UseClient
         .limit(1)
         .maybeSingle()
 
-      const ixcConnectionQuery = db
-        .from('ixc_connections')
-        .select('*')
-        .eq('active', true)
-        .order('created_at', { ascending: true })
-        .limit(1)
-        .maybeSingle()
-
       const [
         overviewResult,
         rewardsResult,
         redemptionsResult,
         latestSyncResult,
-        ixcConnectionResult,
+        settingsResult,
       ] = await Promise.all([
         overviewQuery,
         rewardsQuery,
         redemptionsQuery,
         latestSyncQuery,
-        ixcConnectionQuery,
+        backendRequest<{
+          name: string
+          ixc_base_url: string | null
+          ixc_user: string | null
+          ixc_configured: boolean
+          ixc_connection_id: string | null
+          ixc_connection_name: string | null
+        }>('/settings').catch(() => null),
       ])
 
       if (overviewResult.error) throw overviewResult.error
       if (rewardsResult.error) throw rewardsResult.error
       if (redemptionsResult.error) throw redemptionsResult.error
       if (latestSyncResult.error) throw latestSyncResult.error
-      if (ixcConnectionResult.error) throw ixcConnectionResult.error
-
       const overviewItems = (overviewResult.data ?? []).map((row: unknown) => normalizeOverviewItem(row as Record<string, unknown>))
       const rewardItems = (rewardsResult.data ?? []).map((row: unknown) => normalizeRewardItem(row as Record<string, unknown>))
       const redemptionItems = (redemptionsResult.data ?? []).map((row: unknown) => normalizeRedemptionItem(row as Record<string, unknown>))
@@ -296,12 +294,12 @@ export function useClienteEmDia(options: UseClienteEmDiaOptions = {}): UseClient
       setRewards(rewardItems)
       setRedemptions(redemptionItems)
       setSettings({
-        activeIxcConnection: ixcConnectionResult.data
+        activeIxcConnection: settingsResult?.ixc_configured
           ? {
-              id: String(ixcConnectionResult.data.id),
-              name: typeof ixcConnectionResult.data.name === 'string' ? ixcConnectionResult.data.name : null,
-              ixcBaseUrl: String(ixcConnectionResult.data.ixc_base_url ?? ''),
-              active: Boolean(ixcConnectionResult.data.active),
+              id: String(settingsResult?.ixc_connection_id ?? ''),
+              name: settingsResult?.ixc_connection_name ?? null,
+              ixcBaseUrl: String(settingsResult?.ixc_base_url ?? ''),
+              active: Boolean(settingsResult?.ixc_configured),
             }
           : null,
         latestSync: latestSyncResult.data

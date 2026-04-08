@@ -78,7 +78,6 @@ async function ensureTenantForSupabaseUser(userId: string, email: string, tenant
         id: userId,
         tenant_id: tenantId,
         email,
-        password_hash: 'supabase-managed',
         role: 'admin',
       })
 

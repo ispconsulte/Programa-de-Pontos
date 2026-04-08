@@ -62,7 +62,6 @@ serve(async (req) => {
         id: user.id,
         tenant_id: newTenant.id,
         email: user.email,
-        password_hash: '$2b$10$dummyhash', 
         role: 'admin'
       })
 

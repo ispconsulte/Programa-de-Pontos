@@ -222,7 +222,6 @@ export async function usersRoutes(app: FastifyInstance) {
           id: authUserId,
           tenant_id: request.tenantId,
           email: body.email,
-          password_hash: 'supabase-managed',
           role: body.role,
           is_active: true,
         })
