@@ -139,6 +139,7 @@ export default function ReceivablesPage() {
   const [limit, setLimit] = useState(10)
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState<SortOption>('due_desc')
+  const [clientNameMap, setClientNameMap] = useState<Map<string, string>>(new Map())
 
   const fetchReceivablesData = useCallback(async () => {
     setLoading(true)
