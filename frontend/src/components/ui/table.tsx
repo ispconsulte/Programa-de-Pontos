@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils"
 const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
   ({ className, ...props }, ref) => (
     <div className="table-responsive scrollable-content">
-      <table ref={ref} className={cn("w-full min-w-[44rem] caption-bottom text-sm md:min-w-full", className)} {...props} />
+      <table ref={ref} className={cn("w-full min-w-[40rem] caption-bottom text-sm lg:min-w-full", className)} {...props} />
     </div>
   )
 )
@@ -50,7 +50,7 @@ const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttributes<
     <th
       ref={ref}
       className={cn(
-        "h-11 whitespace-nowrap px-4 text-left align-middle text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 [&:has([role=checkbox])]:pr-0",
+        "h-11 whitespace-nowrap px-4 text-left align-middle text-[11px] font-semibold uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0",
         className
       )}
       {...props}
@@ -63,7 +63,7 @@ const TableCell = React.forwardRef<HTMLTableCellElement, React.TdHTMLAttributes<
   ({ className, ...props }, ref) => (
     <td
       ref={ref}
-      className={cn("max-w-[18rem] px-4 py-3.5 align-middle text-[13px] leading-5 md:max-w-[22rem] [&:has([role=checkbox])]:pr-0", className)}
+      className={cn("max-w-[14rem] px-4 py-3.5 align-middle text-[13px] leading-5 sm:max-w-[18rem] md:max-w-[22rem] [&:has([role=checkbox])]:pr-0", className)}
       {...props}
     />
   )
