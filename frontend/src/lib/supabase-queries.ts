@@ -282,7 +282,7 @@ export async function fetchClientRanking(tenantId: string, limit = 10): Promise<
   return (data ?? []) as unknown as RankingClientRow[]
 }
 
-
+export interface IxcConnection {
   id: string
   name: string | null
   ixc_base_url: string
