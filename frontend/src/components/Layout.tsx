@@ -31,7 +31,6 @@ import { clearCurrentTenantIdCache, fetchTenantSettings, getCurrentTenantId } fr
 
 export type DashboardSearchType = 'name' | 'cpfCnpj' | 'id'
 export const DASHBOARD_CLIENT_SEARCH_EVENT = 'dashboard:client-search'
-
 /* ─── Nav data ─── */
 interface NavItem {
   href: string
