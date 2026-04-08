@@ -118,21 +118,14 @@ function RotatingMessageCard({ mounted }: { mounted: boolean }) {
 
   return (
     <div
-      className="w-[380px]"
+      className="w-[400px]"
       style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(8px)', transition: 'all 700ms ease 850ms' }}
     >
-      <div className="group relative flex h-[52px] items-center justify-center gap-3 overflow-hidden rounded-full border border-primary/10 bg-gradient-to-r from-primary/[0.06] via-[hsl(225_25%_10%_/_0.5)] to-[hsl(45_90%_55%_/_0.04)] px-7 backdrop-blur-xl transition-all duration-500 hover:border-primary/20 hover:shadow-[0_0_30px_-6px_hsl(217_91%_60%_/_0.2),0_0_15px_-3px_hsl(45_90%_55%_/_0.1)]">
-        {/* Animated gradient border */}
-        <div className="pointer-events-none absolute inset-[-1px] rounded-full opacity-30 transition-opacity duration-500 group-hover:opacity-60"
-          style={{ background: 'conic-gradient(from 180deg, hsl(217 91% 60% / 0.15), hsl(45 90% 55% / 0.1), hsl(160 60% 45% / 0.08), transparent, hsl(217 91% 60% / 0.15))', animation: 'spin 8s linear infinite' }} />
-        {/* Inner bg to mask the conic border */}
-        <div className="pointer-events-none absolute inset-[1px] rounded-full bg-[hsl(225_25%_7%_/_0.9)]" />
-        {/* Top highlight */}
-        <div className="pointer-events-none absolute -top-px left-[20%] right-[20%] h-px bg-gradient-to-r from-transparent via-primary/25 to-transparent" />
-        {/* Dot indicator */}
-        <div className="relative z-10 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary/60 shadow-[0_0_8px_hsl(217_91%_60%_/_0.4)]" />
+      <div className="relative overflow-hidden rounded-2xl border border-primary/[0.08] bg-gradient-to-br from-[hsl(225_30%_10%_/_0.7)] to-[hsl(225_25%_7%_/_0.6)] px-6 py-4 backdrop-blur-2xl shadow-[0_8px_32px_-8px_rgba(0,0,0,0.4)]">
+        {/* Subtle top accent */}
+        <div className="pointer-events-none absolute -top-px left-[12%] right-[12%] h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
         <p
-          className="relative z-10 text-center text-[12.5px] font-medium leading-snug text-foreground/65 transition-all duration-500"
+          className="text-center text-[13px] font-medium leading-relaxed text-foreground/60 transition-all duration-500"
           style={{ opacity: fade ? 1 : 0 }}
         >
           {motivationalMessages[index]}
