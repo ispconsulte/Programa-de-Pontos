@@ -345,9 +345,15 @@
 
   .scrollable-content {
     overflow-y: auto;
-    overscroll-behavior: contain;
+    overscroll-behavior-y: auto;
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
+
+  /* Use overflow:clip instead of overflow:hidden on cards so they don't
+     create a scroll-trapping context while still clipping content visually */
+  .overflow-hidden {
+    overflow: clip !important;
   }
 
   .scrollable-content::-webkit-scrollbar {
