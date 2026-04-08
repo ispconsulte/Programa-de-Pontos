@@ -42,6 +42,7 @@ export interface ClienteEmDiaRewardItem {
   pontosNecessarios: number
   ativo: boolean
   estoqueDisponivel: number | null
+  imagemUrl: string | null
   createdAt: string
   updatedAt: string
   metadata: Record<string, unknown>
