@@ -5,25 +5,27 @@ import { supabase } from '@/lib/supabase-client'
 import Spinner from '@/components/Spinner'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import logoBonifica from '@/assets/logo-bonifica.png'
+import logoPrincipal from '@/assets/logo-principal.png'
 
 /* ── Floating particles (memoized) ── */
 function AmbientParticles() {
   const particles = useMemo(() =>
-    Array.from({ length: 18 }, (_, i) => ({
+    Array.from({ length: 24 }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
       y: Math.random() * 100,
       size: 2 + Math.random() * 3,
-      delay: Math.random() * 6,
-      duration: 8 + Math.random() * 10,
-      color: i % 4 === 0
-        ? 'hsl(217 91% 60% / 0.25)'
-        : i % 4 === 1
-          ? 'hsl(48 96% 58% / 0.2)'
-          : i % 4 === 2
-            ? 'hsl(260 70% 60% / 0.18)'
-            : 'hsl(160 70% 48% / 0.15)',
+      delay: Math.random() * 8,
+      duration: 10 + Math.random() * 14,
+      color: i % 5 === 0
+        ? 'hsl(217 91% 60% / 0.2)'
+        : i % 5 === 1
+          ? 'hsl(48 96% 58% / 0.18)'
+          : i % 5 === 2
+            ? 'hsl(260 70% 60% / 0.15)'
+            : i % 5 === 3
+              ? 'hsl(160 70% 48% / 0.12)'
+              : 'hsl(340 80% 55% / 0.1)',
     })), [])
 
   return (
@@ -38,7 +40,7 @@ function AmbientParticles() {
             width: p.size,
             height: p.size,
             background: p.color,
-            boxShadow: `0 0 ${p.size * 3}px ${p.color}`,
+            boxShadow: `0 0 ${p.size * 4}px ${p.color}`,
             animation: `loginFloat ${p.duration}s ease-in-out ${p.delay}s infinite`,
           }}
         />
@@ -95,7 +97,7 @@ export default function LoginPage() {
   return (
     <div className="login-page relative flex min-h-[100dvh] flex-col overflow-hidden">
       {/* ── Unified full-screen background ── */}
-      <div className="absolute inset-0 bg-[linear-gradient(135deg,hsl(230,35%,4%)_0%,hsl(225,30%,6%)_30%,hsl(220,28%,8%)_60%,hsl(225,25%,5%)_100%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(135deg,hsl(230,35%,3%)_0%,hsl(225,30%,5%)_25%,hsl(220,28%,7%)_50%,hsl(230,25%,4%)_100%)]" />
 
       {/* Large ambient orbs */}
       <div className="pointer-events-none absolute -left-[15%] -top-[10%] h-[600px] w-[600px] rounded-full opacity-30"
@@ -106,7 +108,7 @@ export default function LoginPage() {
         style={{ background: 'radial-gradient(circle, hsl(48 96% 55% / 0.06) 0%, transparent 50%)', animation: 'loginGlowDrift 18s ease-in-out 8s infinite' }} />
 
       {/* Subtle grid overlay */}
-      <div className="pointer-events-none absolute inset-0 opacity-[0.015]"
+      <div className="pointer-events-none absolute inset-0 opacity-[0.012]"
         style={{ backgroundImage: 'linear-gradient(hsl(217 91% 60% / 0.15) 1px, transparent 1px), linear-gradient(90deg, hsl(217 91% 60% / 0.15) 1px, transparent 1px)', backgroundSize: '80px 80px' }} />
 
       {/* Top accent line */}
@@ -115,34 +117,48 @@ export default function LoginPage() {
       <AmbientParticles />
 
       {/* ── Main content ── */}
-      <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-5 py-8 md:flex-row md:items-center md:justify-center md:gap-8 lg:gap-16 xl:gap-24">
+      <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-5 py-8 md:flex-row md:items-center md:justify-center md:gap-10 lg:gap-20 xl:gap-28">
 
-        {/* ── LEFT: Brand / Hero area ── */}
+        {/* ── LEFT: Brand / Hero area with 3D animated logo ── */}
         <div
-          className="mb-10 flex w-full max-w-[420px] flex-col items-center text-center md:mb-0 md:w-auto md:max-w-[440px] md:items-start md:text-left lg:max-w-[480px]"
+          className="mb-10 flex w-full max-w-[400px] flex-col items-center text-center md:mb-0 md:w-auto md:max-w-[480px] md:items-center md:text-center lg:max-w-[520px]"
           style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(20px)', transition: 'all 900ms cubic-bezier(0.16, 1, 0.3, 1)' }}
         >
-          {/* Logo */}
+          {/* 3D Animated Logo */}
           <div
-            className="mb-6 transition-all duration-[1200ms] md:mb-8"
-            style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'scale(1)' : 'scale(0.85)', ...d(100) }}
+            className="login-hero-3d mb-8 transition-all duration-[1200ms] md:mb-10"
+            style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'scale(1) perspective(800px) rotateY(0deg)' : 'scale(0.7) perspective(800px) rotateY(-15deg)', ...d(100) }}
           >
-            <div className="relative">
-              <div className="absolute inset-0 rounded-full blur-3xl"
-                style={{ background: 'radial-gradient(circle, hsl(217 91% 60% / 0.15) 0%, hsl(48 96% 58% / 0.06) 50%, transparent 70%)' }} />
+            <div className="relative" style={{ perspective: '1000px' }}>
+              {/* Glow behind the logo */}
+              <div className="absolute inset-[-20%] rounded-full blur-3xl"
+                style={{
+                  background: 'radial-gradient(circle, hsl(0 80% 50% / 0.15) 0%, hsl(217 91% 60% / 0.08) 40%, hsl(48 96% 58% / 0.05) 70%, transparent 100%)',
+                  animation: 'loginHeroGlow 4s ease-in-out infinite',
+                }} />
+              
+              {/* Shadow on the "floor" */}
+              <div className="absolute -bottom-4 left-[15%] right-[15%] h-8 rounded-[50%] opacity-30 blur-xl"
+                style={{ background: 'radial-gradient(ellipse, hsl(0 0% 0% / 0.6), transparent 70%)' }} />
+
+              {/* Main 3D image */}
               <img
-                src={logoBonifica}
-                alt="Bonifica"
-                className="relative h-16 w-auto object-contain md:h-20 lg:h-24"
-                style={{ filter: 'drop-shadow(0 0 24px hsl(217 91% 60% / 0.25)) drop-shadow(0 0 48px hsl(48 96% 58% / 0.1))' }}
+                src={logoPrincipal}
+                alt="Plataforma de Recompensas"
+                className="relative w-[220px] object-contain sm:w-[260px] md:w-[300px] lg:w-[340px]"
+                style={{
+                  filter: 'drop-shadow(0 20px 40px hsl(0 0% 0% / 0.4)) drop-shadow(0 0 30px hsl(217 91% 60% / 0.15))',
+                  animation: mounted ? 'loginHero3DFloat 6s ease-in-out infinite' : 'none',
+                  transformStyle: 'preserve-3d',
+                }}
               />
             </div>
           </div>
 
           {/* Headline */}
           <h1
-            className="mb-3 text-[clamp(1.5rem,4vw,2rem)] font-bold leading-[1.15] tracking-tight text-foreground transition-all duration-700"
-            style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(10px)', ...d(250) }}
+            className="mb-3 text-[clamp(1.4rem,4vw,1.9rem)] font-bold leading-[1.15] tracking-tight text-foreground transition-all duration-700"
+            style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(10px)', ...d(350) }}
           >
             Fidelize.{' '}
             <span className="bg-gradient-to-r from-primary via-[hsl(48,96%,62%)] to-[hsl(260,70%,60%)] bg-clip-text text-transparent">
@@ -154,7 +170,7 @@ export default function LoginPage() {
 
           <p
             className="mb-6 max-w-[340px] text-[clamp(0.8rem,2vw,0.875rem)] leading-relaxed text-muted-foreground/60 transition-all duration-700 md:mb-8"
-            style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(8px)', ...d(400) }}
+            style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(8px)', ...d(500) }}
           >
             A plataforma completa de fidelização e pontuação para o seu negócio.
           </p>
@@ -162,7 +178,7 @@ export default function LoginPage() {
           {/* Tier badges */}
           <div
             className="flex items-center gap-4 transition-all duration-700 md:gap-5"
-            style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(8px)', ...d(550) }}
+            style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(8px)', ...d(650) }}
           >
             {tiers.map((tier, i) => {
               const Icon = tier.icon
@@ -185,7 +201,7 @@ export default function LoginPage() {
           style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(16px)', transition: 'all 800ms cubic-bezier(0.16, 1, 0.3, 1) 200ms' }}
         >
           {/* Glass card */}
-          <div className="login-card rounded-2xl border border-foreground/[0.06] bg-[hsl(225_25%_7.5%_/_0.6)] p-6 shadow-[0_24px_80px_-16px_rgba(0,0,0,0.5),0_0_0_1px_hsl(217_91%_60%_/_0.04)] backdrop-blur-xl sm:p-7 lg:p-8">
+          <div className="login-card relative rounded-2xl border border-foreground/[0.06] bg-[hsl(225_25%_7.5%_/_0.6)] p-6 shadow-[0_24px_80px_-16px_rgba(0,0,0,0.5),0_0_0_1px_hsl(217_91%_60%_/_0.04)] backdrop-blur-xl sm:p-7 lg:p-8">
             {/* Subtle top glow on card */}
             <div className="pointer-events-none absolute -top-px left-[10%] right-[10%] h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
 
