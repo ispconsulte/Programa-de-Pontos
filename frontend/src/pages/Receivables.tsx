@@ -30,12 +30,12 @@ import {
 } from '@/components/ui/select'
 
 /* ── Adapter: DB row → UI shape ── */
-function toShape(row: ReceivableRow) {
+function toShape(row: ReceivableRow, nameMap?: Map<string, string>) {
   const payload = (row.payload ?? {}) as Record<string, unknown>
   return {
     id: row.id,
     id_cliente: row.ixc_cliente_id,
-    cliente_nome: null as string | null,
+    cliente_nome: nameMap?.get(row.ixc_cliente_id) ?? null,
     data_vencimento: (payload.competencia as string | undefined) ?? row.competencia ?? '',
     data_pagamento: row.data_pagamento ?? null,
     valor: row.valor_pago ?? 0,
