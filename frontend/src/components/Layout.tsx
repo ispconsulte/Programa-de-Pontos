@@ -1,6 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
 import {
-  Bell,
   Camera,
   ChevronDown,
   ChevronsLeft,
@@ -531,13 +530,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <Search className="h-4 w-4" />
             </button>
 
-            {/* Notifications */}
-            <button className="relative flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground">
-              <Bell className="h-4 w-4" />
-              <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
-                4
-              </span>
-            </button>
+            {/* Notifications removed — not functional */}
 
             {/* Theme toggle */}
             <button
@@ -564,10 +557,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </button>
 
               {userMenuOpen && (
-                <div className="absolute right-0 top-[calc(100%+6px)] z-50 w-56 overflow-hidden rounded-xl border border-border bg-surface-1 shadow-xl shadow-black/20 animate-scale-in">
-                  <div className="border-b border-border px-4 py-3">
-                    <p className="truncate text-[13px] font-medium text-foreground">{profile.name}</p>
-                    <p className="truncate text-[11.5px] text-muted-foreground">{profile.email}</p>
+                <div className="absolute right-0 top-[calc(100%+6px)] z-50 w-64 overflow-hidden rounded-xl border border-border bg-surface-1 shadow-xl shadow-black/20 animate-scale-in">
+                  <div className="border-b border-border px-4 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-sm font-bold text-primary">
+                        {initial}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[13px] font-semibold text-foreground">{profile.name}</p>
+                        <p className="truncate text-[11.5px] text-muted-foreground">{profile.email}</p>
+                        <span className="mt-1 inline-block rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-primary">
+                          {profile.role === 'admin' ? 'Administrador' : 'Operador'}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                   <div className="p-1.5">
                     <button

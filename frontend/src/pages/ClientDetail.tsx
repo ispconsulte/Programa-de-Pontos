@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, ShieldAlert, Users } from 'lucide-react'
+import { ArrowLeft, ShieldAlert, Users, Mail, Phone, FileText, Hash, Briefcase, Coins, Gift, TrendingUp } from 'lucide-react'
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import PageHeader from '@/components/PageHeader'
@@ -30,11 +30,32 @@ function formatBRL(value: number | null | undefined): string {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function InfoField({ icon: Icon, label, children }: { icon: React.ElementType; label: string; children: React.ReactNode }) {
   return (
-    <div className="space-y-1">
-      <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
-      <div className="text-sm text-foreground">{children || '-'}</div>
+    <div className="flex items-start gap-3 rounded-lg border border-border/50 bg-card p-3">
+      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-muted">
+        <Icon className="h-4 w-4 text-muted-foreground" />
+      </div>
+      <div className="min-w-0">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
+        <div className="mt-0.5 truncate text-sm text-foreground">{children || '-'}</div>
+      </div>
+    </div>
+  )
+}
+
+function PointCard({ label, value, icon: Icon, color }: { label: string; value: number; icon: React.ElementType; color: string }) {
+  return (
+    <div className={`relative overflow-hidden rounded-xl border p-4 ${color}`}>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
+          <p className="mt-1 text-3xl font-bold text-foreground">{value.toLocaleString('pt-BR')}</p>
+        </div>
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-foreground/[0.05]">
+          <Icon className="h-5 w-5 text-foreground/50" />
+        </div>
+      </div>
     </div>
   )
 }
@@ -101,47 +122,36 @@ export default function ClientDetailPage() {
                 actions={statusBadge(client.status)}
               />
 
-              <div className="grid gap-5 lg:grid-cols-2">
-                <Card>
-                  <CardHeader><CardTitle>Informações</CardTitle></CardHeader>
-                  <CardContent>
-                    <div className="grid gap-5 sm:grid-cols-2">
-                      <Field label="Nome">{client.nome_cliente}</Field>
-                      <Field label="Email">{client.email || '-'}</Field>
-                      <Field label="Telefone">{client.telefone || '-'}</Field>
-                      <Field label="CPF/CNPJ">{client.documento || '-'}</Field>
-                      <Field label="ID IXC">{client.ixc_cliente_id}</Field>
-                      <Field label="Contrato IXC">{client.ixc_contrato_id || '-'}</Field>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader><CardTitle>Pontuação</CardTitle></CardHeader>
-                  <CardContent>
-                    <div className="grid gap-5 sm:grid-cols-3">
-                      <Field label="Acumulados">
-                        <span className="text-2xl font-bold text-emerald-400">{client.pontos_acumulados}</span>
-                      </Field>
-                      <Field label="Resgatados">
-                        <span className="text-2xl font-bold text-amber-400">{client.pontos_resgatados}</span>
-                      </Field>
-                      <Field label="Disponíveis">
-                        <span className="text-2xl font-bold text-primary">{client.pontos_disponiveis ?? 0}</span>
-                      </Field>
-                    </div>
-                    <div className="mt-5 grid gap-5 sm:grid-cols-2">
-                      <Field label="Status">{statusBadge(client.status)}</Field>
-                      <Field label="Faturas processadas">
-                        <span className="text-lg font-bold">{faturas.length}</span>
-                      </Field>
-                    </div>
-                  </CardContent>
-                </Card>
+              {/* Points summary */}
+              <div className="grid gap-4 sm:grid-cols-3">
+                <PointCard label="Acumulados" value={client.pontos_acumulados} icon={TrendingUp} color="border-emerald-500/20 bg-emerald-500/[0.04]" />
+                <PointCard label="Resgatados" value={client.pontos_resgatados} icon={Gift} color="border-amber-500/20 bg-amber-500/[0.04]" />
+                <PointCard label="Disponíveis" value={client.pontos_disponiveis ?? 0} icon={Coins} color="border-primary/20 bg-primary/[0.04]" />
               </div>
 
+              {/* Client info */}
               <Card>
-                <CardHeader><CardTitle>Faturas processadas</CardTitle></CardHeader>
+                <CardHeader><CardTitle>Informações do cliente</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    <InfoField icon={Users} label="Nome">{client.nome_cliente}</InfoField>
+                    <InfoField icon={Mail} label="E-mail">{client.email || '-'}</InfoField>
+                    <InfoField icon={Phone} label="Telefone">{client.telefone || '-'}</InfoField>
+                    <InfoField icon={FileText} label="CPF/CNPJ">{client.documento || '-'}</InfoField>
+                    <InfoField icon={Hash} label="ID IXC">{client.ixc_cliente_id}</InfoField>
+                    <InfoField icon={Briefcase} label="Contrato IXC">{client.ixc_contrato_id || '-'}</InfoField>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Faturas */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Faturas processadas</CardTitle>
+                    <span className="rounded-lg bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">{faturas.length}</span>
+                  </div>
+                </CardHeader>
                 <CardContent className="p-0">
                   {faturas.length === 0 ? (
                     <div className="py-16 text-center">
@@ -157,7 +167,7 @@ export default function ClientDetailPage() {
                           <TableHead>Pagamento</TableHead>
                           <TableHead className="text-right">Valor</TableHead>
                           <TableHead className="text-right">Pontos</TableHead>
-                          <TableHead>Status</TableHead>
+                          <TableHead className="text-center">Status</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -169,7 +179,7 @@ export default function ClientDetailPage() {
                             <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(fatura.data_pagamento)}</TableCell>
                             <TableCell className="text-right text-emerald-400">{formatBRL(fatura.valor_pago)}</TableCell>
                             <TableCell className="text-right font-semibold text-emerald-400">+{fatura.pontos_gerados}</TableCell>
-                            <TableCell>{statusBadge(fatura.status_processamento)}</TableCell>
+                            <TableCell className="text-center">{statusBadge(fatura.status_processamento)}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
