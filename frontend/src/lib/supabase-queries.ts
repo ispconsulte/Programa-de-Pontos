@@ -236,6 +236,39 @@ export async function fetchCampaignClientFaturas(
   return (data ?? []) as unknown as ReceivableRow[]
 }
 
+/** Fetch a campaign client by their IXC client ID (not the internal UUID) */
+export async function fetchCampaignClientByIxcClienteId(
+  tenantId: string,
+  ixcClienteId: string
+): Promise<CampaignClientRow | null> {
+  const { data, error } = await (supabase as any)
+    .from('pontuacao_campanha_clientes')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .eq('ixc_cliente_id', ixcClienteId)
+    .maybeSingle()
+
+  if (error) throw new Error(error.message)
+  return data as CampaignClientRow | null
+}
+
+/** Fetch recent paid invoices for a given ixc_cliente_id */
+export async function fetchRecentFaturasByIxcClienteId(
+  tenantId: string,
+  ixcClienteId: string
+): Promise<ReceivableRow[]> {
+  const { data, error } = await (supabase as any)
+    .from('pontuacao_faturas_processadas')
+    .select('id, fatura_id, ixc_contrato_id, competencia, data_pagamento, valor_pago, pontos_gerados, status_processamento, created_at, campanha_cliente_id')
+    .eq('tenant_id', tenantId)
+    .eq('ixc_cliente_id', ixcClienteId)
+    .order('data_pagamento', { ascending: false })
+    .limit(10)
+
+  if (error) throw new Error(error.message)
+  return (data ?? []) as unknown as ReceivableRow[]
+}
+
 export interface RedemptionRow {
   id: string
   brinde_nome: string
