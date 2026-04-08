@@ -256,24 +256,6 @@ export default function SuportePage() {
           subtitle="Guia rápido e prático — direto ao ponto"
         />
 
-        {/* Quick reference */}
-        <div className="mb-6 rounded-xl border border-border bg-gradient-to-r from-primary/[0.06] to-transparent p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Zap className="h-4 w-4 text-primary" />
-            <span className="text-xs font-bold uppercase tracking-wider text-primary">Atalho rápido — O que você quer fazer?</span>
-          </div>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            {quickRef.map((item) => (
-              <div key={item.label} className="flex items-center gap-2.5 rounded-lg bg-card/60 border border-border/50 px-3 py-2.5">
-                <span className="text-lg">{item.emoji}</span>
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold text-foreground">{item.label}</p>
-                  <p className="text-[10px] text-muted-foreground">Vá em: {item.where}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
 
         {/* Search */}
         <div className="mb-5">
