@@ -71,8 +71,10 @@ export default function AnimatedGiftBox({ size = 96, className = '' }: { size?: 
   const lidH = s * 0.16
   const ribbonW = s * 0.07
 
+  const compact = s < 48
+
   return (
-    <div className={`relative ${className}`} style={{ width: s, height: s }}>
+    <div className={`relative ${className}`} style={{ width: s, height: s, overflow: compact ? 'hidden' : 'visible' }}>
       {/* Confetti */}
       {confetti.map(c => {
         const w = c.shape === 2 ? c.size * 2 : c.shape === 3 ? c.size * 1.2 : c.size
