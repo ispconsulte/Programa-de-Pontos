@@ -7,23 +7,26 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import logoPrincipal from '@/assets/logo-principal.png'
 
-/* ── Floating reward particles ── */
+/* ── Floating reward particles (enhanced) ── */
 function RewardParticles() {
   const particles = useMemo(() =>
-    Array.from({ length: 18 }, (_, i) => ({
+    Array.from({ length: 30 }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
       y: Math.random() * 100,
-      size: 2 + Math.random() * 4,
-      delay: Math.random() * 6,
-      duration: 12 + Math.random() * 10,
-      color: i % 4 === 0
-        ? 'hsl(45 90% 55% / 0.25)'
-        : i % 4 === 1
-          ? 'hsl(217 91% 60% / 0.18)'
-          : i % 4 === 2
-            ? 'hsl(30 70% 50% / 0.15)'
-            : 'hsl(0 75% 55% / 0.12)',
+      size: 1.5 + Math.random() * 3.5,
+      delay: Math.random() * 8,
+      duration: 14 + Math.random() * 14,
+      driftX: -20 + Math.random() * 40,
+      color: i % 5 === 0
+        ? 'hsl(45 90% 55% / 0.22)'
+        : i % 5 === 1
+          ? 'hsl(217 91% 60% / 0.16)'
+          : i % 5 === 2
+            ? 'hsl(30 70% 50% / 0.14)'
+            : i % 5 === 3
+              ? 'hsl(160 60% 45% / 0.12)'
+              : 'hsl(0 75% 55% / 0.10)',
     })), [])
 
   return (
@@ -38,8 +41,49 @@ function RewardParticles() {
             width: p.size,
             height: p.size,
             background: p.color,
-            boxShadow: `0 0 ${p.size * 5}px ${p.color}`,
+            boxShadow: `0 0 ${p.size * 6}px ${p.color}`,
             animation: `loginFloat ${p.duration}s ease-in-out ${p.delay}s infinite`,
+            '--drift-x': `${p.driftX}px`,
+          } as React.CSSProperties}
+        />
+      ))}
+    </div>
+  )
+}
+
+/* ── Animated aurora background ── */
+function AuroraBackground() {
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      {/* Aurora wave 1 */}
+      <div
+        className="absolute -left-[30%] top-[10%] h-[60%] w-[160%] rounded-[50%] opacity-[0.04]"
+        style={{
+          background: 'linear-gradient(90deg, transparent 0%, hsl(217 91% 60%) 25%, hsl(45 90% 55%) 50%, hsl(160 60% 45%) 75%, transparent 100%)',
+          filter: 'blur(80px)',
+          animation: 'auroraWave1 18s ease-in-out infinite',
+        }}
+      />
+      {/* Aurora wave 2 */}
+      <div
+        className="absolute -right-[20%] top-[35%] h-[50%] w-[140%] rounded-[50%] opacity-[0.03]"
+        style={{
+          background: 'linear-gradient(90deg, transparent 0%, hsl(0 75% 55%) 20%, hsl(45 90% 55%) 50%, hsl(217 91% 60%) 80%, transparent 100%)',
+          filter: 'blur(100px)',
+          animation: 'auroraWave2 22s ease-in-out 4s infinite',
+        }}
+      />
+      {/* Coin shimmer lines */}
+      {[0, 1, 2].map(i => (
+        <div
+          key={i}
+          className="absolute h-px opacity-[0.06]"
+          style={{
+            top: `${25 + i * 22}%`,
+            left: '-10%',
+            width: '120%',
+            background: `linear-gradient(90deg, transparent 0%, hsl(45 90% 55% / 0.4) ${30 + i * 10}%, transparent ${60 + i * 5}%)`,
+            animation: `shimmerLine ${8 + i * 3}s ease-in-out ${i * 2.5}s infinite`,
           }}
         />
       ))}
