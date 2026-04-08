@@ -227,13 +227,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Reward info cards */}
-          <div className="flex flex-col items-center gap-3">
-            {rewardCards.map((card, i) => (
-              <RewardInfoCard key={card.label} {...card} delay={450 + i * 120} mounted={mounted} />
-            ))}
-            <RotatingMessageCard mounted={mounted} />
-          </div>
+          <RotatingMessageCard mounted={mounted} />
         </div>
 
         {/* ── RIGHT: Login Form (60%) ── */}
