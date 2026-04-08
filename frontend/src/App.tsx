@@ -4,7 +4,7 @@ import LoginPage from './pages/Login'
 import RegisterPage from './pages/Register'
 
 import DashboardPage from './pages/Dashboard'
-import ClientsPage from './pages/Clients'
+// ClientsPage merged into Dashboard/Operação
 import ClientDetailPage from './pages/ClientDetail'
 import ReceivablesPage from './pages/Receivables'
 import ReceivableDetailPage from './pages/ReceivableDetail'
