@@ -118,11 +118,10 @@ function RotatingMessageCard({ mounted }: { mounted: boolean }) {
 
   return (
     <div
-      className="w-[400px]"
+      className="w-full max-w-[400px] px-2 sm:px-0"
       style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(8px)', transition: 'all 700ms ease 850ms' }}
     >
-      <div className="relative flex h-[60px] items-center justify-center overflow-hidden rounded-2xl border border-primary/[0.08] bg-gradient-to-br from-[hsl(225_30%_10%_/_0.7)] to-[hsl(225_25%_7%_/_0.6)] px-6 backdrop-blur-2xl shadow-[0_8px_32px_-8px_rgba(0,0,0,0.4)]">
-        {/* Subtle top accent */}
+      <div className="relative flex min-h-[68px] items-center justify-center overflow-hidden rounded-2xl border border-primary/[0.08] bg-gradient-to-br from-[hsl(225_30%_10%_/_0.7)] to-[hsl(225_25%_7%_/_0.6)] px-5 py-3 backdrop-blur-2xl shadow-[0_8px_32px_-8px_rgba(0,0,0,0.4)] sm:px-6">
         <div className="pointer-events-none absolute -top-px left-[12%] right-[12%] h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
         <p
           className="text-center text-[13px] font-medium leading-snug text-foreground/80 transition-opacity duration-500"
