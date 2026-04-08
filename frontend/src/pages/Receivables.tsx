@@ -361,7 +361,7 @@ export default function ReceivablesPage() {
                                 <p className="mt-1 text-xs text-muted-foreground">IXC #{formatText(item.id_cliente)}</p>
                               </div>
                             </TableCell>
-                            <TableCell className="font-mono text-xs text-foreground">{item.id.slice(0, 8)}…</TableCell>
+                            <TableCell className="font-mono text-xs text-foreground min-w-[10rem]">{item.id.slice(0, 10)}…</TableCell>
                             <TableCell className="text-muted-foreground">{getPaymentBehaviorLabel(item)}</TableCell>
                             <TableCell className="text-right font-semibold text-emerald-400">+{getPaymentScore(item)}</TableCell>
                             <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(item.data_vencimento)}</TableCell>
