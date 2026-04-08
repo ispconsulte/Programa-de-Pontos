@@ -96,13 +96,13 @@ export default function ClientsPage() {
                 <CardContent className="p-4">
                   <div className="flex gap-3">
                     <div className="relative flex-1">
-                      <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/40" />
+                      <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         type="text"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         placeholder={SEARCH_TYPES.find((type) => type.value === searchType)?.placeholder}
-                        className="pl-10 h-11"
+                        className="h-11 pl-10 placeholder:text-muted-foreground"
                       />
                     </div>
                     <Button type="submit" disabled={loading || !query.trim()} className="h-11 px-5">

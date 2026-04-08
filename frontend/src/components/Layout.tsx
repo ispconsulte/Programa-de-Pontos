@@ -134,8 +134,8 @@ function SidebarItem({
         className={cn(
           'group flex items-center justify-center rounded-xl p-2.5 transition-all duration-200',
           active
-            ? 'bg-primary/10 text-primary'
-            : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+            ? 'bg-primary/12 text-primary shadow-sm'
+            : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'
         )}
       >
         <Icon className="h-[18px] w-[18px] flex-shrink-0" />
@@ -152,15 +152,15 @@ function SidebarItem({
           className={cn(
             'group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all duration-200',
             active
-              ? 'bg-primary/10 text-primary'
-              : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+              ? 'bg-primary/12 text-primary shadow-sm'
+              : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'
           )}
         >
           <Icon className="h-[18px] w-[18px] flex-shrink-0" />
           <span className="flex-1 text-[13px] font-medium">{item.label}</span>
           <ChevronDown
             className={cn(
-              'h-3.5 w-3.5 text-muted-foreground/50 transition-transform duration-200',
+              'h-3.5 w-3.5 text-muted-foreground transition-transform duration-200',
               open && 'rotate-180'
             )}
           />
@@ -168,7 +168,7 @@ function SidebarItem({
 
         <div
           className={cn(
-            'ml-[18px] mt-0.5 space-y-0.5 border-l border-border/50 pl-3.5 transition-all duration-200 overflow-hidden',
+            'ml-[18px] mt-0.5 space-y-0.5 overflow-hidden border-l border-border pl-3.5 transition-all duration-200',
             open ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
           )}
         >
@@ -182,8 +182,8 @@ function SidebarItem({
                 className={cn(
                   'block rounded-lg px-3 py-2 text-[12.5px] font-medium transition-all duration-150',
                   childActive
-                    ? 'text-primary bg-primary/5'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
                 )}
               >
                 {child.label}
@@ -205,8 +205,8 @@ function SidebarItem({
         'group flex items-center rounded-xl transition-all duration-200',
         collapsed ? 'justify-center p-2.5' : 'gap-3 px-3 py-2.5',
         isActive
-          ? 'bg-primary/10 text-primary'
-          : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+          ? 'bg-primary/12 text-primary shadow-sm'
+          : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'
       )}
     >
       <Icon className="h-[18px] w-[18px] flex-shrink-0" />
@@ -417,12 +417,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <div key={section.label || si}>
                 {/* Section label */}
                 {section.label && !collapsed && (
-                  <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/60">
+                  <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                     {section.label}
                   </p>
                 )}
                 {section.label && collapsed && (
-                  <div className="mb-2 mx-auto h-px w-5 bg-border/40" />
+                  <div className="mx-auto mb-2 h-px w-5 bg-border" />
                 )}
 
                 <div className="space-y-0.5">
@@ -459,13 +459,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* ── Main area ── */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {/* Header */}
-        <header className="sticky top-0 z-30 flex h-16 flex-shrink-0 items-center gap-3 border-b border-border bg-surface-1/80 backdrop-blur-xl px-4 lg:px-5">
+        <header className="sticky top-0 z-30 flex h-16 flex-shrink-0 items-center gap-3 border-b border-border bg-surface-1/90 backdrop-blur-xl px-4 lg:px-5">
           {/* Left: toggle + title */}
           <div className="flex items-center gap-2">
             {/* Desktop collapse toggle */}
             <button
               onClick={toggleCollapse}
-              className="hidden lg:flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+              className="hidden lg:flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
               title={collapsed ? 'Expandir menu' : 'Recolher menu'}
             >
               {collapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
@@ -481,8 +481,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
             {/* Desktop: user/org name */}
             <div className="hidden lg:flex items-center gap-2">
-              <User className="h-4 w-4 text-muted-foreground/50" />
-              <span className="text-[13px] font-medium text-foreground/90">{profile.name}</span>
+              <User className="h-4 w-4 text-muted-foreground" />
+              <span className="text-[13px] font-medium text-foreground">{profile.name}</span>
             </div>
 
             {/* Mobile: page title */}
@@ -497,19 +497,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <select
                 value={headerSearchType}
                 onChange={(e) => setHeaderSearchType(e.target.value as DashboardSearchType)}
-                className="h-9 rounded-lg border border-border bg-surface-2 px-2.5 text-[11px] text-muted-foreground outline-none transition-colors focus:border-primary/40"
+                className="h-9 rounded-lg border border-border bg-surface-2 px-2.5 text-[11px] text-foreground outline-none transition-colors focus:border-primary/50"
               >
                 <option value="name">Nome</option>
                 <option value="cpfCnpj">CPF/CNPJ</option>
                 <option value="id">ID</option>
               </select>
-              <label className="flex flex-1 items-center gap-2 rounded-lg border border-border bg-surface-2 px-3 py-[7px] transition-colors focus-within:border-primary/30 focus-within:bg-surface-3">
-                <Search className="h-3.5 w-3.5 text-muted-foreground/40" />
+              <label className="flex flex-1 items-center gap-2 rounded-lg border border-border bg-surface-2 px-3 py-[7px] transition-colors focus-within:border-primary/50 focus-within:bg-surface-3">
+                <Search className="h-3.5 w-3.5 text-muted-foreground" />
                 <input
                   value={headerSearchValue}
                   onChange={(e) => setHeaderSearchValue(e.target.value)}
                   placeholder="Buscar clientes"
-                  className="w-full bg-transparent text-[12.5px] text-foreground outline-none placeholder:text-muted-foreground/50"
+                  className="w-full bg-transparent text-[12.5px] text-foreground outline-none placeholder:text-muted-foreground"
                 />
               </label>
             </div>
