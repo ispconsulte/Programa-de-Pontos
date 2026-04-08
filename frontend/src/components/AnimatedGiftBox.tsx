@@ -89,7 +89,7 @@ export default function AnimatedGiftBox({ size = 96, className = '' }: { size?: 
                 animation: `confettiBurst 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) ${c.delay}ms forwards`,
                 '--conf-tx': `${c.tx}px`,
                 '--conf-ty': `${c.ty}px`,
-                '--conf-ty2': `${c.ty + 40}px`,
+                '--conf-ty2': `${c.ty + 50}px`,
                 '--conf-rot': `${c.rot}deg`,
                 '--conf-rot2': `${c.rot + 180}deg`,
               } as React.CSSProperties : {}),
