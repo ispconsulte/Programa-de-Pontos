@@ -160,7 +160,12 @@ export default function ReceivablesPage() {
         dateTo: appliedFilters.dateTo || undefined,
       })
 
-      setReceivables(result.data.map(toShape))
+      // Fetch client names in parallel
+      const ixcIds = result.data.map(r => r.ixc_cliente_id)
+      const nameMap = await fetchClientNamesByIxcIds(tenantId, ixcIds)
+      setClientNameMap(nameMap)
+
+      setReceivables(result.data.map(r => toShape(r, nameMap)))
       setTotal(result.total)
       setTotalPages(result.totalPages)
     } catch (err) {
