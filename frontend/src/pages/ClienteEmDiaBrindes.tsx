@@ -214,14 +214,10 @@ export default function ClienteEmDiaBrindesPage() {
                               alt={reward.nome}
                               className="h-full w-full object-contain p-2"
                               loading="lazy"
-                              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden') }}
                             />
-                          ) : null}
-                          <div className={`flex flex-col items-center justify-center gap-1 ${reward.imagemUrl ? 'hidden' : ''} ${tier.text}`}>
-                            {tierIcon(reward.pontosNecessarios)}
-                            <ImageIcon className="h-3 w-3 opacity-40" />
-                            <span className="text-[9px] uppercase tracking-wider opacity-50">Sem imagem</span>
-                          </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground/50 uppercase tracking-wider">Sem imagem</span>
+                          )}
                         </div>
 
                         {/* Info */}
