@@ -292,14 +292,24 @@ export default function DashboardPage() {
                 {/* Mobile list */}
                 <div className="divide-y divide-border md:hidden">
                   {rows.map((item) => (
-                    <Link key={item.id} to={`/receivables/${item.id}`} className="block px-5 py-3.5 transition-colors hover:bg-muted">
-                      <div className="flex items-center justify-between">
-                        <p className="truncate text-sm font-medium text-foreground">{item.cliente_nome?.trim() || `#${item.ixc_cliente_id}`}</p>
-                        <span className="ml-2 text-xs font-semibold text-[hsl(var(--success))]">+{formatPoints(item.pontos_gerados)}</span>
+                    <Link
+                      key={item.id}
+                      to={`/receivables/${item.id}`}
+                      className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-muted/60"
+                    >
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                        {(item.cliente_nome?.trim()?.[0] || '#').toUpperCase()}
                       </div>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {classificationLabel(item.classificacao)} · {formatDate(item.data_pagamento)}
-                      </p>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-foreground">{item.cliente_nome?.trim() || `#${item.ixc_cliente_id}`}</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {classificationLabel(item.classificacao)} · {formatDate(item.data_pagamento)}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-[hsl(var(--success))]">+{formatPoints(item.pontos_gerados)}</p>
+                        <p className="text-[10px] text-muted-foreground">{formatBRL(Number(item.valor_pago ?? 0))}</p>
+                      </div>
                     </Link>
                   ))}
                 </div>
@@ -308,28 +318,37 @@ export default function DashboardPage() {
                 <div className="table-responsive hidden md:block">
                   <table className="w-full min-w-[48rem] text-sm">
                     <thead>
-                      <tr className="border-b border-border">
-                        <th className="px-5 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Cliente</th>
-                        <th className="px-3 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Classificação</th>
-                        <th className="px-3 py-3 text-center text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Pontos</th>
-                        <th className="px-3 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Vencimento</th>
-                        <th className="px-3 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Pago em</th>
-                        <th className="px-3 py-3 text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Valor</th>
+                      <tr className="border-b border-border bg-muted/30">
+                        <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Cliente</th>
+                        <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Classificação</th>
+                        <th className="px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Pontos</th>
+                        <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Vencimento</th>
+                        <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Pago em</th>
+                        <th className="px-3 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Valor</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
                       {rows.map((item) => (
-                        <tr key={item.id} className="transition-colors hover:bg-muted">
-                          <td className="px-5 py-3">
-                            <Link to={`/receivables/${item.id}`} className="font-medium text-foreground hover:text-primary">
-                              {item.cliente_nome?.trim() || `#${item.ixc_cliente_id}`}
+                        <tr key={item.id} className="group transition-colors hover:bg-muted/40">
+                          <td className="px-5 py-3.5">
+                            <Link to={`/receivables/${item.id}`} className="flex items-center gap-3">
+                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">
+                                {(item.cliente_nome?.trim()?.[0] || '#').toUpperCase()}
+                              </div>
+                              <span className="font-medium text-foreground group-hover:text-primary transition-colors">
+                                {item.cliente_nome?.trim() || `#${item.ixc_cliente_id}`}
+                              </span>
                             </Link>
                           </td>
-                          <td className="px-3 py-3">{categoryBadge(item.classificacao)}</td>
-                          <td className="px-3 py-3 text-center font-semibold text-[hsl(var(--success))]">+{formatPoints(item.pontos_gerados)}</td>
-                          <td className="px-3 py-3 text-muted-foreground">{formatDate(item.data_vencimento)}</td>
-                          <td className="px-3 py-3 text-muted-foreground">{formatDate(item.data_pagamento)}</td>
-                          <td className="px-3 py-3 text-right text-muted-foreground">{formatBRL(Number(item.valor_pago ?? 0))}</td>
+                          <td className="px-3 py-3.5">{categoryBadge(item.classificacao)}</td>
+                          <td className="px-3 py-3.5 text-center">
+                            <span className="inline-flex items-center rounded-md bg-[hsl(var(--success)/0.1)] px-2 py-0.5 text-xs font-bold text-[hsl(var(--success))]">
+                              +{formatPoints(item.pontos_gerados)}
+                            </span>
+                          </td>
+                          <td className="px-3 py-3.5 text-muted-foreground">{formatDate(item.data_vencimento)}</td>
+                          <td className="px-3 py-3.5 text-muted-foreground">{formatDate(item.data_pagamento)}</td>
+                          <td className="px-3 py-3.5 text-right font-medium text-foreground">{formatBRL(Number(item.valor_pago ?? 0))}</td>
                         </tr>
                       ))}
                     </tbody>
