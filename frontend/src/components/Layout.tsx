@@ -315,9 +315,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           {!collapsed && (
             <div className="text-center -mt-0.5">
               <span className="text-[13px] font-semibold tracking-wide bg-gradient-to-r from-emerald-400 via-yellow-400 to-blue-400 bg-clip-text text-transparent">
-                Recompensas
+                Sistema de Recompensas
               </span>
-              <p className="text-[10px] text-muted-foreground mt-0.5 truncate max-w-[10rem]">{tenantName}</p>
             </div>
           )}
 
