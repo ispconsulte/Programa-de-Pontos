@@ -206,7 +206,7 @@ export default function ReceivablesPage() {
     receivables.filter((item) => {
       const term = search.trim().toLowerCase()
       if (!term) return true
-      return [item.cliente_nome, item.id_cliente, item.id, getPaymentBehaviorLabel(item)]
+      return [item.cliente_nome, item.id_cliente, item.id, getBehaviorLabelFromPoints(item.pontos_gerados)]
         .map((v) => String(v ?? '').toLowerCase())
         .some((v) => v.includes(term))
     }),
