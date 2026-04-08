@@ -105,7 +105,7 @@
     --accent-foreground: 0 0% 100%;
     --destructive: 0 78% 45%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 16% 78%;
+    --border: 220 16% 72%;
     --input: 220 20% 84%;
     --ring: 214 92% 45%;
     --success: 160 60% 36%;
@@ -114,15 +114,15 @@
     --warning-foreground: 0 0% 100%;
     --info: 214 92% 45%;
     --info-foreground: 0 0% 100%;
-    --sidebar: 220 20% 97%;
+    --sidebar: 220 20% 94%;
     --sidebar-active: 214 100% 94%;
-    --sidebar-border: 220 18% 82%;
+    --sidebar-border: 220 18% 76%;
     --surface-1: 0 0% 100%;
-    --surface-2: 220 26% 96%;
+    --surface-2: 220 26% 93%;
     --surface-3: 220 20% 91%;
     --scrollbar-thumb: hsla(220, 10%, 40%, 0.22);
     --scrollbar-thumb-hover: hsla(220, 10%, 40%, 0.34);
-    --elevation-1: 0 10px 30px -20px rgba(15, 23, 42, 0.18);
+    --elevation-1: 0 4px 12px -4px rgba(15, 23, 42, 0.12);
     --elevation-2: 0 24px 60px -28px rgba(15, 23, 42, 0.2);
     --overlay: rgba(15, 23, 42, 0.22);
   }
