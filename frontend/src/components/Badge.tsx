@@ -16,11 +16,11 @@ const variantClasses: Record<BadgeVariant, string> = {
   gray: 'border-[hsl(var(--border))] bg-[hsl(var(--surface-3))] text-muted-foreground',
 }
 
-export default function Badge({ variant, label }: BadgeProps) {
+export default function Badge({ variant, label, className }: BadgeProps & { className?: string }) {
   return (
     <ShadcnBadge
       variant="outline"
-      className={cn('rounded-md px-2.5 py-0.5 text-[11px] font-medium', variantClasses[variant])}
+      className={cn('rounded-md px-2.5 py-0.5 text-[11px] font-medium', variantClasses[variant], className)}
     >
       {label}
     </ShadcnBadge>
@@ -28,29 +28,33 @@ export default function Badge({ variant, label }: BadgeProps) {
 }
 
 export function categoryBadge(category: string) {
+  const badgeClass = 'min-w-[6.5rem] justify-center text-center'
   switch (category?.toLowerCase()) {
+    case 'antecipado':
     case 'pagamento antecipado':
-      return <Badge variant="green" label="Pagamento antecipado" />
+      return <Badge variant="green" label="antecipado" className={badgeClass} />
+    case 'vencimento':
     case 'pagamento no vencimento':
-      return <Badge variant="blue" label="Pagamento no vencimento" />
+      return <Badge variant="blue" label="no vencimento" className={badgeClass} />
+    case 'atraso':
     case 'pagamento após o vencimento':
     case 'pagamento apos o vencimento':
-      return <Badge variant="yellow" label="Pagamento após o vencimento" />
+      return <Badge variant="red" label="atraso" className={badgeClass} />
     case 'received':
     case 'recebido':
-      return <Badge variant="green" label="Recebido" />
+      return <Badge variant="green" label="Recebido" className={badgeClass} />
     case 'renegotiated':
     case 'renegociado':
-      return <Badge variant="yellow" label="Renegociado" />
+      return <Badge variant="yellow" label="Renegociado" className={badgeClass} />
     case 'open':
     case 'em aberto':
     case 'aberto':
-      return <Badge variant="blue" label="Em aberto" />
+      return <Badge variant="blue" label="Em aberto" className={badgeClass} />
     case 'cancelled':
     case 'cancelado':
-      return <Badge variant="red" label="Cancelado" />
+      return <Badge variant="red" label="Cancelado" className={badgeClass} />
     default:
-      return <Badge variant="gray" label={category || 'Não encontrado'} />
+      return <Badge variant="gray" label={category || 'Não encontrado'} className={badgeClass} />
   }
 }
 
