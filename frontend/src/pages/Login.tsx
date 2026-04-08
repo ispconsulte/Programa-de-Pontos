@@ -227,7 +227,7 @@ export default function LoginPage() {
               <img
                 src={logoPrincipal}
                 alt="Bonifica - Plataforma de Recompensas"
-                className="relative w-[200px] object-contain lg:w-[260px]"
+                className="relative w-[280px] object-contain lg:w-[340px] xl:w-[380px]"
                 style={{
                   filter: 'drop-shadow(0 16px 32px hsl(0 0% 0% / 0.35)) drop-shadow(0 0 20px hsl(0 75% 50% / 0.1))',
                   animation: mounted ? 'loginHero3DFloat 6s ease-in-out infinite' : 'none',
