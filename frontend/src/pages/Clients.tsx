@@ -190,7 +190,7 @@ export default function ClientsPage() {
                               <TableCell className="text-muted-foreground">{client.email || '—'}</TableCell>
                               <TableCell className="text-muted-foreground">{client.telefone || '—'}</TableCell>
                               <TableCell className="text-right font-semibold text-emerald-400">{client.pontos_disponiveis ?? 0}</TableCell>
-                              <TableCell>{statusBadge(getClientStatus(client))}</TableCell>
+                              <TableCell className="text-center">{statusBadge(getClientStatus(client))}</TableCell>
                               <TableCell className="text-right">
                                 <Link to={`/clients/${client.id}`} className="text-sm text-primary transition-colors hover:text-primary/80">Ver perfil</Link>
                               </TableCell>
