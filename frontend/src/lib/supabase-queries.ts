@@ -177,6 +177,34 @@ export async function searchCampaignClients(opts: {
   return (data ?? []) as CampaignClientRow[]
 }
 
+/** Autocomplete: returns up to 10 matching clients for quick suggestions */
+export async function autocompleteCampaignClients(opts: {
+  tenantId: string
+  query: string
+}): Promise<CampaignClientRow[]> {
+  const { tenantId, query } = opts
+  const trimmed = query.trim()
+  if (!trimmed || trimmed.length < 2) return []
+
+  const isNumeric = /^\d+$/.test(trimmed.replace(/[.\-\/]/g, ''))
+
+  let q = (supabase as any)
+    .from('pontuacao_campanha_clientes')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .limit(10)
+
+  if (isNumeric) {
+    q = q.ilike('documento', `%${trimmed.replace(/\D/g, '')}%`)
+  } else {
+    q = q.ilike('nome_cliente', `%${trimmed}%`)
+  }
+
+  const { data, error } = await q
+  if (error) throw new Error(error.message)
+  return (data ?? []) as CampaignClientRow[]
+}
+
 export async function fetchCampaignClientById(
   tenantId: string,
   id: string
