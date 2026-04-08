@@ -46,10 +46,6 @@ import {
   type RedemptionRow,
 } from '@/lib/supabase-queries'
 
-/* ── Types ────────────────────────────────────────────────────────────── */
-
-type Classification = 'antecipado' | 'vencimento' | 'atraso' | 'indefinido'
-
 /* ── Helpers ──────────────────────────────────────────────────────────── */
 
 function formatPoints(value: number): string { return value.toLocaleString('pt-BR') }
@@ -76,26 +72,6 @@ function toLocalDate(value?: string | null): Date | null {
   return new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]))
 }
 
-function getDeltaVencimento(pagamento: string | null, vencimento: string | null): number | null {
-  const p = toLocalDate(pagamento), d = toLocalDate(vencimento)
-  if (!p || !d) return null
-  return Math.round((d.getTime() - p.getTime()) / 86_400_000)
-}
-
-function classifyByDates(delta: number | null): Classification {
-  if (delta === null) return 'indefinido'
-  if (delta > 0) return 'antecipado'
-  if (delta === 0) return 'vencimento'
-  return 'atraso'
-}
-
-function classificationLabel(v: Classification): string {
-  if (v === 'antecipado') return 'Antecipado'
-  if (v === 'vencimento') return 'No vencimento'
-  if (v === 'atraso') return 'Após vencimento'
-  return '—'
-}
-
 function monthDateRange() {
   const now = new Date()
   const first = new Date(now.getFullYear(), now.getMonth(), 1)
@@ -110,13 +86,6 @@ const avatarColors = [
 ]
 function avatarColor(name: string): string {
   return avatarColors[(name || '#').charCodeAt(0) % avatarColors.length]
-}
-
-function classificationAccent(c: Classification): string {
-  if (c === 'antecipado') return 'border-l-emerald-500'
-  if (c === 'atraso') return 'border-l-rose-500'
-  if (c === 'vencimento') return 'border-l-sky-500'
-  return 'border-l-transparent'
 }
 
 /* ── Autocomplete hook ────────────────────────────────────────────────── */
