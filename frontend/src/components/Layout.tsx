@@ -227,13 +227,33 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       clearCurrentUserProfileCache()
       clearCurrentTenantIdCache()
       setTenantName('Empresa')
-      const user = session?.user
-      const m = user?.user_metadata ?? {}
-      setProfile({
-        name: String(m.full_name || m.name || m.display_name || user?.email?.split('@')[0] || 'Usuário'),
-        email: user?.email || 'Sem e-mail',
-        role: 'operator',
-      })
+      if (!session?.user) {
+        setProfile({ name: 'Usuário', email: 'Sem e-mail', role: 'operator' })
+        return
+      }
+      // Re-fetch real profile (including role from DB)
+      fetchCurrentUserProfile()
+        .then((currentUser) => {
+          if (!mounted) return
+          setProfile({ name: currentUser.name, email: currentUser.email, role: currentUser.role })
+          getCurrentTenantId().then((tid) => {
+            if (!mounted || !tid) return
+            fetchTenantSettings(tid).then((t) => {
+              if (!mounted || !t?.name) return
+              setTenantName(t.name)
+            }).catch(() => {})
+          }).catch(() => {})
+        })
+        .catch(() => {
+          const user = session.user
+          const m = user?.user_metadata ?? {}
+          if (!mounted) return
+          setProfile({
+            name: String(m.full_name || m.name || m.display_name || user?.email?.split('@')[0] || 'Usuário'),
+            email: user?.email || 'Sem e-mail',
+            role: 'operator',
+          })
+        })
     })
     return () => {
       mounted = false
