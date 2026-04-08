@@ -73,14 +73,14 @@ function RotatingMessageCard({ mounted }: { mounted: boolean }) {
 
   return (
     <div
-      className="w-full max-w-[380px]"
+      className="w-full max-w-[340px]"
       style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(8px)', transition: 'all 700ms ease 550ms' }}
     >
-      <div className="relative overflow-hidden rounded-2xl border border-foreground/[0.06] bg-[hsl(225_25%_8%_/_0.5)] px-6 py-4 backdrop-blur-md shadow-[0_8px_32px_-8px_rgba(0,0,0,0.3)]">
+      <div className="relative overflow-hidden rounded-2xl border border-foreground/[0.06] bg-[hsl(225_25%_8%_/_0.5)] px-5 py-3.5 backdrop-blur-md shadow-[0_8px_32px_-8px_rgba(0,0,0,0.3)]">
         <div className="pointer-events-none absolute -top-px left-[10%] right-[10%] h-px bg-gradient-to-r from-transparent via-primary/15 to-transparent" />
         <div className="pointer-events-none absolute -bottom-px left-[20%] right-[20%] h-px bg-gradient-to-r from-transparent via-[hsl(45_90%_55%_/_0.1)] to-transparent" />
         <p
-          className="text-center text-[13px] font-medium leading-relaxed text-foreground/60 transition-opacity duration-500"
+          className="text-center text-[12.5px] font-medium leading-relaxed text-foreground/60 transition-opacity duration-500"
           style={{ opacity: fade ? 1 : 0 }}
         >
           {motivationalMessages[index]}
@@ -149,33 +149,31 @@ export default function LoginPage() {
 
       <RewardParticles />
 
-      {/* ── Main 50/50 layout ── */}
-      <div className="relative z-10 flex w-full flex-col items-center justify-center px-4 py-8 md:flex-row md:items-center md:justify-center md:gap-0">
+      {/* ── Main layout: 40/60 split ── */}
+      <div className="relative z-10 flex w-full flex-col items-center justify-center px-4 py-8 md:flex-row md:items-stretch md:gap-0 md:px-0 md:py-0">
 
-        {/* ── LEFT: Hero/Brand ── */}
+        {/* ── LEFT: Visual / Brand (40%) ── */}
         <div
-          className="flex w-full max-w-[460px] flex-col items-center px-4 pb-8 md:w-1/2 md:max-w-none md:items-center md:justify-center md:px-8 md:pb-0 lg:px-12 xl:px-16"
+          className="hidden md:flex md:w-[38%] lg:w-[40%] flex-col items-center justify-center px-6 lg:px-10"
           style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(16px)', transition: 'all 800ms cubic-bezier(0.16, 1, 0.3, 1)' }}
         >
           {/* 3D Animated Logo */}
           <div
-            className="mb-6 md:mb-8"
+            className="mb-8"
             style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'scale(1)' : 'scale(0.85)', transition: 'all 1000ms cubic-bezier(0.16, 1, 0.3, 1) 100ms' }}
           >
             <div className="relative" style={{ perspective: '1000px' }}>
-              {/* Glow */}
               <div className="absolute inset-[-25%] rounded-full blur-3xl"
                 style={{
                   background: 'radial-gradient(circle, hsl(0 80% 50% / 0.12) 0%, hsl(45 90% 55% / 0.06) 40%, transparent 70%)',
                   animation: 'loginHeroGlow 4s ease-in-out infinite',
                 }} />
-              {/* Floor shadow */}
               <div className="absolute -bottom-3 left-[20%] right-[20%] h-6 rounded-[50%] opacity-25 blur-xl"
                 style={{ background: 'radial-gradient(ellipse, hsl(0 0% 0% / 0.5), transparent 70%)' }} />
               <img
                 src={logoPrincipal}
                 alt="Bonifica - Plataforma de Recompensas"
-                className="relative w-[180px] object-contain sm:w-[220px] md:w-[260px] lg:w-[300px]"
+                className="relative w-[200px] object-contain lg:w-[260px]"
                 style={{
                   filter: 'drop-shadow(0 16px 32px hsl(0 0% 0% / 0.35)) drop-shadow(0 0 20px hsl(0 75% 50% / 0.1))',
                   animation: mounted ? 'loginHero3DFloat 6s ease-in-out infinite' : 'none',
@@ -185,33 +183,49 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Subtitle */}
-          <p
-            className="mb-6 max-w-[320px] text-center text-[clamp(0.8rem,2vw,0.9rem)] leading-relaxed text-muted-foreground/50 md:mb-8"
-            style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(8px)', transition: 'all 700ms ease 400ms' }}
-          >
-            Sua plataforma completa de fidelização, pontuação e recompensas.
-          </p>
-
           <RotatingMessageCard mounted={mounted} />
         </div>
 
-        {/* ── RIGHT: Login Form ── */}
+        {/* ── RIGHT: Login Form (60%) ── */}
         <div
-          className="w-full max-w-[420px] px-4 md:w-1/2 md:max-w-none md:flex md:items-center md:justify-center md:px-8 lg:px-12 xl:px-16"
+          className="flex w-full max-w-[480px] flex-col items-center justify-center px-4 md:w-[62%] lg:w-[60%] md:max-w-none md:px-8 lg:px-16 xl:px-24"
           style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(16px)', transition: 'all 800ms cubic-bezier(0.16, 1, 0.3, 1) 250ms' }}
         >
-          <div className="w-full max-w-[400px]">
+          {/* Mobile-only logo */}
+          <div
+            className="mb-8 md:hidden"
+            style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'scale(1)' : 'scale(0.85)', transition: 'all 1000ms cubic-bezier(0.16, 1, 0.3, 1) 100ms' }}
+          >
+            <div className="relative" style={{ perspective: '1000px' }}>
+              <div className="absolute inset-[-25%] rounded-full blur-3xl"
+                style={{
+                  background: 'radial-gradient(circle, hsl(0 80% 50% / 0.12) 0%, hsl(45 90% 55% / 0.06) 40%, transparent 70%)',
+                  animation: 'loginHeroGlow 4s ease-in-out infinite',
+                }} />
+              <img
+                src={logoPrincipal}
+                alt="Bonifica"
+                className="relative w-[160px] object-contain"
+                style={{
+                  filter: 'drop-shadow(0 12px 24px hsl(0 0% 0% / 0.3))',
+                  animation: mounted ? 'loginHero3DFloat 6s ease-in-out infinite' : 'none',
+                  transformStyle: 'preserve-3d',
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="w-full max-w-[440px]">
             {/* Glass card */}
-            <div className="login-card relative rounded-2xl border border-foreground/[0.06] bg-[hsl(225_25%_7.5%_/_0.65)] p-6 shadow-[0_24px_80px_-16px_rgba(0,0,0,0.5),0_0_0_1px_hsl(217_91%_60%_/_0.04)] backdrop-blur-xl sm:p-7 lg:p-8">
+            <div className="login-card relative rounded-2xl border border-foreground/[0.06] bg-[hsl(225_25%_7.5%_/_0.65)] p-7 shadow-[0_24px_80px_-16px_rgba(0,0,0,0.5),0_0_0_1px_hsl(217_91%_60%_/_0.04)] backdrop-blur-xl sm:p-8 lg:p-10">
               {/* Top glow */}
               <div className="pointer-events-none absolute -top-px left-[10%] right-[10%] h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
 
-              <div className="mb-6">
-                <h2 className="text-[clamp(1.15rem,3vw,1.35rem)] font-bold tracking-tight text-foreground">
+              <div className="mb-7 text-center">
+                <h2 className="text-[clamp(1.25rem,3vw,1.5rem)] font-bold tracking-tight text-foreground">
                   Acesse seu painel
                 </h2>
-                <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground/50">
+                <p className="mt-2 text-[13.5px] leading-relaxed text-muted-foreground/50">
                   Seus pontos e recompensas estão te esperando.
                 </p>
               </div>
@@ -223,7 +237,7 @@ export default function LoginPage() {
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-5">
                 {error && (
                   <div className="flex items-center gap-2.5 rounded-xl border border-destructive/20 bg-destructive/[0.06] px-4 py-3 animate-enter">
                     <AlertCircle className="h-4 w-4 flex-shrink-0 text-destructive" />
@@ -231,7 +245,7 @@ export default function LoginPage() {
                   </div>
                 )}
 
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   <Label htmlFor="email" className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/50">
                     E-mail
                   </Label>
@@ -242,11 +256,11 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="seu@empresa.com"
                     autoComplete="email"
-                    className="h-[46px] rounded-xl border-foreground/[0.06] bg-foreground/[0.03] px-4 text-[14px] transition-all duration-200 placeholder:text-muted-foreground/25 focus-visible:border-primary/30 focus-visible:bg-foreground/[0.05] focus-visible:shadow-[0_0_0_3px_hsl(var(--primary)_/_0.08)]"
+                    className="h-[48px] rounded-xl border-foreground/[0.06] bg-foreground/[0.03] px-4 text-[14px] transition-all duration-200 placeholder:text-muted-foreground/25 focus-visible:border-primary/30 focus-visible:bg-foreground/[0.05] focus-visible:shadow-[0_0_0_3px_hsl(var(--primary)_/_0.08)]"
                   />
                 </div>
 
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   <Label htmlFor="password" className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/50">
                     Senha
                   </Label>
@@ -258,7 +272,7 @@ export default function LoginPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
                       autoComplete="current-password"
-                      className="h-[46px] rounded-xl border-foreground/[0.06] bg-foreground/[0.03] px-4 pr-11 text-[14px] transition-all duration-200 placeholder:text-muted-foreground/25 focus-visible:border-primary/30 focus-visible:bg-foreground/[0.05] focus-visible:shadow-[0_0_0_3px_hsl(var(--primary)_/_0.08)]"
+                      className="h-[48px] rounded-xl border-foreground/[0.06] bg-foreground/[0.03] px-4 pr-11 text-[14px] transition-all duration-200 placeholder:text-muted-foreground/25 focus-visible:border-primary/30 focus-visible:bg-foreground/[0.05] focus-visible:shadow-[0_0_0_3px_hsl(var(--primary)_/_0.08)]"
                     />
                     <button
                       type="button"
@@ -271,12 +285,21 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                <div className="pt-1" />
+                {/* Forgot password */}
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    className="text-[12.5px] font-medium text-primary/70 transition-colors hover:text-primary"
+                    onClick={() => {/* future: forgot password flow */}}
+                  >
+                    Esqueceu sua senha?
+                  </button>
+                </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="group relative flex h-[48px] w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-primary to-[hsl(230,80%,58%)] text-[14px] font-semibold text-primary-foreground shadow-[0_1px_0_0_hsl(var(--primary)/_0.6)_inset,0_6px_24px_-6px_hsl(var(--primary)_/_0.4)] transition-all duration-200 hover:shadow-[0_1px_0_0_hsl(var(--primary)/_0.6)_inset,0_10px_32px_-4px_hsl(var(--primary)_/_0.5)] hover:brightness-[1.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(225,30%,6%)] active:scale-[0.985] active:brightness-[0.96] disabled:pointer-events-none disabled:opacity-50"
+                  className="group relative flex h-[50px] w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-primary to-[hsl(230,80%,58%)] text-[14.5px] font-semibold text-primary-foreground shadow-[0_1px_0_0_hsl(var(--primary)/_0.6)_inset,0_6px_24px_-6px_hsl(var(--primary)_/_0.4)] transition-all duration-200 hover:shadow-[0_1px_0_0_hsl(var(--primary)/_0.6)_inset,0_10px_32px_-4px_hsl(var(--primary)_/_0.5)] hover:brightness-[1.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(225,30%,6%)] active:scale-[0.985] active:brightness-[0.96] disabled:pointer-events-none disabled:opacity-50"
                 >
                   <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/[0.06] to-transparent transition-transform duration-500 group-hover:translate-x-full" />
                   <span className="relative">{loading ? 'Entrando...' : 'Entrar'}</span>
@@ -288,12 +311,17 @@ export default function LoginPage() {
               </form>
             </div>
 
-            <p className="mt-5 text-center text-[13px] text-muted-foreground/40">
+            <p className="mt-6 text-center text-[13.5px] text-muted-foreground/40">
               Não tem conta?{' '}
               <Link to="/register" className="font-medium text-primary/80 transition-colors hover:text-primary">
                 Criar conta
               </Link>
             </p>
+          </div>
+
+          {/* Mobile-only rotating card */}
+          <div className="mt-8 md:hidden">
+            <RotatingMessageCard mounted={mounted} />
           </div>
         </div>
       </div>
