@@ -392,18 +392,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           collapsed ? 'h-20 px-2' : 'h-36 px-4'
         )}>
           <div className={cn(
-            'relative transition-all duration-300',
-            collapsed ? 'h-10 w-10' : 'h-24 w-24'
+            'relative flex items-center justify-center transition-all duration-300',
+            collapsed ? 'h-10 w-10' : 'h-28 w-28'
           )}>
-            {/* Glow behind */}
-            <div className="absolute inset-[-30%] rounded-full opacity-40 blur-xl"
-              style={{ background: 'radial-gradient(circle, hsl(0 75% 50% / 0.2), hsl(45 90% 55% / 0.1), transparent 70%)', animation: 'float 3s ease-in-out infinite' }} />
-            <img
-              src={menuLateralImg}
-              alt="Bonifica"
-              className="relative h-full w-full object-contain drop-shadow-lg"
-              style={{ animation: 'float 3s ease-in-out infinite' }}
-            />
+            <AnimatedGiftBox size={collapsed ? 40 : 110} />
           </div>
 
           {/* Mobile close */}
