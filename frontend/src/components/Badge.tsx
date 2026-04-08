@@ -16,11 +16,11 @@ const variantClasses: Record<BadgeVariant, string> = {
   gray: 'border-[hsl(var(--border))] bg-[hsl(var(--surface-3))] text-muted-foreground',
 }
 
-export default function Badge({ variant, label }: BadgeProps) {
+export default function Badge({ variant, label, className }: BadgeProps & { className?: string }) {
   return (
     <ShadcnBadge
       variant="outline"
-      className={cn('rounded-md px-2.5 py-0.5 text-[11px] font-medium', variantClasses[variant])}
+      className={cn('rounded-md px-2.5 py-0.5 text-[11px] font-medium', variantClasses[variant], className)}
     >
       {label}
     </ShadcnBadge>
