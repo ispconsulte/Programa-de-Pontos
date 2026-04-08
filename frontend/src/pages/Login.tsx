@@ -220,7 +220,7 @@ export default function LoginPage() {
 
           {/* 3D Animated Logo */}
           <div
-            className="mb-6"
+            className="mb-6 -mt-12 lg:-mt-16"
             style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'scale(1)' : 'scale(0.85)', transition: 'all 1000ms cubic-bezier(0.16, 1, 0.3, 1) 200ms' }}
           >
             <div className="relative" style={{ perspective: '1000px' }}>
