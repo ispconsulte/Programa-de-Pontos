@@ -209,7 +209,6 @@ export default function ClienteEmDiaDetailPage() {
                     )
                   })}
                 </div>
-                </div>
               )}
             </CardContent>
           </Card>
