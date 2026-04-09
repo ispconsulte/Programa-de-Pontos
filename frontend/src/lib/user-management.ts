@@ -139,11 +139,14 @@ export async function fetchCurrentUserProfile(options?: { force?: boolean }): Pr
   if (!currentUserProfilePromise) {
     currentUserProfilePromise = backendRequest<CurrentUserProfile>('/users/me')
       .then((profile) => {
+        console.log('[user-management] profile from backend:', profile?.role)
         currentUserProfileCache = profile
         return profile
       })
-      .catch(async () => {
+      .catch(async (backendErr) => {
+        console.warn('[user-management] backend /users/me failed, using Supabase fallback:', backendErr?.message)
         const profile = await fetchCurrentUserProfileFromSupabase()
+        console.log('[user-management] profile from Supabase fallback:', profile?.role)
         currentUserProfileCache = profile
         return profile
       })
