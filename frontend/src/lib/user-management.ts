@@ -147,8 +147,8 @@ export async function fetchCurrentUserProfile(options?: { force?: boolean }): Pr
 }
 
 export async function fetchManagedUsers(): Promise<ManagedUser[]> {
-  const response = await backendRequest<{ data: ManagedUser[] }>('/users')
-  return response.data
+  const response = await backendRequest<{ data: ManagedUser[] } | null>('/users')
+  return response?.data ?? []
 }
 
 export async function createManagedUser(input: CreateManagedUserInput): Promise<void> {
