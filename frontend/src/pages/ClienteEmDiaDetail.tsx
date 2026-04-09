@@ -47,7 +47,7 @@ export default function ClienteEmDiaDetailPage() {
   return (
     <ProtectedRoute>
       <Layout>
-        <div className="space-y-6">
+        <div className="page-stack">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Link to={backPath} className="inline-flex items-center gap-1 transition-colors hover:text-foreground">
             <ArrowLeft className="h-3.5 w-3.5" />
@@ -57,7 +57,7 @@ export default function ClienteEmDiaDetailPage() {
           <span className="text-foreground">Detalhe do cliente</span>
         </div>
 
-        <Card className="overflow-hidden border-emerald-500/10 bg-[linear-gradient(135deg,rgba(16,185,129,0.12),rgba(8,10,15,0)_46%),hsl(var(--surface-1))]">
+        <Card className="overflow-hidden border-emerald-500/10 bg-[linear-gradient(135deg,hsl(var(--success)/0.12),transparent_46%),hsl(var(--surface-1))]">
           <CardContent className="p-5 lg:p-6">
             <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
               <div className="flex items-start gap-4">
@@ -65,16 +65,26 @@ export default function ClienteEmDiaDetailPage() {
                   <Star className="h-7 w-7 text-emerald-300" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold tracking-tight text-white lg:text-[30px]">
+                  <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Nome</p>
+                  <h1 className="text-2xl font-bold tracking-tight text-foreground lg:text-[30px]">
                     {customer?.nomeCliente ?? `Cliente #${ixc_cliente_id ?? '...'}`}
                   </h1>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {loading
-                      ? 'Carregando dados reais do cliente.'
-                      : error
-                        ? error
-                        : customer?.documento ?? 'Nenhum documento vinculado.'}
-                  </p>
+
+                  <div className="mt-3 space-y-1">
+                    <div>
+                      <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">CPF / CNPJ</p>
+                      <p className="text-sm font-medium text-foreground">
+                        {loading ? 'Carregando...' : error ? error : customer?.documento ?? 'Não informado'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">E-mail</p>
+                      <p className="text-sm font-medium text-foreground">
+                        {customer?.email ?? 'Não informado'}
+                      </p>
+                    </div>
+                  </div>
+
                   <div className="mt-4 flex flex-wrap gap-3 text-xs text-muted-foreground">
                     <span className="rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-1">
                       IXC #{customer?.ixcClienteId ?? ixc_cliente_id ?? '...'}
@@ -88,7 +98,7 @@ export default function ClienteEmDiaDetailPage() {
 
               <div className="min-w-[250px] rounded-2xl border border-emerald-500/15 bg-[hsl(var(--surface-2))] p-5 text-right">
                 <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                  Pontos disponiveis
+                  Pontos disponíveis
                 </p>
                 <p className="mt-3 text-3xl font-semibold tracking-tight text-foreground">
                   {customer ? customer.pontosDisponiveis.toLocaleString('pt-BR') : '--'}

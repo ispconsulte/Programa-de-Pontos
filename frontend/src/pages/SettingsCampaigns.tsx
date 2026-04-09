@@ -126,11 +126,20 @@ export default function SettingsCampaignsPage() {
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
                       <Zap className="h-5 w-5 text-primary" />
                     </div>
-                    <div>
+                    <div className="space-y-3">
                       <h2 className="text-base font-bold text-foreground">Como os pontos são calculados</h2>
-                      <p className="mt-1 max-w-xl text-sm leading-relaxed text-muted-foreground">
-                        O sistema compara a data de pagamento com a data de vencimento e aplica as faixas abaixo automaticamente durante cada sincronização.
+                      <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                        A cada fatura paga, o sistema compara automaticamente a <strong className="text-foreground">data de pagamento</strong> com a <strong className="text-foreground">data de vencimento</strong> e atribui pontos conforme as faixas configuradas abaixo. Quanto mais cedo o cliente pagar, mais pontos receberá.
                       </p>
+                      <div className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                        <p className="font-medium text-foreground">Para que serve esta tela?</p>
+                        <ul className="mt-1.5 list-disc space-y-1 pl-5 text-[13px]">
+                          <li>Definir quantos pontos cada comportamento de pagamento gera.</li>
+                          <li>Ajustar o limiar de dias para considerar um pagamento "antecipado".</li>
+                          <li>Criar promoções temporárias — ex.: <strong className="text-foreground">dobrar a pontuação</strong> em um mês específico basta duplicar os valores e salvar.</li>
+                          <li>Ao salvar, as novas regras passam a valer na próxima sincronização automática.</li>
+                        </ul>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
