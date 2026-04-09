@@ -85,14 +85,6 @@ export default function ClienteEmDiaDetailPage() {
                     </div>
                   </div>
 
-                  <div className="mt-4 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                    <span className="rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-1">
-                      IXC #{customer?.ixcClienteId ?? ixc_cliente_id ?? '...'}
-                    </span>
-                    <span className="rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-1">
-                      Status: {customer?.statusCampanha ?? 'sem dados'}
-                    </span>
-                  </div>
                 </div>
               </div>
 
