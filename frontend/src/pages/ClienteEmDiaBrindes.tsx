@@ -530,6 +530,33 @@ export default function ClienteEmDiaBrindesPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Delete confirmation dialog */}
+        <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}>
+          <DialogContent className="max-w-sm bg-[hsl(var(--background))]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-foreground">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
+                Confirmar exclusão
+              </DialogTitle>
+              <DialogDescription>
+                Tem certeza que deseja excluir o brinde <strong className="text-foreground">"{deleteTarget?.nome}"</strong>? Essa ação não pode ser desfeita.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deleting}>
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => void confirmDelete()}
+                disabled={deleting}
+              >
+                {deleting ? 'Excluindo...' : 'Sim, excluir'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </Layout>
     </ProtectedRoute>
   )
