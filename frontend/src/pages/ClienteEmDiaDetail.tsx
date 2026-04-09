@@ -49,9 +49,9 @@ export default function ClienteEmDiaDetailPage() {
       <Layout>
         <div className="space-y-6">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Link to="/operacao" className="inline-flex items-center gap-1 transition-colors hover:text-foreground">
+          <Link to={backPath} className="inline-flex items-center gap-1 transition-colors hover:text-foreground">
             <ArrowLeft className="h-3.5 w-3.5" />
-            Operação
+            {backLabel}
           </Link>
           <ChevronRight className="h-3 w-3" />
           <span className="text-foreground">Detalhe do cliente</span>
