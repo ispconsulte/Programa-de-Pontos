@@ -28,6 +28,10 @@ function friendlyOrigem(raw: string): string {
 
 export default function ClienteEmDiaDetailPage() {
   const { ixc_cliente_id } = useParams()
+  const location = useLocation()
+  const cameFrom = (location.state as { from?: string })?.from
+  const backPath = cameFrom === '/resgates' ? '/resgates' : '/operacao'
+  const backLabel = cameFrom === '/resgates' ? 'Resgates' : 'Operação'
   const { loading, error, customerDetail, reload } = useClienteEmDia({
     customerId: ixc_cliente_id,
   })
