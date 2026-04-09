@@ -173,7 +173,7 @@ export default function SettingsUsersPage() {
       }
     } catch (loadError) {
       console.error('[SettingsUsers] loadData error:', loadError)
-      setError(loadError instanceof Error ? loadError.message : 'Não foi possível carregar os usuários.')
+      setError(friendlyError(loadError))
     } finally {
       setLoading(false)
     }
