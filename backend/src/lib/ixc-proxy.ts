@@ -255,11 +255,15 @@ export async function ixcList<T>(
 
   let httpStatus = 0
   try {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 30_000)
     const response = await fetch(url, {
       method: 'POST',
       headers: buildIxcRequestHeaders(creds, token, 'listar'),
       body,
+      signal: controller.signal,
     })
+    clearTimeout(timeout)
     httpStatus = response.status
 
     await writeAuditLog({
