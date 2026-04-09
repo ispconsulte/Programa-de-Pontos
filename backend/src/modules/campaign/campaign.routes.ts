@@ -498,7 +498,7 @@ export async function campaignRoutes(app: FastifyInstance) {
       security: [{ bearerAuth: [] }],
     },
   }, async (request, reply) => {
-    const { id } = request.params as { id: string }
+    const { id } = z.object({ id: z.string().uuid() }).parse(request.params)
 
     const deleteResult = await supabaseAdmin
       .from('pontuacao_catalogo_brindes')

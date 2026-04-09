@@ -374,11 +374,15 @@ export async function ixcWrite<T = unknown>(
 
   let httpStatus = 0
   try {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 30_000)
     const response = await fetch(url, {
       method,
       headers: buildIxcRequestHeaders(creds, token, 'editar'),
       body,
+      signal: controller.signal,
     })
+    clearTimeout(timeout)
     httpStatus = response.status
 
     await writeAuditLog({

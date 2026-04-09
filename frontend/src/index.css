@@ -188,18 +188,6 @@
     transition: background-color 0.35s ease, color 0.35s ease;
   }
 
-  /* Smooth theme transitions — all elements */
-  *,
-  *::before,
-  *::after {
-    transition:
-      background-color 0.4s ease,
-      border-color 0.4s ease,
-      color 0.35s ease,
-      box-shadow 0.4s ease,
-      fill 0.35s ease,
-      stroke 0.35s ease;
-  }
 
   /* Remove all focus outlines / rings globally */
   *:focus,
