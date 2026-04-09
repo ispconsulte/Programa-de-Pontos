@@ -4,6 +4,7 @@ import ProtectedRoute from '@/components/ProtectedRoute'
 import PageHeader from '@/components/PageHeader'
 import AlertBanner from '@/components/AlertBanner'
 import Spinner from '@/components/Spinner'
+import StatCard from '@/components/StatCard'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -17,7 +18,6 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import {
   createManagedUser,
   deleteManagedUser,
@@ -30,7 +30,7 @@ import {
   type CurrentUserProfile,
   type ManagedUser,
 } from '@/lib/user-management'
-import { KeyRound, LogOut, Shield, Trash2, UserCog, UserPlus, Users } from 'lucide-react'
+import { Edit3, KeyRound, LogOut, Shield, Trash2, UserCog, UserPlus, Users } from 'lucide-react'
 
 type DialogMode = 'create' | 'edit'
 
@@ -61,6 +61,81 @@ function roleLabel(role: string): string {
   return isAdminUiRole(role) ? 'Administrador' : 'Operador'
 }
 
+/* ── Compact user card for mobile ── */
+function UserCard({
+  user,
+  busy,
+  onEdit,
+  onDisconnect,
+  onDelete,
+}: {
+  user: ManagedUser
+  busy: boolean
+  onEdit: () => void
+  onDisconnect: () => void
+  onDelete: () => void
+}) {
+  const initial = (user.name?.trim()?.[0] || user.email?.[0] || 'U').toUpperCase()
+
+  return (
+    <div className="flex flex-col gap-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4">
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary">
+          {initial}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
+          <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            <Badge variant="outline" className="border-primary/20 bg-primary/5 text-primary text-[10px]">
+              {roleLabel(user.role)}
+            </Badge>
+            <Badge
+              variant="outline"
+              className={user.is_active
+                ? 'border-emerald-500/20 bg-emerald-500/10 text-[hsl(var(--success))] text-[10px]'
+                : 'border-amber-500/20 bg-amber-500/10 text-[hsl(var(--warning))] text-[10px]'}
+            >
+              {user.is_active ? 'Ativo' : 'Inativo'}
+            </Badge>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 text-[11px] text-muted-foreground">
+        <div>
+          <p className="font-medium text-foreground/60">Último login</p>
+          <p>{formatDateTime(user.last_sign_in_at)}</p>
+        </div>
+        <div>
+          <p className="font-medium text-foreground/60">Revogação</p>
+          <p>{formatDateTime(user.session_revoked_at)}</p>
+        </div>
+      </div>
+
+      <div className="flex gap-2 border-t border-[hsl(var(--border))] pt-3">
+        <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={onEdit}>
+          <Edit3 className="h-3 w-3" />
+          Editar
+        </Button>
+        <Button variant="outline" size="sm" className="flex-1 text-xs" disabled={busy} onClick={onDisconnect}>
+          <LogOut className="h-3 w-3" />
+          Revogar
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-xs text-destructive hover:text-destructive"
+          disabled={busy || user.is_current_user}
+          onClick={onDelete}
+        >
+          <Trash2 className="h-3 w-3" />
+        </Button>
+      </div>
+    </div>
+  )
+}
+
 export default function SettingsUsersPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -75,9 +150,9 @@ export default function SettingsUsersPage() {
   const [form, setForm] = useState<UserFormState>(initialFormState)
 
   const summary = useMemo(() => {
-    const admins = users.filter((user) => isAdminUiRole(user.role)).length
-    const operators = users.filter((user) => !isAdminUiRole(user.role)).length
-    const active = users.filter((user) => user.is_active).length
+    const admins = users.filter((u) => isAdminUiRole(u.role)).length
+    const operators = users.filter((u) => !isAdminUiRole(u.role)).length
+    const active = users.filter((u) => u.is_active).length
     return { admins, operators, active }
   }, [users])
 
@@ -87,10 +162,7 @@ export default function SettingsUsersPage() {
 
     try {
       const me = await fetchCurrentUserProfile()
-      if (!me) {
-        throw new Error('Perfil do usuário não pôde ser carregado.')
-      }
-
+      if (!me) throw new Error('Perfil do usuário não pôde ser carregado.')
       setCurrentUser(me)
 
       if (isAdminUiRole(me.role)) {
@@ -104,9 +176,7 @@ export default function SettingsUsersPage() {
     }
   }
 
-  useEffect(() => {
-    void loadData()
-  }, []) 
+  useEffect(() => { void loadData() }, [])
 
   function openCreateDialog() {
     setDialogMode('create')
@@ -181,9 +251,7 @@ export default function SettingsUsersPage() {
   }
 
   async function handleDelete(user: ManagedUser) {
-    if (!window.confirm(`Excluir o usuário ${user.email}? Esta ação não pode ser desfeita.`)) {
-      return
-    }
+    if (!window.confirm(`Excluir o usuário ${user.email}? Esta ação não pode ser desfeita.`)) return
 
     setBusyUserId(user.id)
     setError('')
@@ -205,19 +273,19 @@ export default function SettingsUsersPage() {
   return (
     <ProtectedRoute allowRoles={['admin']}>
       <Layout>
-        <PageHeader
-          icon={UserCog}
-          title="Usuários"
-          subtitle="Administre administradores e operadores da empresa com segurança e rastreabilidade."
-          actions={isAdmin ? (
-            <Button onClick={openCreateDialog}>
-              <UserPlus className="h-4 w-4" />
-              Novo usuário
-            </Button>
-          ) : null}
-        />
+        <div className="page-stack">
+          <PageHeader
+            icon={UserCog}
+            title="Usuários"
+            subtitle="Administre administradores e operadores da empresa com segurança e rastreabilidade."
+            actions={isAdmin ? (
+              <Button onClick={openCreateDialog} size="sm">
+                <UserPlus className="h-3.5 w-3.5" />
+                Novo usuário
+              </Button>
+            ) : null}
+          />
 
-        <div className="space-y-6">
           {loading ? (
             <div className="flex justify-center py-16">
               <Spinner />
@@ -234,128 +302,127 @@ export default function SettingsUsersPage() {
                 />
               ) : (
                 <>
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-base">
-                          <Shield className="h-4 w-4 text-primary" />
-                          Administradores
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-3xl font-semibold text-foreground">{summary.admins}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">Usuários com poder de gestão total do tenant.</p>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-base">
-                          <Users className="h-4 w-4 text-primary" />
-                          Operadores
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-3xl font-semibold text-foreground">{summary.operators}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">Usuários para operação diária sem acesso de governança.</p>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-base">
-                          <KeyRound className="h-4 w-4 text-primary" />
-                          Ativos
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-3xl font-semibold text-foreground">{summary.active}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">Contas liberadas para autenticação e uso do painel.</p>
-                      </CardContent>
-                    </Card>
+                  {/* KPI cards */}
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <StatCard label="Administradores" value={summary.admins} icon={Shield} />
+                    <StatCard label="Operadores" value={summary.operators} icon={Users} />
+                    <StatCard
+                      label="Ativos"
+                      value={summary.active}
+                      icon={KeyRound}
+                      iconColor="text-[hsl(var(--success))]"
+                      iconBg="bg-[hsl(var(--success)/0.1)]"
+                    />
                   </div>
 
-                  <Card>
-                    <CardHeader>
+                  {/* Desktop table */}
+                  <Card className="hidden md:block overflow-hidden">
+                    <CardHeader className="border-b border-[hsl(var(--border))]">
                       <CardTitle>Equipe da empresa</CardTitle>
                       <CardDescription>
                         Crie acessos, ajuste papéis, revogue sessões e mantenha o escopo operacional separado da administração.
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="p-0 sm:p-6">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Usuário</TableHead>
-                            <TableHead>Papel</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Último login</TableHead>
-                            <TableHead>Revogação</TableHead>
-                            <TableHead className="text-right">Ações</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {users.map((user) => {
-                            const rowBusy = busyUserId === user.id
-                            return (
-                              <TableRow key={user.id}>
-                                <TableCell>
-                                  <div>
-                                    <p className="font-medium text-foreground">{user.name}</p>
-                                    <p className="text-xs text-muted-foreground">{user.email}</p>
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                  <Badge variant="outline" className="border-primary/20 bg-primary/5 text-primary">
-                                    {roleLabel(user.role)}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell>
-                                  <Badge
-                                    variant="outline"
-                                    className={user.is_active
-                                      ? 'border-emerald-500/20 bg-emerald-500/10 text-[hsl(var(--success))]'
-                                      : 'border-amber-500/20 bg-amber-500/10 text-[hsl(var(--warning))]'}
-                                  >
-                                    {user.is_active ? 'Ativo' : 'Inativo'}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell>{formatDateTime(user.last_sign_in_at)}</TableCell>
-                                <TableCell>{formatDateTime(user.session_revoked_at)}</TableCell>
-                                <TableCell className="text-right align-top">
-                                  <div className="flex min-w-[10rem] flex-wrap justify-end gap-2">
-                                    <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => openEditDialog(user)}>
-                                      Editar
-                                    </Button>
-                                    <Button
+                    <CardContent className="p-0">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-[hsl(var(--border))] text-left">
+                              <th className="px-5 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Usuário</th>
+                              <th className="px-5 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Papel</th>
+                              <th className="px-5 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Status</th>
+                              <th className="px-5 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Último login</th>
+                              <th className="px-5 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Revogação</th>
+                              <th className="px-5 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">Ações</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-[hsl(var(--border))]">
+                            {users.map((user) => {
+                              const rowBusy = busyUserId === user.id
+                              const initial = (user.name?.trim()?.[0] || 'U').toUpperCase()
+                              return (
+                                <tr key={user.id} className="transition-colors hover:bg-[hsl(var(--muted)/0.4)]">
+                                  <td className="px-5 py-3.5">
+                                    <div className="flex items-center gap-3">
+                                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[11px] font-bold text-primary">
+                                        {initial}
+                                      </div>
+                                      <div className="min-w-0">
+                                        <p className="truncate text-sm font-medium text-foreground">{user.name}</p>
+                                        <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="px-5 py-3.5">
+                                    <Badge variant="outline" className="border-primary/20 bg-primary/5 text-primary">
+                                      {roleLabel(user.role)}
+                                    </Badge>
+                                  </td>
+                                  <td className="px-5 py-3.5">
+                                    <Badge
                                       variant="outline"
-                                      size="sm"
-                                      className="w-full sm:w-auto"
-                                      disabled={rowBusy}
-                                      onClick={() => void handleDisconnect(user)}
+                                      className={user.is_active
+                                        ? 'border-emerald-500/20 bg-emerald-500/10 text-[hsl(var(--success))]'
+                                        : 'border-amber-500/20 bg-amber-500/10 text-[hsl(var(--warning))]'}
                                     >
-                                      <LogOut className="h-3.5 w-3.5" />
-                                      Desconectar
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="w-full text-destructive hover:text-destructive sm:w-auto"
-                                      disabled={rowBusy || user.is_current_user}
-                                      onClick={() => void handleDelete(user)}
-                                    >
-                                      <Trash2 className="h-3.5 w-3.5" />
-                                      Excluir
-                                    </Button>
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            )
-                          })}
-                        </TableBody>
-                      </Table>
+                                      {user.is_active ? 'Ativo' : 'Inativo'}
+                                    </Badge>
+                                  </td>
+                                  <td className="px-5 py-3.5 text-xs text-muted-foreground whitespace-nowrap">{formatDateTime(user.last_sign_in_at)}</td>
+                                  <td className="px-5 py-3.5 text-xs text-muted-foreground whitespace-nowrap">{formatDateTime(user.session_revoked_at)}</td>
+                                  <td className="px-5 py-3.5 text-right">
+                                    <div className="flex items-center justify-end gap-2">
+                                      <Button variant="outline" size="sm" onClick={() => openEditDialog(user)}>
+                                        <Edit3 className="h-3 w-3" />
+                                        Editar
+                                      </Button>
+                                      <Button variant="outline" size="sm" disabled={rowBusy} onClick={() => void handleDisconnect(user)}>
+                                        <LogOut className="h-3 w-3" />
+                                        Revogar
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="text-destructive hover:text-destructive"
+                                        disabled={rowBusy || user.is_current_user}
+                                        onClick={() => void handleDelete(user)}
+                                      >
+                                        <Trash2 className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              )
+                            })}
+                            {users.length === 0 && (
+                              <tr>
+                                <td colSpan={6} className="px-5 py-12 text-center text-sm text-muted-foreground">
+                                  Nenhum usuário encontrado.
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
                     </CardContent>
                   </Card>
+
+                  {/* Mobile cards */}
+                  <div className="grid gap-3 md:hidden">
+                    {users.length === 0 && (
+                      <p className="py-8 text-center text-sm text-muted-foreground">Nenhum usuário encontrado.</p>
+                    )}
+                    {users.map((user) => (
+                      <UserCard
+                        key={user.id}
+                        user={user}
+                        busy={busyUserId === user.id}
+                        onEdit={() => openEditDialog(user)}
+                        onDisconnect={() => void handleDisconnect(user)}
+                        onDelete={() => void handleDelete(user)}
+                      />
+                    ))}
+                  </div>
                 </>
               )}
             </>
@@ -363,7 +430,7 @@ export default function SettingsUsersPage() {
         </div>
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent className="border-[hsl(var(--border))] bg-[linear-gradient(180deg,rgba(16,185,129,0.06),rgba(255,255,255,0)_20%),hsl(var(--background))]">
+          <DialogContent className="border-[hsl(var(--border))] bg-[linear-gradient(180deg,hsl(var(--primary)/0.04),transparent_30%),hsl(var(--background))]">
             <DialogHeader>
               <DialogTitle>{dialogMode === 'create' ? 'Novo usuário' : 'Editar usuário'}</DialogTitle>
               <DialogDescription>
@@ -379,7 +446,7 @@ export default function SettingsUsersPage() {
                 <Input
                   id="user-name"
                   value={form.name}
-                  onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
+                  onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
                   placeholder="Nome do colaborador"
                 />
               </div>
@@ -391,18 +458,18 @@ export default function SettingsUsersPage() {
                   type="email"
                   value={form.email}
                   disabled={dialogMode === 'edit'}
-                  onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))}
+                  onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
                   placeholder="colaborador@empresa.com"
                 />
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="user-role">Papel</Label>
                   <select
                     id="user-role"
                     value={form.role}
-                    onChange={(event) => setForm((prev) => ({ ...prev, role: event.target.value as 'admin' | 'operator' }))}
+                    onChange={(e) => setForm((prev) => ({ ...prev, role: e.target.value as 'admin' | 'operator' }))}
                     className="h-10 w-full rounded-lg border border-[hsl(var(--border))] bg-background px-3 text-sm text-foreground outline-none focus:ring-1 focus:ring-primary/40"
                   >
                     <option value="admin">Administrador</option>
@@ -416,7 +483,7 @@ export default function SettingsUsersPage() {
                     id="user-status"
                     value={form.isActive ? 'active' : 'inactive'}
                     disabled={dialogMode === 'create'}
-                    onChange={(event) => setForm((prev) => ({ ...prev, isActive: event.target.value === 'active' }))}
+                    onChange={(e) => setForm((prev) => ({ ...prev, isActive: e.target.value === 'active' }))}
                     className="h-10 w-full rounded-lg border border-[hsl(var(--border))] bg-background px-3 text-sm text-foreground outline-none focus:ring-1 focus:ring-primary/40"
                   >
                     <option value="active">Ativo</option>
@@ -433,7 +500,7 @@ export default function SettingsUsersPage() {
                   id="user-password"
                   type="password"
                   value={form.password}
-                  onChange={(event) => setForm((prev) => ({ ...prev, password: event.target.value }))}
+                  onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
                   placeholder={dialogMode === 'create' ? 'Mínimo de 8 caracteres' : 'Preencha apenas se quiser alterar'}
                 />
               </div>
