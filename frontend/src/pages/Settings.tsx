@@ -166,7 +166,7 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="pt-5">
+                <CardContent className="pt-6 pb-6">
                   <div className="flex flex-col gap-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex min-w-0 items-center gap-3">
                       {settings?.ixc_configured ? (
