@@ -6,8 +6,9 @@ import EmptyState from '@/components/EmptyState'
 import Spinner from '@/components/Spinner'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { Gift, Sparkles } from 'lucide-react'
+import { Gift, Sparkles, ChevronRight } from 'lucide-react'
 import { fetchLegacyRedemptions, getCurrentTenantId } from '@/lib/supabase-queries'
+import { useNavigate } from 'react-router-dom'
 
 type RedemptionStatus = 'pendente' | 'entregue' | 'cancelado'
 
