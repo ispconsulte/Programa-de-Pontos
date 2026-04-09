@@ -596,6 +596,7 @@ export type Database = {
           pontos: number
           referencia_ano: number | null
           referencia_mes: number | null
+          tenant_id: string | null
           tipo_evento: string
         }
         Insert: {
@@ -608,6 +609,7 @@ export type Database = {
           pontos: number
           referencia_ano?: number | null
           referencia_mes?: number | null
+          tenant_id?: string | null
           tipo_evento: string
         }
         Update: {
@@ -620,9 +622,18 @@ export type Database = {
           pontos?: number
           referencia_ano?: number | null
           referencia_mes?: number | null
+          tenant_id?: string | null
           tipo_evento?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pontuacao_historico_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pontuacao_movimentos: {
         Row: {
