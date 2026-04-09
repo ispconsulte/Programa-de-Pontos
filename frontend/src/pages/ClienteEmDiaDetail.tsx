@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useClienteEmDia } from '@/hooks/useClienteEmDia'
 import { fetchCurrentUserProfile, isAdminUiRole } from '@/lib/user-management'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { ArrowLeft, ChevronRight, Gift, Settings, Star } from 'lucide-react'
 
@@ -28,6 +28,10 @@ function friendlyOrigem(raw: string): string {
 
 export default function ClienteEmDiaDetailPage() {
   const { ixc_cliente_id } = useParams()
+  const location = useLocation()
+  const cameFrom = (location.state as { from?: string })?.from
+  const backPath = cameFrom === '/resgates' ? '/resgates' : '/operacao'
+  const backLabel = cameFrom === '/resgates' ? 'Resgates' : 'Operação'
   const { loading, error, customerDetail, reload } = useClienteEmDia({
     customerId: ixc_cliente_id,
   })
@@ -45,9 +49,9 @@ export default function ClienteEmDiaDetailPage() {
       <Layout>
         <div className="space-y-6">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Link to="/operacao" className="inline-flex items-center gap-1 transition-colors hover:text-foreground">
+          <Link to={backPath} className="inline-flex items-center gap-1 transition-colors hover:text-foreground">
             <ArrowLeft className="h-3.5 w-3.5" />
-            Operação
+            {backLabel}
           </Link>
           <ChevronRight className="h-3 w-3" />
           <span className="text-foreground">Detalhe do cliente</span>

@@ -174,8 +174,46 @@ export async function fetchCurrentUserProfile(options?: { force?: boolean }): Pr
 }
 
 export async function fetchManagedUsers(): Promise<ManagedUser[]> {
-  const response = await backendRequest<{ data: ManagedUser[] } | null>('/users')
-  return response?.data ?? []
+  try {
+    const response = await backendRequest<{ data: ManagedUser[] } | null>('/users')
+    const users = response?.data ?? []
+    if (users.length > 0) return users
+  } catch (err) {
+    console.warn('[user-management] backend /users failed, using Supabase fallback:', (err as Error)?.message)
+  }
+
+  // Fallback: query users table directly via Supabase
+  const { data: sessionData } = await supabase.auth.getSession()
+  const currentUserId = sessionData.session?.user?.id
+
+  const { data: profile } = await supabase
+    .from('users')
+    .select('tenant_id')
+    .eq('id', currentUserId ?? '')
+    .maybeSingle()
+
+  if (!profile?.tenant_id) return []
+
+  const { data: rows } = await (supabase as any)
+    .from('users')
+    .select('id, email, role, is_active, created_at, updated_at, session_revoked_at')
+    .eq('tenant_id', profile.tenant_id)
+    .order('created_at', { ascending: true })
+
+  if (!rows || rows.length === 0) return []
+
+  return rows.map((row: any) => ({
+    id: row.id,
+    email: row.email,
+    role: row.role,
+    is_active: row.is_active,
+    name: row.email.split('@')[0],
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    last_sign_in_at: null,
+    session_revoked_at: row.session_revoked_at,
+    is_current_user: row.id === currentUserId,
+  }))
 }
 
 export async function createManagedUser(input: CreateManagedUserInput): Promise<void> {
