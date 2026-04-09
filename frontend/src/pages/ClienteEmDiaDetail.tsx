@@ -187,24 +187,28 @@ export default function ClienteEmDiaDetailPage() {
                 <EmptyState title="Ainda não há registros aqui" description="Nenhuma movimentação foi registrada para este cliente." />
               ) : (
                 <div className="space-y-3">
-                  {customerDetail.historico.map((item) => (
-                    <div key={item.id} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{item.descricao}</p>
-                          <p className="mt-1 text-xs text-muted-foreground">{item.origem}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-semibold text-emerald-300">
-                            {item.pontosMovimentados > 0 ? '+' : ''}{item.pontosMovimentados} pts
-                          </p>
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {new Date(item.createdAt).toLocaleString('pt-BR')}
-                          </p>
+                  {customerDetail.historico.map((item) => {
+                    const isDebit = item.pontosMovimentados < 0
+                    return (
+                      <div key={item.id} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-foreground">{item.descricao}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">{friendlyOrigem(item.origem)}</p>
+                          </div>
+                          <div className="shrink-0 text-right">
+                            <p className={`text-sm font-semibold ${isDebit ? 'text-rose-400' : 'text-emerald-400'}`}>
+                              {item.pontosMovimentados > 0 ? '+' : ''}{item.pontosMovimentados} pts
+                            </p>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              {new Date(item.createdAt).toLocaleString('pt-BR')}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
+                </div>
                 </div>
               )}
             </CardContent>
