@@ -144,7 +144,11 @@ export default function ResgatesPage() {
               {/* Mobile list */}
               <div className="divide-y divide-border md:hidden">
                 {filtered.map((row) => (
-                  <div key={row.id} className="px-4 py-3">
+                  <div
+                    key={row.id}
+                    className="px-4 py-3 cursor-pointer transition-colors hover:bg-muted active:bg-muted/70"
+                    onClick={() => navigate(`/cliente-em-dia/${row.ixc_cliente_id}`)}
+                  >
                     <div className="flex items-start justify-between">
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-foreground">{row.cliente_nome}</p>
@@ -152,9 +156,12 @@ export default function ResgatesPage() {
                           resgatou <span className="font-medium text-foreground">{row.brinde_nome}</span>
                         </p>
                       </div>
-                      <span className={cn('ml-2 inline-flex rounded-md border px-2 py-0.5 text-[10px] font-semibold', statusColor(row.status_resgate))}>
-                        {statusLabel(row.status_resgate)}
-                      </span>
+                      <div className="ml-2 flex items-center gap-1.5">
+                        <span className={cn('inline-flex rounded-md border px-2 py-0.5 text-[10px] font-semibold', statusColor(row.status_resgate))}>
+                          {statusLabel(row.status_resgate)}
+                        </span>
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                      </div>
                     </div>
                     <div className="mt-1.5 flex items-center gap-3 text-[11px] text-muted-foreground">
                       <span>{row.pontos_utilizados} pts</span>
