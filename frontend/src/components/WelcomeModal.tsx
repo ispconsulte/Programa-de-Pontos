@@ -75,7 +75,7 @@ export default function WelcomeModal({ storagePrefix, userName, message }: Welco
             </DialogTitle>
           </div>
           <DialogDescription asChild>
-            <div className="mt-3 text-sm leading-relaxed text-muted-foreground">
+            <div className="mt-3 text-[15px] leading-relaxed text-foreground/80">
               {message}
             </div>
           </DialogDescription>
