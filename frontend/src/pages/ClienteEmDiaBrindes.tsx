@@ -515,7 +515,7 @@ export default function ClienteEmDiaBrindesPage() {
                               variant="outline"
                               size="sm"
                               className="text-destructive hover:text-destructive"
-                              onClick={() => void handleDelete(reward)}
+                              onClick={() => setDeleteTarget(reward)}
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                               Excluir
