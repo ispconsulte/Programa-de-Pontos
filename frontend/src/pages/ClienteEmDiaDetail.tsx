@@ -244,22 +244,37 @@ export default function ClienteEmDiaDetailPage() {
                 <EmptyState title="Ainda não há registros aqui" description="Nenhum resgate foi registrado para este cliente." />
               ) : (
                 <div className="space-y-3">
-                  {customerDetail.resgates.map((item) => (
-                    <div key={item.id} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{item.status}</p>
-                          <p className="mt-1 text-xs text-muted-foreground">{item.observacoes ?? 'Sem observações'}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-semibold text-foreground">{item.pontosResgatados} pts</p>
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {new Date(item.solicitadoEm).toLocaleString('pt-BR')}
-                          </p>
+                  {customerDetail.resgates.map((item) => {
+                    const statusMap: Record<string, string> = {
+                      pendente: 'Pendente',
+                      aprovado: 'Aprovado',
+                      entregue: 'Entregue',
+                      cancelado: 'Cancelado',
+                    }
+                    return (
+                      <div key={item.id} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-foreground">{item.brindeNome}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              {statusMap[item.status] ?? item.status}
+                              {item.responsavelEntrega ? ` · Entregue por ${item.responsavelEntrega}` : ''}
+                            </p>
+                            {item.observacoes && (
+                              <p className="mt-1 text-xs text-muted-foreground/70 italic">{item.observacoes}</p>
+                            )}
+                          </div>
+                          <div className="shrink-0 text-right">
+                            <p className="text-sm font-semibold text-rose-400">-{item.pontosResgatados} pts</p>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              {new Date(item.solicitadoEm).toLocaleString('pt-BR')}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
+                </div>
                 </div>
               )}
             </CardContent>
