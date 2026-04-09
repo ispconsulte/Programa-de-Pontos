@@ -187,12 +187,16 @@ export default function ReceivablesPage() {
         dateFrom: appliedFilters.dateFrom || undefined,
         dateTo: appliedFilters.dateTo || undefined,
       }
+      const normalizedSearch = search.trim()
+      const isSearchMode = normalizedSearch.length > 0
+      const fetchPage = isSearchMode ? 1 : page
+      const fetchLimit = isSearchMode ? 1000 : limit
 
       const [result, summaryResult] = await Promise.all([
         fetchReceivables({
           tenantId,
-          page,
-          limit,
+          page: fetchPage,
+          limit: fetchLimit,
           ...filters,
         }),
         fetchReceivablesSummary({
@@ -208,26 +212,32 @@ export default function ReceivablesPage() {
       setSummary(summaryResult)
 
       setReceivables(result.data.map(r => toShape(r, nameMap)))
-      setTotal(result.total)
-      setTotalPages(result.totalPages)
+      if (isSearchMode) {
+        setTotal(result.data.length)
+        setTotalPages(Math.max(1, Math.ceil(result.data.length / limit)))
+      } else {
+        setTotal(result.total)
+        setTotalPages(result.totalPages)
+      }
     } catch (err) {
       setError(friendlyError(err))
       setReceivables([])
     } finally {
       setLoading(false)
     }
-  }, [page, limit, appliedFilters])
+  }, [page, limit, appliedFilters, search])
 
   const [throttledFetch, refreshBusy] = useThrottledAction(fetchReceivablesData)
 
   useEffect(() => { void fetchReceivablesData() }, [fetchReceivablesData])
+  useEffect(() => { setPage(1) }, [search])
 
   const handleFilterApply = () => {
     setPage(1)
     setAppliedFilters({ category, dateFrom, dateTo })
   }
 
-  const visibleReceivables = sortReceivables(
+  const filteredReceivables = sortReceivables(
     receivables.filter((item) => {
       const term = search.trim().toLowerCase()
       if (!term) return true
@@ -237,6 +247,11 @@ export default function ReceivablesPage() {
     }),
     sortBy
   )
+  const isSearchMode = search.trim().length > 0
+  const visibleReceivables = isSearchMode
+    ? filteredReceivables.slice((page - 1) * limit, page * limit)
+    : filteredReceivables
+  const effectiveTotalPages = isSearchMode ? Math.max(1, Math.ceil(filteredReceivables.length / limit)) : totalPages
 
   return (
     <ProtectedRoute>
@@ -459,7 +474,7 @@ export default function ReceivablesPage() {
                   </div>
 
                   <div className="border-t border-[hsl(var(--border))] px-4 py-4 sm:px-5">
-                    <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+                    <Pagination page={page} totalPages={effectiveTotalPages} onPageChange={setPage} />
                   </div>
                 </>
               )}

@@ -4,9 +4,8 @@ import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import PageHeader from '@/components/PageHeader'
 import AlertBanner from '@/components/AlertBanner'
-import { supabase } from '@/lib/supabase-client'
 import { friendlyError } from '@/lib/friendly-errors'
-import { fetchTenantSettings, getCurrentTenantId, type TenantSettings } from '@/lib/supabase-queries'
+import { fetchTenantSettings, getCurrentTenantId, saveTenantSettings, type TenantSettings } from '@/lib/supabase-queries'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -89,32 +88,21 @@ export default function SettingsPage() {
       const tenantId = await getCurrentTenantId()
       if (!tenantId) { setError('Usuário não associado a um tenant.'); return }
 
-      await supabase.functions.invoke('save-ixc-connection', {
-        body: {
-          tenantName: tenantName.trim() || undefined,
-          ixcBaseUrl,
-          ixcUser,
-          ixcToken: ixcToken || undefined,
-          connectionId: settings?.ixcConnection?.id ?? null,
-        },
-      }).then(({ error: fnError }) => {
-        if (fnError) throw new Error(fnError.message || 'Erro ao salvar configurações.')
+      await saveTenantSettings(tenantId, {
+        tenantName: tenantName.trim() || undefined,
+        ixcBaseUrl,
+        ixcUser,
+        ixcToken: ixcToken || undefined,
+        connectionId: settings?.ixcConnection?.id ?? null,
       })
 
+      const refreshedSettings = await fetchTenantSettings(tenantId)
+      setSettings(refreshedSettings)
+      setTenantName(refreshedSettings?.name ?? tenantName)
+      setIxcBaseUrl(refreshedSettings?.ixcConnection?.ixc_base_url ?? ixcBaseUrl)
+      setIxcUser(refreshedSettings?.ixcConnection?.ixc_user ?? ixcUser)
       setSuccess(true)
       setIxcToken('')
-      setSettings((prev) =>
-        prev
-          ? {
-              ...prev,
-              ixc_configured: true,
-              name: tenantName || prev.name,
-              ixcConnection: prev.ixcConnection
-                ? { ...prev.ixcConnection, ixc_base_url: ixcBaseUrl, ixc_user: ixcUser }
-                : null,
-            }
-          : prev
-      )
       setTimeout(() => setSuccess(false), 4000)
     } catch (err) {
       setError(friendlyError(err))
@@ -154,7 +142,7 @@ export default function SettingsPage() {
               </div>
 
               {/* Base ativa */}
-              <Card className="overflow-hidden border-[hsl(var(--border))] mb-4">
+              <Card className="overflow-hidden border-[hsl(var(--border))]">
                 <CardHeader className="border-b border-[hsl(var(--border))]">
                   <div className="flex items-center gap-3">
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
@@ -166,8 +154,8 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="pt-6 pb-6">
-                  <div className="flex flex-col gap-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 sm:flex-row sm:items-center sm:justify-between">
+                <CardContent className="p-0">
+                  <div className="flex flex-col gap-3 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex min-w-0 items-center gap-3">
                       {settings?.ixc_configured ? (
                         <Wifi className="h-4 w-4 shrink-0 text-emerald-400" />
@@ -181,7 +169,11 @@ export default function SettingsPage() {
                         </p>
                       </div>
                     </div>
-                    <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-0.5 text-[11px] font-medium text-primary">
+                    <span className={`inline-flex w-fit items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${
+                      settings?.ixc_configured
+                        ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400'
+                        : 'border-primary/20 bg-primary/10 text-primary'
+                    }`}>
                       {settings?.ixc_configured ? 'Conectado' : 'Pendente'}
                     </span>
                   </div>

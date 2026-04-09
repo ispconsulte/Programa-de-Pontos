@@ -289,6 +289,47 @@ const tierColor = (pts: number) => {
   return { bg: 'bg-emerald-500/15', text: 'text-emerald-400', border: 'border-emerald-500/25', accent: 'from-emerald-500/10' }
 }
 
+function GiftCardVisual({ reward }: { reward: ClienteEmDiaRewardItem }) {
+  const tier = tierColor(reward.pontosNecessarios)
+  const initials = reward.nome
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('')
+
+  if (reward.imagemUrl) {
+    return (
+      <img
+        src={reward.imagemUrl}
+        alt={reward.nome}
+        className="h-full w-full object-contain p-2"
+        loading="lazy"
+      />
+    )
+  }
+
+  return (
+    <div className={`relative h-full w-full overflow-hidden bg-gradient-to-br ${tier.accent} via-transparent to-slate-950/20`}>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.18),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(15,23,42,0.22),transparent_38%)]" />
+      <div className="absolute right-3 top-3 opacity-15">{tierIcon(reward.pontosNecessarios)}</div>
+      <div className="relative flex h-full items-end justify-between p-4">
+        <div>
+          <div className={`mb-2 flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 ${tier.bg} ${tier.text}`}>
+            <span className="text-sm font-black tracking-[0.2em]">{initials || 'GD'}</span>
+          </div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Catálogo</p>
+          <p className="mt-1 text-xs font-medium text-foreground/90">Imagem demonstrativa indisponível</p>
+        </div>
+        <span className={`inline-flex items-center gap-1 rounded-full border border-white/10 px-2 py-1 text-[10px] font-semibold ${tier.text}`}>
+          {tierIcon(reward.pontosNecessarios)}
+          Visual
+        </span>
+      </div>
+    </div>
+  )
+}
+
 export default function ClienteEmDiaBrindesPage() {
   const { loading, error, rewards, reload } = useClienteEmDia({ rewardsOnly: true })
   const [isAdmin, setIsAdmin] = useState(false)
@@ -369,7 +410,7 @@ export default function ClienteEmDiaBrindesPage() {
             />
           )}
 
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 md:grid-cols-3">
             <div className="relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-emerald-500/10 to-emerald-500/[0.02] p-5">
               <div className="flex items-start justify-between">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Itens cadastrados</p>
@@ -399,14 +440,14 @@ export default function ClienteEmDiaBrindesPage() {
             </div>
           </div>
 
-          <Card>
-            <CardContent className="p-4">
-              <div className="relative">
+          <Card className="overflow-hidden">
+            <CardContent className="p-3 sm:p-4">
+              <div className="relative rounded-xl border border-border bg-background/80">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  className="pl-9"
+                  className="h-11 border-0 bg-transparent pl-9 pr-3 shadow-none focus-visible:ring-0"
                   placeholder="Buscar por nome, descrição ou pontuação"
                 />
               </div>
@@ -433,30 +474,21 @@ export default function ClienteEmDiaBrindesPage() {
               ) : filteredRewards.length === 0 ? (
                 <div className="p-8"><EmptyState title="Nenhum brinde encontrado" description="Ajuste a busca ou cadastre um novo item." /></div>
               ) : (
-                <div className="grid gap-px bg-border/30 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-px bg-border/30 md:grid-cols-2 xl:grid-cols-3">
                   {filteredRewards.map((reward) => {
                     const tier = tierColor(reward.pontosNecessarios)
                     return (
                       <div
                         key={reward.id}
-                        className="group relative flex flex-col bg-card p-5 transition-colors hover:bg-muted/20"
+                        className="group relative flex min-w-0 flex-col bg-card p-4 sm:p-5 transition-colors hover:bg-muted/20"
                       >
                         <div className={`mb-4 flex h-28 w-full items-center justify-center overflow-hidden rounded-xl border border-border/50 ${tier.bg}`}>
-                          {reward.imagemUrl ? (
-                            <img
-                              src={reward.imagemUrl}
-                              alt={reward.nome}
-                              className="h-full w-full object-contain p-2"
-                              loading="lazy"
-                            />
-                          ) : (
-                            <span className={`inline-flex items-center gap-2 text-xs ${tier.text}`}>{tierIcon(reward.pontosNecessarios)} Sem imagem</span>
-                          )}
+                          <GiftCardVisual reward={reward} />
                         </div>
 
                         <div className="flex-1">
                           <div className="flex items-start justify-between gap-2">
-                            <p className="text-sm font-bold text-foreground leading-snug">{reward.nome}</p>
+                            <p className="min-w-0 text-sm font-bold leading-snug text-foreground">{reward.nome}</p>
                             <span className={`mt-0.5 shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
                               reward.ativo
                                 ? 'bg-emerald-500/10 text-emerald-400'
@@ -468,18 +500,18 @@ export default function ClienteEmDiaBrindesPage() {
                           <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{reward.descricao ?? 'Sem descrição cadastrada.'}</p>
                         </div>
 
-                        <div className="mt-3 flex items-center justify-between">
+                        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                           <div className={`rounded-lg border ${tier.border} bg-gradient-to-r ${tier.accent} to-transparent px-3 py-1.5`}>
                             <p className={`text-sm font-bold ${tier.text}`}>{reward.pontosNecessarios} pts</p>
                           </div>
-                          <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                          <span className="inline-flex items-center gap-1 self-start rounded-md bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground sm:self-auto">
                             <Box className="h-2.5 w-2.5" />
                             {reward.estoqueDisponivel == null ? 'Ilimitado' : `${reward.estoqueDisponivel} em estoque`}
                           </span>
                         </div>
 
                         {isAdmin && (
-                          <div className="mt-4 flex gap-2">
+                          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                             <GiftCatalogDialog
                               reward={reward}
                               onSaved={handleSaved}

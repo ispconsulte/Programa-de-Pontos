@@ -118,13 +118,13 @@ function RotatingMessageCard({ mounted }: { mounted: boolean }) {
 
   return (
     <div
-      className="w-full max-w-[400px] px-2 sm:px-0"
+      className="w-full max-w-[400px] px-1 sm:px-0"
       style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(8px)', transition: 'all 700ms ease 850ms' }}
     >
-      <div className="relative flex min-h-[68px] items-center justify-center overflow-hidden rounded-2xl border border-primary/[0.08] bg-gradient-to-br from-[hsl(225_30%_10%_/_0.7)] to-[hsl(225_25%_7%_/_0.6)] px-5 py-3 backdrop-blur-2xl shadow-[0_8px_32px_-8px_rgba(0,0,0,0.4)] sm:px-6">
+      <div className="relative flex min-h-[68px] items-center justify-center overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-[hsl(225_30%_10%_/_0.82)] to-[hsl(225_25%_7%_/_0.78)] px-4 py-3 backdrop-blur-2xl shadow-[0_8px_32px_-8px_rgba(0,0,0,0.4)] sm:px-6">
         <div className="pointer-events-none absolute -top-px left-[12%] right-[12%] h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
         <p
-          className="text-center text-[13px] font-medium leading-snug text-foreground/80 transition-opacity duration-500"
+          className="text-center text-[13px] font-medium leading-snug text-white/88 transition-opacity duration-500 sm:text-[13.5px]"
           style={{ opacity: fade ? 1 : 0 }}
         >
           {motivationalMessages[index]}
@@ -196,11 +196,11 @@ export default function LoginPage() {
       <RewardParticles />
 
       {/* ── Main layout: 40/60 split ── */}
-      <div className="relative z-10 flex min-h-[100dvh] w-full flex-col items-center justify-center px-4 py-8 sm:px-5 md:flex-row md:items-center md:justify-center md:gap-0 md:px-0 md:py-0">
+      <div className="relative z-10 flex min-h-[100dvh] w-full flex-col items-center justify-center px-4 py-6 sm:px-5 sm:py-8 md:flex-row md:items-center md:justify-center md:gap-0 md:px-0 md:py-0">
 
         {/* ── LEFT: Visual / Brand (40%) ── */}
         <div
-          className="hidden md:flex md:w-[38%] lg:w-[40%] flex-col items-center justify-center px-6 lg:px-10"
+          className="hidden md:flex md:w-[40%] lg:w-[40%] flex-col items-center justify-center px-5 lg:px-10"
           style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(16px)', transition: 'all 800ms cubic-bezier(0.16, 1, 0.3, 1)' }}
         >
           {/* Title */}
@@ -244,7 +244,7 @@ export default function LoginPage() {
 
         {/* ── RIGHT: Login Form (60%) ── */}
         <div
-          className="flex w-full max-w-[34rem] min-w-0 flex-col items-center justify-center px-0 md:w-[62%] md:max-w-none md:px-8 lg:w-[60%] lg:px-16 xl:px-24"
+          className="flex w-full max-w-[34rem] min-w-0 flex-col items-center justify-center px-0 md:w-[60%] md:max-w-none md:px-6 lg:w-[60%] lg:px-16 xl:px-24"
           style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(16px)', transition: 'all 800ms cubic-bezier(0.16, 1, 0.3, 1) 250ms' }}
         >
           {/* Mobile-only logo */}
@@ -272,12 +272,12 @@ export default function LoginPage() {
           </div>
 
           <div className="w-full max-w-[28rem] min-w-0 sm:max-w-[30rem]">
-            <div className="login-card group/card relative rounded-[1.75rem] border border-white/[0.06] bg-[hsl(225_25%_8%_/_0.75)] p-5 shadow-[0_32px_80px_-20px_rgba(0,0,0,0.6)] backdrop-blur-2xl sm:p-7 lg:p-10">
+            <div className="login-card group/card relative rounded-[1.5rem] border border-white/[0.08] bg-[hsl(225_25%_8%_/_0.82)] p-4 shadow-[0_32px_80px_-20px_rgba(0,0,0,0.6)] backdrop-blur-2xl sm:rounded-[1.75rem] sm:p-7 lg:p-10">
               <div className="mb-7 text-center">
-                <h2 className="text-[clamp(1.8rem,7vw,2.5rem)] font-bold tracking-tight text-foreground text-balance">
+                <h2 className="text-[clamp(1.8rem,7vw,2.5rem)] font-bold tracking-tight text-white text-balance">
                   Acesse seu painel
                 </h2>
-                <p className="mx-auto mt-2.5 max-w-[28ch] text-[14px] leading-relaxed text-muted-foreground">
+                <p className="mx-auto mt-2.5 max-w-[28ch] text-[14px] leading-relaxed text-slate-300">
                   Seus pontos e recompensas estão te esperando.
                 </p>
               </div>
@@ -285,7 +285,7 @@ export default function LoginPage() {
               {registered && (
                 <div className="mb-5 flex items-center gap-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] px-4 py-3 animate-enter">
                   <CheckCircle className="h-4 w-4 flex-shrink-0 text-[hsl(var(--success))]" />
-                  <p className="text-[13px] text-foreground">Conta criada. Faça login para continuar.</p>
+                  <p className="text-[13px] text-white">Conta criada. Faça login para continuar.</p>
                 </div>
               )}
 
@@ -293,12 +293,12 @@ export default function LoginPage() {
                 {error && (
                   <div className="flex items-center gap-2.5 rounded-xl border border-destructive/20 bg-destructive/[0.06] px-4 py-3 animate-enter">
                     <AlertCircle className="h-4 w-4 flex-shrink-0 text-destructive" />
-                    <p className="text-[13px] text-foreground">{error}</p>
+                    <p className="text-[13px] text-white">{error}</p>
                   </div>
                 )}
 
                 <div className="space-y-2.5">
-                  <Label htmlFor="email" className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                  <Label htmlFor="email" className="text-[11px] font-semibold uppercase tracking-widest text-slate-300">
                     E-mail
                   </Label>
                   <Input
@@ -308,12 +308,12 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="seu@empresa.com"
                     autoComplete="email"
-                    className="h-12 rounded-xl border-primary/[0.08] bg-[hsl(225_25%_10%_/_0.5)] px-4 text-[14px] transition-all duration-300 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-0 focus-visible:border-primary/25 focus-visible:bg-[hsl(225_25%_11%_/_0.6)] focus-visible:shadow-[0_0_0_3px_hsl(var(--primary)_/_0.1),0_4px_16px_-4px_hsl(var(--primary)_/_0.1)]"
+                    className="h-12 rounded-xl border-white/[0.08] bg-[hsl(225_25%_10%_/_0.7)] px-4 text-[14px] text-white transition-all duration-300 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-0 focus-visible:border-primary/25 focus-visible:bg-[hsl(225_25%_11%_/_0.82)] focus-visible:text-white focus-visible:shadow-[0_0_0_3px_hsl(var(--primary)_/_0.1),0_4px_16px_-4px_hsl(var(--primary)_/_0.1)]"
                   />
                 </div>
 
                 <div className="space-y-2.5">
-                  <Label htmlFor="password" className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                  <Label htmlFor="password" className="text-[11px] font-semibold uppercase tracking-widest text-slate-300">
                     Senha
                   </Label>
                   <div className="relative">
@@ -324,12 +324,12 @@ export default function LoginPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
                       autoComplete="current-password"
-                      className="h-12 rounded-xl border-primary/[0.08] bg-[hsl(225_25%_10%_/_0.5)] px-4 pr-11 text-[14px] transition-all duration-300 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-0 focus-visible:border-primary/25 focus-visible:bg-[hsl(225_25%_11%_/_0.6)] focus-visible:shadow-[0_0_0_3px_hsl(var(--primary)_/_0.1),0_4px_16px_-4px_hsl(var(--primary)_/_0.1)]"
+                      className="h-12 rounded-xl border-white/[0.08] bg-[hsl(225_25%_10%_/_0.7)] px-4 pr-11 text-[14px] text-white transition-all duration-300 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-0 focus-visible:border-primary/25 focus-visible:bg-[hsl(225_25%_11%_/_0.82)] focus-visible:text-white focus-visible:shadow-[0_0_0_3px_hsl(var(--primary)_/_0.1),0_4px_16px_-4px_hsl(var(--primary)_/_0.1)]"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-muted-foreground transition-all duration-200 hover:bg-primary/[0.08] hover:text-foreground/80"
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-400 transition-all duration-200 hover:bg-primary/[0.08] hover:text-white"
                       tabIndex={-1}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -340,7 +340,7 @@ export default function LoginPage() {
                 <div className="flex justify-end pt-0.5">
                   <button
                     type="button"
-                    className="text-[12.5px] font-medium text-primary/80 transition-colors duration-200 hover:text-primary"
+                    className="text-[12.5px] font-medium text-primary/90 transition-colors duration-200 hover:text-primary"
                     onClick={() => {/* future: forgot password flow */}}
                   >
                     Esqueceu sua senha?
@@ -362,7 +362,7 @@ export default function LoginPage() {
               </form>
             </div>
 
-            <p className="mt-5 text-center text-[13.5px] text-muted-foreground">
+            <p className="mt-5 text-center text-[13.5px] text-slate-300">
               Não tem conta?{' '}
               <Link to="/register" className="font-medium text-primary/90 transition-colors hover:text-primary">
                 Criar conta

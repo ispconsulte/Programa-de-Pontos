@@ -20,9 +20,13 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
-import { supabase } from '@/lib/supabase-client'
 import { autocompleteCampaignClients, getCurrentTenantId, type CampaignClientRow } from '@/lib/supabase-queries'
-import { registerRewardRedemption, type RewardCatalogRow } from '@/lib/loyalty-admin'
+import {
+  fetchRewardCatalogItems,
+  registerRewardRedemption,
+  type RewardCatalogRow,
+  type RewardRedemptionResult,
+} from '@/lib/loyalty-admin'
 import Spinner from '@/components/Spinner'
 
 interface GiftOption {
@@ -61,14 +65,15 @@ export default function RegisterRedemptionDialog({
   const [responsible, setResponsible] = useState('')
   const [notes, setNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [success, setSuccess] = useState(false)
+  const [success, setSuccess] = useState<RewardRedemptionResult | null>(null)
   const [submitError, setSubmitError] = useState('')
 
   const selectedGift = useMemo(() => gifts.find(g => g.id === selectedGiftId) ?? null, [gifts, selectedGiftId])
   const availablePoints = selectedClient?.pontos_disponiveis ?? 0
   const requiredPoints = selectedGift?.requiredPoints ?? 0
+  const isOutOfStock = !!selectedGift && selectedGift.stock != null && selectedGift.stock <= 0
   const isBlocked = !!selectedGift && !!selectedClient && availablePoints < requiredPoints
-  const canConfirm = !!selectedClient && !!selectedGift && !!responsible.trim() && !isBlocked && !submitting
+  const canConfirm = !!selectedClient && !!selectedGift && !!responsible.trim() && !isBlocked && !isOutOfStock && !submitting
 
   /* Load gifts on open */
   useEffect(() => {
@@ -77,19 +82,20 @@ export default function RegisterRedemptionDialog({
     const loadGifts = async () => {
       setGiftsLoading(true)
       try {
-        const { data } = await (supabase as any)
-          .from('pontuacao_catalogo_brindes')
-          .select('id, nome, pontos_necessarios, ativo, estoque, imagem_url, descricao')
-          .eq('ativo', true)
-          .order('pontos_necessarios', { ascending: true })
+        const data = await fetchRewardCatalogItems()
         if (!mounted) return
-        setGifts((data ?? []).map((g: any) => ({
+        setGifts((data ?? [])
+          .filter((g) => g.ativo)
+          .map((g) => ({
           id: g.id,
           name: g.nome,
           requiredPoints: g.pontos_necessarios,
           stock: g.estoque ?? null,
         })))
-      } catch { /* ignore */ }
+      } catch {
+        if (!mounted) return
+        setGifts([])
+      }
       finally { if (mounted) setGiftsLoading(false) }
     }
     loadGifts()
@@ -103,7 +109,7 @@ export default function RegisterRedemptionDialog({
     setResponsible('')
     setNotes('')
     setSubmitError('')
-    setSuccess(false)
+    setSuccess(null)
 
     if (preselectedClient) {
       setSelectedClient(preselectedClient)
@@ -148,7 +154,7 @@ export default function RegisterRedemptionDialog({
     setSubmitting(true)
     setSubmitError('')
     try {
-      await registerRewardRedemption({
+      const result = await registerRewardRedemption({
         client: selectedClient,
         reward: {
           id: selectedGift.id,
@@ -163,7 +169,7 @@ export default function RegisterRedemptionDialog({
         notes,
       })
 
-      setSuccess(true)
+      setSuccess(result)
       setTimeout(() => {
         setOpen(false)
         onRedemptionComplete?.()
@@ -199,7 +205,13 @@ export default function RegisterRedemptionDialog({
               <CheckCircle2 className="h-8 w-8 text-emerald-400" />
             </div>
             <p className="mt-4 text-lg font-bold text-foreground">Resgate registrado!</p>
-            <p className="mt-1 text-sm text-muted-foreground">Os pontos foram atualizados automaticamente.</p>
+            <p className="mt-1 text-center text-sm text-muted-foreground">
+              {selectedClient?.nome_cliente} resgatou <span className="font-semibold text-foreground">{success.redemption.brinde_nome}</span>.
+            </p>
+            <p className="mt-2 text-center text-xs text-muted-foreground">
+              Saldo restante: <span className="font-semibold text-foreground">{success.remainingPoints.toLocaleString('pt-BR')} pts</span>
+              {success.remainingStock != null ? <> · Estoque restante: <span className="font-semibold text-foreground">{success.remainingStock}</span></> : null}
+            </p>
           </div>
         ) : (
           <div className="space-y-4 px-6 pb-2">
@@ -278,7 +290,7 @@ export default function RegisterRedemptionDialog({
                   </SelectTrigger>
                   <SelectContent>
                     {gifts.map((g) => (
-                      <SelectItem key={g.id} value={g.id}>
+                      <SelectItem key={g.id} value={g.id} disabled={g.stock != null && g.stock <= 0}>
                         {g.name} — {g.requiredPoints} pts{g.stock != null ? ` • estoque ${g.stock}` : ''}
                       </SelectItem>
                     ))}
@@ -318,6 +330,18 @@ export default function RegisterRedemptionDialog({
                   <p className="text-sm font-semibold text-destructive">Saldo insuficiente</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     O cliente tem {availablePoints.toLocaleString('pt-BR')} pts, mas precisa de {requiredPoints.toLocaleString('pt-BR')} pts.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {isOutOfStock && (
+              <div className="flex items-start gap-3 rounded-lg border border-amber-500/20 bg-amber-500/[0.06] p-3">
+                <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-amber-400">Estoque indisponível</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Este brinde está cadastrado, mas o estoque atual está zerado. Escolha outro item para continuar.
                   </p>
                 </div>
               </div>

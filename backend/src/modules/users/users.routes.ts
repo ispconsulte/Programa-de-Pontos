@@ -84,6 +84,32 @@ async function loadTenantUserById(tenantId: string, userId: string): Promise<Ten
   return data as TenantUserRow
 }
 
+async function listAllAuthUsers() {
+  const users: Array<any> = []
+  let page = 1
+  const perPage = 200
+
+  while (true) {
+    const result = await supabaseAdmin.auth.admin.listUsers({
+      page,
+      perPage,
+    })
+
+    if (result.error) {
+      throw new AppError(500, result.error.message)
+    }
+
+    const batch = result.data.users ?? []
+    users.push(...batch)
+
+    if (batch.length < perPage) {
+      return users
+    }
+
+    page += 1
+  }
+}
+
 async function ensureAnotherAdminRemains(tenantId: string, excludedUserId: string) {
   const { count, error } = await supabaseAdmin
     .from('users')
@@ -143,17 +169,10 @@ export async function usersRoutes(app: FastifyInstance) {
       },
     }, async (request, reply) => {
       const tenantUsers = await loadTenantUsers(request.tenantId)
-      const authUsersResult = await supabaseAdmin.auth.admin.listUsers({
-        page: 1,
-        perPage: 1000,
-      })
-
-      if (authUsersResult.error) {
-        throw new AppError(500, authUsersResult.error.message)
-      }
+      const authUsers = await listAllAuthUsers()
 
       const authUsersById = new Map(
-        (authUsersResult.data.users ?? []).map((user) => [user.id, user]),
+        authUsers.map((user) => [user.id, user]),
       )
 
       return reply.send({

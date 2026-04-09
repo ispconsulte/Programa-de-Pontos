@@ -2,6 +2,31 @@ import { authenticateRequest, assertAdmin } from '../_lib/auth'
 import { methodNotAllowed, sendJson } from '../_lib/http'
 import { normalizeDisplayName, supabaseAdmin } from '../_lib/supabase'
 
+async function listAllAuthUsers() {
+  const users: Array<any> = []
+  let page = 1
+  const perPage = 200
+
+  while (true) {
+    const result = await supabaseAdmin.auth.admin.listUsers({ page, perPage })
+    if (result.error) {
+      return result
+    }
+
+    const batch = result.data.users ?? []
+    users.push(...batch)
+
+    if (batch.length < perPage) {
+      return {
+        data: { users },
+        error: null,
+      }
+    }
+
+    page += 1
+  }
+}
+
 export default async function handler(request: any, response: any) {
   try {
     if (request.method !== 'GET') {
@@ -17,7 +42,7 @@ export default async function handler(request: any, response: any) {
       .eq('tenant_id', auth.tenantId)
       .order('created_at', { ascending: true })
 
-    const authUsers = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 })
+    const authUsers = await listAllAuthUsers()
 
     if (tenantUsers.error || authUsers.error) {
       return sendJson(response, 500, { error: tenantUsers.error?.message ?? authUsers.error?.message ?? 'Falha ao listar usuários' })

@@ -359,7 +359,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
           {!collapsed && (
             <div className="text-center -mt-0.5">
-              <span className="text-[13px] font-semibold tracking-wide bg-gradient-to-r from-emerald-400 via-yellow-400 to-blue-400 bg-clip-text text-transparent">
+              <span className={cn(
+                'text-[13px] font-semibold tracking-wide',
+                theme === 'light'
+                  ? 'text-foreground'
+                  : 'bg-gradient-to-r from-emerald-400 via-yellow-400 to-blue-400 bg-clip-text text-transparent'
+              )}>
                 Sistema de Recompensas!
               </span>
             </div>
@@ -465,7 +470,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <div className="relative ml-1" ref={userMenuRef}>
               <button
                 onClick={() => setUserMenuOpen((o) => !o)}
-                className="flex h-9 w-9 items-center justify-center rounded-full border-0 outline-none transition-opacity hover:opacity-85 focus:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                className="flex items-center gap-2 rounded-full border border-border/70 bg-surface-1/80 px-1 py-1 pr-2 outline-none transition-colors hover:bg-muted/55 focus:outline-none focus-visible:ring-1 focus-visible:ring-primary"
               >
                 {avatarUrl ? (
                   <img src={avatarUrl} alt={profile.name} className="h-8 w-8 rounded-full object-cover" />
@@ -474,6 +479,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     {initial}
                   </div>
                 )}
+                <div className="hidden max-w-[8.5rem] min-w-0 text-left sm:block">
+                  <p className="truncate text-[12.5px] font-semibold text-foreground">{profile.name}</p>
+                  <p className="truncate text-[11px] text-muted-foreground">
+                    {profileLoading ? 'Carregando' : isAdminUiRole(profile.role) ? 'Administrador' : profile.role ? 'Operador' : 'Perfil'}
+                  </p>
+                </div>
               </button>
 
               {userMenuOpen && (

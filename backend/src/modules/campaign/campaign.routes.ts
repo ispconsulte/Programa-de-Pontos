@@ -460,6 +460,31 @@ export async function campaignRoutes(app: FastifyInstance) {
     return reply.status(201).send(insertResult.data)
   })
 
+  app.get('/catalog', {
+    schema: {
+      tags: ['Campaign'],
+      summary: 'Listar itens do catálogo legado de brindes',
+      security: [{ bearerAuth: [] }],
+    },
+  }, async (request, reply) => {
+    const query = supabaseAdmin
+      .from('pontuacao_catalogo_brindes')
+      .select('*')
+      .order('ativo', { ascending: false })
+      .order('pontos_necessarios', { ascending: true })
+      .order('nome', { ascending: true })
+
+    const listResult = await (['admin', 'owner', 'manager'].includes(String(request.userRole ?? '').toLowerCase())
+      ? query
+      : query.eq('ativo', true))
+
+    if (listResult.error) {
+      throw new AppError(500, listResult.error.message)
+    }
+
+    return reply.send(listResult.data ?? [])
+  })
+
   app.patch('/catalog/:id', {
     schema: {
       tags: ['Campaign'],

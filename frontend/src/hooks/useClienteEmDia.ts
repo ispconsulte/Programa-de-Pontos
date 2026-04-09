@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase-client'
 import { backendRequest } from '@/lib/backend-client'
+import { fetchRewardCatalogItems } from '@/lib/loyalty-admin'
 import { fetchLegacyRedemptions } from '@/lib/supabase-queries'
 
 type ClienteEmDiaCampaignStatus = 'ativo' | 'inativo' | 'bloqueado'
@@ -225,16 +226,8 @@ export function useClienteEmDia(options: UseClienteEmDiaOptions = {}): UseClient
     setError(null)
 
     try {
-      const rewardsQuery = db
-        .from('pontuacao_catalogo_brindes')
-        .select('*')
-        .order('ativo', { ascending: false })
-        .order('pontos_necessarios', { ascending: true })
-        .order('nome', { ascending: true })
-
       if (options.rewardsOnly) {
-        const { data: rewardsData, error: rewardsError } = await rewardsQuery
-        if (rewardsError) throw rewardsError
+        const rewardsData = await fetchRewardCatalogItems()
 
         setRewards((rewardsData ?? []).map((row: unknown) => normalizeRewardItem(row as Record<string, unknown>)))
         setOverview([])
@@ -263,7 +256,7 @@ export function useClienteEmDia(options: UseClienteEmDiaOptions = {}): UseClient
         redemptionsResult,
       ] = await Promise.all([
         overviewQuery,
-        rewardsQuery,
+        fetchRewardCatalogItems(),
         latestSyncQuery,
         backendRequest<{
           name: string
@@ -280,10 +273,9 @@ export function useClienteEmDia(options: UseClienteEmDiaOptions = {}): UseClient
       ])
 
       if (overviewResult.error) throw overviewResult.error
-      if (rewardsResult.error) throw rewardsResult.error
       if (latestSyncResult.error) throw latestSyncResult.error
       const overviewItems = (overviewResult.data ?? []).map((row: unknown) => normalizeOverviewItem(row as Record<string, unknown>))
-      const rewardItems = (rewardsResult.data ?? []).map((row: unknown) => normalizeRewardItem(row as Record<string, unknown>))
+      const rewardItems = (rewardsResult ?? []).map((row: unknown) => normalizeRewardItem(row as Record<string, unknown>))
       const redemptionItems = (redemptionsResult ?? []).map((row: unknown) => normalizeRedemptionItem(row as Record<string, unknown>))
 
       setOverview(overviewItems)

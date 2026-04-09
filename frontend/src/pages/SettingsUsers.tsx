@@ -51,6 +51,14 @@ const initialFormState: UserFormState = {
   isActive: true,
 }
 
+const PASSWORD_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%*-_'
+
+function generatePassword(length = 12): string {
+  const values = new Uint32Array(length)
+  globalThis.crypto.getRandomValues(values)
+  return Array.from(values, (value) => PASSWORD_CHARS[value % PASSWORD_CHARS.length]).join('')
+}
+
 function formatDateTime(value: string | null): string {
   if (!value) return 'Nunca'
   const parsed = new Date(value)
@@ -149,6 +157,8 @@ export default function SettingsUsersPage() {
   const [dialogMode, setDialogMode] = useState<DialogMode>('create')
   const [editingUser, setEditingUser] = useState<ManagedUser | null>(null)
   const [form, setForm] = useState<UserFormState>(initialFormState)
+  const [showPassword, setShowPassword] = useState(false)
+  const [copyFeedback, setCopyFeedback] = useState('')
 
   const summary = useMemo(() => {
     const admins = users.filter((u) => isAdminUiRole(u.role)).length
@@ -168,7 +178,6 @@ export default function SettingsUsersPage() {
 
       if (isAdminUiRole(me.role)) {
         const managedUsers = await fetchManagedUsers()
-        console.log('[SettingsUsers] managedUsers loaded:', managedUsers.length)
         setUsers(managedUsers)
       }
     } catch (loadError) {
@@ -185,6 +194,8 @@ export default function SettingsUsersPage() {
     setDialogMode('create')
     setEditingUser(null)
     setForm(initialFormState)
+    setShowPassword(false)
+    setCopyFeedback('')
     setDialogOpen(true)
   }
 
@@ -198,11 +209,46 @@ export default function SettingsUsersPage() {
       role: isAdminUiRole(user.role) ? 'admin' : 'operator',
       isActive: user.is_active,
     })
+    setShowPassword(false)
+    setCopyFeedback('')
     setDialogOpen(true)
+  }
+
+  function closeDialog() {
+    setDialogOpen(false)
+    setEditingUser(null)
+    setForm(initialFormState)
+    setShowPassword(false)
+    setCopyFeedback('')
+  }
+
+  function handleGeneratePassword() {
+    const password = generatePassword()
+    setForm((prev) => ({ ...prev, password }))
+    setShowPassword(true)
+    setCopyFeedback('')
+  }
+
+  async function handleCopyPassword() {
+    if (!form.password) return
+
+    try {
+      await navigator.clipboard.writeText(form.password)
+      setCopyFeedback('Senha copiada.')
+      setTimeout(() => setCopyFeedback(''), 2500)
+    } catch {
+      setCopyFeedback('Não foi possível copiar agora.')
+      setTimeout(() => setCopyFeedback(''), 2500)
+    }
   }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
+    if (dialogMode === 'edit' && form.password && form.password.length < 8) {
+      setError('A nova senha precisa ter no mínimo 8 caracteres.')
+      return
+    }
+
     setSaving(true)
     setError('')
     setSuccess('')
@@ -227,8 +273,7 @@ export default function SettingsUsersPage() {
         setSuccess('Usuário atualizado com sucesso.')
       }
 
-      setDialogOpen(false)
-      setForm(initialFormState)
+      closeDialog()
       await loadData()
     } catch (submitError) {
       setError(friendlyError(submitError))
@@ -432,7 +477,16 @@ export default function SettingsUsersPage() {
           )}
         </div>
 
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog
+          open={dialogOpen}
+          onOpenChange={(open) => {
+            if (!open) {
+              closeDialog()
+              return
+            }
+            setDialogOpen(true)
+          }}
+        >
           <DialogContent className="border-[hsl(var(--border))] bg-[hsl(var(--background))]">
             <DialogHeader>
               <DialogTitle>{dialogMode === 'create' ? 'Novo usuário' : 'Editar usuário'}</DialogTitle>
@@ -499,22 +553,61 @@ export default function SettingsUsersPage() {
                 <Label htmlFor="user-password">
                   {dialogMode === 'create' ? 'Senha inicial' : 'Nova senha'}
                 </Label>
-                <Input
-                  id="user-password"
-                  type="password"
-                  value={form.password}
-                  onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
-                  placeholder={dialogMode === 'create' ? 'Mínimo de 8 caracteres' : 'Preencha apenas se quiser alterar'}
-                />
+                <div className="space-y-2">
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <Input
+                      id="user-password"
+                      type={showPassword ? 'text' : 'password'}
+                      value={form.password}
+                      onChange={(e) => {
+                        setCopyFeedback('')
+                        setForm((prev) => ({ ...prev, password: e.target.value }))
+                      }}
+                      placeholder={dialogMode === 'create' ? 'Mínimo de 8 caracteres' : 'Preencha apenas se quiser alterar'}
+                    />
+                    <div className="flex gap-2 sm:w-auto">
+                      <Button type="button" variant="outline" onClick={handleGeneratePassword}>
+                        Gerar
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        disabled={!form.password}
+                      >
+                        {showPassword ? 'Ocultar' : 'Ver'}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => void handleCopyPassword()}
+                        disabled={!form.password}
+                      >
+                        Copiar
+                      </Button>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {dialogMode === 'create'
+                      ? 'Use uma senha forte com pelo menos 8 caracteres.'
+                      : 'Deixe em branco para manter a senha atual.'}
+                  </p>
+                  {copyFeedback && <p className="text-xs text-primary">{copyFeedback}</p>}
+                </div>
               </div>
 
               <DialogFooter className="px-0 pb-0">
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                <Button type="button" variant="outline" onClick={closeDialog}>
                   Cancelar
                 </Button>
                 <Button
                   type="submit"
-                  disabled={saving || !form.email.trim() || (dialogMode === 'create' && form.password.length < 8)}
+                  disabled={
+                    saving
+                    || !form.email.trim()
+                    || (dialogMode === 'create' && form.password.length < 8)
+                    || (dialogMode === 'edit' && form.password.length > 0 && form.password.length < 8)
+                  }
                 >
                   {saving ? <Spinner size="sm" /> : null}
                   {dialogMode === 'create' ? 'Criar usuário' : 'Salvar alterações'}

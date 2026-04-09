@@ -22,11 +22,31 @@ function getBody(request: any): unknown {
 export default async function handler(request: any, response: any) {
   try {
     const auth = await authenticateRequest(request)
-    assertAdmin(auth.userRole)
+
+    if (request.method === 'GET') {
+      const query = supabaseAdmin
+        .from('pontuacao_catalogo_brindes')
+        .select('*')
+        .order('ativo', { ascending: false })
+        .order('pontos_necessarios', { ascending: true })
+        .order('nome', { ascending: true })
+
+      const listResult = await (auth.userRole && ['admin', 'owner', 'manager'].includes(auth.userRole.toLowerCase())
+        ? query
+        : query.eq('ativo', true))
+
+      if (listResult.error) {
+        return sendJson(response, 500, { error: listResult.error.message })
+      }
+
+      return sendJson(response, 200, listResult.data ?? [])
+    }
 
     if (request.method !== 'POST') {
       return methodNotAllowed(response)
     }
+
+    assertAdmin(auth.userRole)
 
     const body = catalogRewardSchema.parse(getBody(request))
 

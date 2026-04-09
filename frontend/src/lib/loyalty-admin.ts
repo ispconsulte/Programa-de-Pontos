@@ -20,6 +20,12 @@ export interface RewardCatalogRow {
   imagem_url: string | null
 }
 
+export async function fetchRewardCatalogItems(): Promise<RewardCatalogRow[]> {
+  return backendRequest<RewardCatalogRow[]>('/campaign/catalog', {
+    method: 'GET',
+  })
+}
+
 export interface ManualPointsInput {
   client: CampaignClientRow
   points: number
@@ -32,6 +38,17 @@ export interface RewardRedemptionInput {
   reward: RewardCatalogRow
   responsible: string
   notes?: string
+}
+
+export interface RewardRedemptionResult {
+  redemption: {
+    id: string
+    brinde_nome: string
+    pontos_utilizados: number
+    status_resgate: string
+  }
+  remainingPoints: number
+  remainingStock: number | null
 }
 
 export async function readImageAsDataUrl(file: File): Promise<string> {
@@ -100,8 +117,8 @@ export async function grantManualPoints(input: ManualPointsInput): Promise<void>
   })
 }
 
-export async function registerRewardRedemption(input: RewardRedemptionInput): Promise<void> {
-  await backendRequest('/campaign/legacy-redemptions', {
+export async function registerRewardRedemption(input: RewardRedemptionInput): Promise<RewardRedemptionResult> {
+  return backendRequest<RewardRedemptionResult>('/campaign/legacy-redemptions', {
     method: 'POST',
     body: JSON.stringify({
       clientId: input.client.id,

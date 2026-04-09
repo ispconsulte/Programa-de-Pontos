@@ -10,12 +10,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
+  createDefaultCampaignRuleSettings,
+  deleteCampaignRuleSettings,
+  fetchCampaignRuleSettingsList,
   fetchActiveCampaignRuleSettings,
   getCurrentTenantId,
   saveCampaignRuleSettings,
   type CampaignRuleSettings,
 } from '@/lib/supabase-queries'
-import { ArrowLeft, Megaphone, Save, Zap } from 'lucide-react'
+import { ArrowLeft, Megaphone, Plus, Save, Trash2, Zap } from 'lucide-react'
 import { friendlyError } from '@/lib/friendly-errors'
 
 /* ── Points tier visual ── */
@@ -42,9 +45,24 @@ export default function SettingsCampaignsPage() {
   const [tenantId, setTenantId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [settings, setSettings] = useState<CampaignRuleSettings | null>(null)
+  const [campaigns, setCampaigns] = useState<CampaignRuleSettings[]>([])
+
+  const loadCampaigns = async (currentTenantId: string) => {
+    const loadedCampaigns = await fetchCampaignRuleSettingsList(currentTenantId)
+    setCampaigns(loadedCampaigns)
+
+    if (loadedCampaigns.length === 0) {
+      setSettings(createDefaultCampaignRuleSettings())
+      return
+    }
+
+    const activeCampaign = loadedCampaigns.find((campaign) => campaign.active) ?? loadedCampaigns[0]
+    setSettings(activeCampaign)
+  }
 
   useEffect(() => {
     const load = async () => {
@@ -55,8 +73,7 @@ export default function SettingsCampaignsPage() {
         if (!currentTenantId) { setError('Usuário sem tenant associado.'); return }
 
         setTenantId(currentTenantId)
-        const loaded = await fetchActiveCampaignRuleSettings(currentTenantId)
-        setSettings(loaded)
+        await loadCampaigns(currentTenantId)
       } catch (err) {
         setError(friendlyError(err))
       } finally {
@@ -73,6 +90,31 @@ export default function SettingsCampaignsPage() {
   const threshold = Math.max(0, Number(settings?.thresholdEarlyDays ?? 0))
   const nearDueMax = Math.max(0, threshold - 1)
 
+  const showTemporarySuccess = (message: string) => {
+    setSuccess(message)
+    setTimeout(() => setSuccess(''), 3500)
+  }
+
+  const handleSelectCampaign = async (campaignId: string) => {
+    if (!tenantId) return
+
+    setError('')
+
+    if (campaignId === '__new__') {
+      setSettings(createDefaultCampaignRuleSettings())
+      return
+    }
+
+    const selectedCampaign = campaigns.find((campaign) => campaign.campaignId === campaignId)
+    if (selectedCampaign) {
+      setSettings(selectedCampaign)
+      return
+    }
+
+    const activeCampaign = await fetchActiveCampaignRuleSettings(tenantId)
+    setSettings(activeCampaign)
+  }
+
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
     if (!settings || !tenantId) return
@@ -83,14 +125,41 @@ export default function SettingsCampaignsPage() {
 
     try {
       await saveCampaignRuleSettings(tenantId, settings)
-      const refreshed = await fetchActiveCampaignRuleSettings(tenantId)
+      const refreshedCampaigns = await fetchCampaignRuleSettingsList(tenantId)
+      setCampaigns(refreshedCampaigns)
+      const refreshed = refreshedCampaigns.find((campaign) => campaign.active)
+        ?? refreshedCampaigns.find((campaign) => campaign.campaignName === (settings.campaignName.trim() || 'Campanha padrão'))
+        ?? refreshedCampaigns[0]
+        ?? createDefaultCampaignRuleSettings()
       setSettings(refreshed)
-      setSuccess('Regras da campanha salvas com sucesso.')
-      setTimeout(() => setSuccess(''), 3500)
+      showTemporarySuccess('Campanha salva com sucesso.')
     } catch (err) {
       setError(friendlyError(err))
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!tenantId || !settings?.campaignId) return
+
+    const confirmed = window.confirm(`Excluir a campanha "${settings.campaignName}"?`)
+    if (!confirmed) return
+
+    setDeleting(true)
+    setError('')
+    setSuccess('')
+
+    try {
+      await deleteCampaignRuleSettings(tenantId, settings.campaignId)
+      const refreshedCampaigns = await fetchCampaignRuleSettingsList(tenantId)
+      setCampaigns(refreshedCampaigns)
+      setSettings(refreshedCampaigns.find((campaign) => campaign.active) ?? refreshedCampaigns[0] ?? createDefaultCampaignRuleSettings())
+      showTemporarySuccess('Campanha excluída com sucesso.')
+    } catch (err) {
+      setError(friendlyError(err))
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -152,6 +221,47 @@ export default function SettingsCampaignsPage() {
                   <CardDescription>Ajuste os parâmetros abaixo e salve para aplicar.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-5 pt-5">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-end">
+                    <div className="flex-1 space-y-2">
+                      <Label htmlFor="campaign-selector">Campanha</Label>
+                      <select
+                        id="campaign-selector"
+                        value={settings?.campaignId ?? '__new__'}
+                        onChange={(e) => void handleSelectCampaign(e.target.value)}
+                        className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none ring-offset-background transition-colors focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {campaigns.map((campaign) => (
+                          <option key={campaign.campaignId ?? campaign.campaignName} value={campaign.campaignId ?? ''}>
+                            {campaign.campaignName}{campaign.active ? ' (ativa)' : ''}
+                          </option>
+                        ))}
+                        <option value="__new__">Nova campanha</option>
+                      </select>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex-1 md:flex-none"
+                        onClick={() => setSettings(createDefaultCampaignRuleSettings())}
+                      >
+                        <Plus className="h-4 w-4" />
+                        Nova
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex-1 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive md:flex-none"
+                        onClick={() => void handleDelete()}
+                        disabled={!settings?.campaignId || deleting}
+                      >
+                        {deleting ? <Spinner size="sm" /> : <Trash2 className="h-4 w-4" />}
+                        Excluir
+                      </Button>
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="campaign-name">Nome da campanha</Label>
                     <Input
@@ -240,9 +350,9 @@ export default function SettingsCampaignsPage() {
                 <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
                   <Link to="/admin/empresa">Cancelar</Link>
                 </Button>
-                <Button type="submit" disabled={saving} size="lg" className="w-full gap-2 sm:w-auto sm:min-w-[220px]">
+                <Button type="submit" disabled={saving || deleting} size="lg" className="w-full gap-2 sm:w-auto sm:min-w-[220px]">
                   {saving ? <Spinner size="sm" /> : <Save className="h-4 w-4" />}
-                  {saving ? 'Salvando...' : 'Salvar regras'}
+                  {saving ? 'Salvando...' : settings?.campaignId ? 'Salvar campanha' : 'Criar campanha'}
                 </Button>
               </div>
             </form>

@@ -476,16 +476,21 @@ export async function saveTenantSettings(
     connectionId?: string | null
   }
 ): Promise<void> {
+  const payload: Record<string, unknown> = {
+    tenantName: opts.tenantName?.trim() || undefined,
+    connectionName: opts.tenantName || 'Integração Padrão',
+    ixcBaseUrl: opts.ixcBaseUrl,
+    ixcUser: opts.ixcUser,
+    ixcToken: opts.ixcToken || undefined,
+  }
+
+  if (opts.connectionId) {
+    payload.ixcConnectionId = opts.connectionId
+  }
+
   await backendRequest('/settings', {
     method: 'PUT',
-    body: JSON.stringify({
-      tenantName: opts.tenantName?.trim() || undefined,
-      ixcConnectionId: opts.connectionId ?? undefined,
-      connectionName: opts.tenantName || 'Integração Padrão',
-      ixcBaseUrl: opts.ixcBaseUrl,
-      ixcUser: opts.ixcUser,
-      ixcToken: opts.ixcToken || undefined,
-    }),
+    body: JSON.stringify(payload),
   })
 }
 
@@ -501,40 +506,26 @@ export interface CampaignRuleSettings {
   pointsLate: number
 }
 
-export async function fetchActiveCampaignRuleSettings(tenantId: string): Promise<CampaignRuleSettings> {
-  const defaults: CampaignRuleSettings = {
-    campaignId: null,
-    campaignName: 'Campanha padrão',
-    active: true,
-    thresholdEarlyDays: 3,
-    pointsEarly: 5,
-    pointsOnDue: 4,
-    pointsLate: 2,
-  }
+const DEFAULT_CAMPAIGN_RULE_SETTINGS: CampaignRuleSettings = {
+  campaignId: null,
+  campaignName: 'Campanha padrão',
+  active: true,
+  thresholdEarlyDays: 3,
+  pointsEarly: 5,
+  pointsOnDue: 4,
+  pointsLate: 2,
+}
 
-  const { data: campaign, error: campaignError } = await (supabase as any)
-    .from('pontuacao_campanhas')
-    .select('id, nome, ativa')
-    .eq('tenant_id', tenantId)
-    .eq('ativa', true)
-    .order('updated_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-
-  if (campaignError) throw new Error(campaignError.message)
-  if (!campaign) return defaults
-
-  const { data: rules, error: rulesError } = await (supabase as any)
-    .from('pontuacao_campanha_regras')
-    .select('regra_codigo, dias_antecedencia_min, pontos, ativo')
-    .eq('tenant_id', tenantId)
-    .eq('campanha_id', campaign.id)
-    .eq('ativo', true)
-
-  if (rulesError) throw new Error(rulesError.message)
-
+function mapCampaignRuleSettings(
+  campaign: { id: string; nome: string | null; ativa: boolean | null },
+  rules: Array<{
+    regra_codigo: string | null
+    dias_antecedencia_min: number | null
+    pontos: number | null
+  }>,
+): CampaignRuleSettings {
   const byCode = new Map<string, { points: number; days: number | null }>()
-  for (const row of rules ?? []) {
+  for (const row of rules) {
     const code = String(row.regra_codigo ?? '')
     if (!code) continue
     byCode.set(code, {
@@ -547,13 +538,104 @@ export async function fetchActiveCampaignRuleSettings(tenantId: string): Promise
 
   return {
     campaignId: String(campaign.id),
-    campaignName: String(campaign.nome ?? defaults.campaignName),
+    campaignName: String(campaign.nome ?? DEFAULT_CAMPAIGN_RULE_SETTINGS.campaignName),
     active: Boolean(campaign.ativa),
-    thresholdEarlyDays: byCode.get('antecipado')?.days ?? defaults.thresholdEarlyDays,
-    pointsEarly: byCode.get('antecipado')?.points ?? defaults.pointsEarly,
-    pointsOnDue: byCode.get('no_vencimento')?.points ?? defaults.pointsOnDue,
-    pointsLate: byCode.get('apos_vencimento')?.points ?? defaults.pointsLate,
+    thresholdEarlyDays: byCode.get('antecipado')?.days ?? DEFAULT_CAMPAIGN_RULE_SETTINGS.thresholdEarlyDays,
+    pointsEarly: byCode.get('antecipado')?.points ?? DEFAULT_CAMPAIGN_RULE_SETTINGS.pointsEarly,
+    pointsOnDue: byCode.get('no_vencimento')?.points ?? DEFAULT_CAMPAIGN_RULE_SETTINGS.pointsOnDue,
+    pointsLate: byCode.get('apos_vencimento')?.points ?? DEFAULT_CAMPAIGN_RULE_SETTINGS.pointsLate,
   }
+}
+
+export function createDefaultCampaignRuleSettings(): CampaignRuleSettings {
+  return { ...DEFAULT_CAMPAIGN_RULE_SETTINGS }
+}
+
+export async function fetchCampaignRuleSettingsList(tenantId: string): Promise<CampaignRuleSettings[]> {
+  const { data: campaigns, error: campaignsError } = await (supabase as any)
+    .from('pontuacao_campanhas')
+    .select('id, nome, ativa, updated_at, created_at')
+    .eq('tenant_id', tenantId)
+    .order('ativa', { ascending: false })
+    .order('updated_at', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false, nullsFirst: false })
+
+  if (campaignsError) throw new Error(campaignsError.message)
+  if (!campaigns || campaigns.length === 0) return []
+
+  const campaignIds = campaigns.map((campaign: any) => String(campaign.id))
+  const { data: rules, error: rulesError } = await (supabase as any)
+    .from('pontuacao_campanha_regras')
+    .select('campanha_id, regra_codigo, dias_antecedencia_min, pontos, ativo')
+    .eq('tenant_id', tenantId)
+    .in('campanha_id', campaignIds)
+    .eq('ativo', true)
+
+  if (rulesError) throw new Error(rulesError.message)
+
+  const rulesByCampaign = new Map<string, Array<{
+    regra_codigo: string | null
+    dias_antecedencia_min: number | null
+    pontos: number | null
+  }>>()
+
+  for (const row of rules ?? []) {
+    const campaignId = String(row.campanha_id ?? '')
+    if (!campaignId) continue
+    const currentRules = rulesByCampaign.get(campaignId) ?? []
+    currentRules.push({
+      regra_codigo: row.regra_codigo ?? null,
+      dias_antecedencia_min: row.dias_antecedencia_min ?? null,
+      pontos: row.pontos ?? null,
+    })
+    rulesByCampaign.set(campaignId, currentRules)
+  }
+
+  return campaigns.map((campaign: any) =>
+    mapCampaignRuleSettings(
+      {
+        id: String(campaign.id),
+        nome: campaign.nome ?? null,
+        ativa: campaign.ativa ?? false,
+      },
+      rulesByCampaign.get(String(campaign.id)) ?? [],
+    ),
+  )
+}
+
+export async function fetchActiveCampaignRuleSettings(tenantId: string): Promise<CampaignRuleSettings> {
+  const { data: campaign, error: campaignError } = await (supabase as any)
+    .from('pontuacao_campanhas')
+    .select('id, nome, ativa')
+    .eq('tenant_id', tenantId)
+    .eq('ativa', true)
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (campaignError) throw new Error(campaignError.message)
+  if (!campaign) return createDefaultCampaignRuleSettings()
+
+  const { data: rules, error: rulesError } = await (supabase as any)
+    .from('pontuacao_campanha_regras')
+    .select('regra_codigo, dias_antecedencia_min, pontos, ativo')
+    .eq('tenant_id', tenantId)
+    .eq('campanha_id', campaign.id)
+    .eq('ativo', true)
+
+  if (rulesError) throw new Error(rulesError.message)
+  return mapCampaignRuleSettings(
+    {
+      id: String(campaign.id),
+      nome: campaign.nome ?? null,
+      ativa: campaign.ativa ?? false,
+    },
+    (rules ?? []).map((row: any) => ({
+      regra_codigo: row.regra_codigo ?? null,
+      dias_antecedencia_min: row.dias_antecedencia_min ?? null,
+      pontos: row.pontos ?? null,
+    })),
+  )
 }
 
 export async function saveCampaignRuleSettings(
@@ -563,21 +645,20 @@ export async function saveCampaignRuleSettings(
   const campaignPayload = {
     tenant_id: tenantId,
     nome: settings.campaignName.trim() || 'Campanha padrão',
-    ativa: true,
   }
 
   let campaignId = settings.campaignId
   if (campaignId) {
     const { error } = await (supabase as any)
       .from('pontuacao_campanhas')
-      .update(campaignPayload)
+      .update({ nome: campaignPayload.nome })
       .eq('id', campaignId)
       .eq('tenant_id', tenantId)
     if (error) throw new Error(error.message)
   } else {
     const { data, error } = await (supabase as any)
       .from('pontuacao_campanhas')
-      .insert(campaignPayload)
+      .insert({ ...campaignPayload, ativa: false })
       .select('id')
       .single()
     if (error) throw new Error(error.message)
@@ -591,6 +672,13 @@ export async function saveCampaignRuleSettings(
     .eq('tenant_id', tenantId)
     .neq('id', campaignId)
   if (deactivateError) throw new Error(deactivateError.message)
+
+  const { error: activateError } = await (supabase as any)
+    .from('pontuacao_campanhas')
+    .update({ ativa: true })
+    .eq('tenant_id', tenantId)
+    .eq('id', campaignId)
+  if (activateError) throw new Error(activateError.message)
 
   const rules = [
     {
@@ -624,6 +712,57 @@ export async function saveCampaignRuleSettings(
     .upsert(rules, { onConflict: 'campanha_id,regra_codigo' })
 
   if (rulesError) throw new Error(rulesError.message)
+}
+
+export async function deleteCampaignRuleSettings(
+  tenantId: string,
+  campaignId: string,
+): Promise<void> {
+  const { data: currentCampaign, error: currentCampaignError } = await (supabase as any)
+    .from('pontuacao_campanhas')
+    .select('id, ativa')
+    .eq('tenant_id', tenantId)
+    .eq('id', campaignId)
+    .maybeSingle()
+
+  if (currentCampaignError) throw new Error(currentCampaignError.message)
+  if (!currentCampaign) return
+
+  const { error: rulesError } = await (supabase as any)
+    .from('pontuacao_campanha_regras')
+    .delete()
+    .eq('tenant_id', tenantId)
+    .eq('campanha_id', campaignId)
+  if (rulesError) throw new Error(rulesError.message)
+
+  const { error: campaignError } = await (supabase as any)
+    .from('pontuacao_campanhas')
+    .delete()
+    .eq('tenant_id', tenantId)
+    .eq('id', campaignId)
+  if (campaignError) throw new Error(campaignError.message)
+
+  if (!currentCampaign.ativa) return
+
+  const { data: replacementCampaign, error: replacementError } = await (supabase as any)
+    .from('pontuacao_campanhas')
+    .select('id')
+    .eq('tenant_id', tenantId)
+    .order('updated_at', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false, nullsFirst: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (replacementError) throw new Error(replacementError.message)
+  if (!replacementCampaign) return
+
+  const { error: activateError } = await (supabase as any)
+    .from('pontuacao_campanhas')
+    .update({ ativa: true })
+    .eq('tenant_id', tenantId)
+    .eq('id', replacementCampaign.id)
+
+  if (activateError) throw new Error(activateError.message)
 }
 
 // ── Dashboard (pontuação) ────────────────────────────────────────────────────
