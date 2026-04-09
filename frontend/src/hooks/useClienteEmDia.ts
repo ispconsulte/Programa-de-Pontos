@@ -53,6 +53,8 @@ export interface ClienteEmDiaRedemptionItem {
   id: string
   campanhaClienteId: string
   catalogoBrindeId: string
+  brindeNome: string
+  responsavelEntrega: string | null
   status: 'pendente' | 'aprovado' | 'entregue' | 'cancelado'
   pontosResgatados: number
   observacoes: string | null
