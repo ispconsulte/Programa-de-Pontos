@@ -6,7 +6,7 @@ import EmptyState from '@/components/EmptyState'
 import Spinner from '@/components/Spinner'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { Gift, Sparkles, ChevronRight } from 'lucide-react'
+import { AlertTriangle, Gift, Sparkles, ChevronRight } from 'lucide-react'
 import { fetchLegacyRedemptions, getCurrentTenantId } from '@/lib/supabase-queries'
 import { useNavigate } from 'react-router-dom'
 
@@ -106,6 +106,18 @@ export default function ResgatesPage() {
           </div>
 
           {/* Status tabs */}
+          <div className="flex items-start gap-3 rounded-xl border border-amber-500/15 bg-amber-500/[0.06] p-4">
+            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/15">
+              <AlertTriangle className="h-4 w-4 text-amber-400" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-foreground">Verifique a disponibilidade</p>
+              <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                Antes de confirmar um resgate, verifique se o produto desejado está disponível em estoque para evitar situações em que o cliente saia sem o prêmio.
+              </p>
+            </div>
+          </div>
+
           <div className="flex gap-1 rounded-lg border border-border bg-card p-1">
             {STATUS_TABS.map((t) => (
               <button

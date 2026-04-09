@@ -107,6 +107,7 @@ export default function DashboardPage() {
   const [detailLoading, setDetailLoading] = useState(false)
   const [clientError, setClientError] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
+  const [userName, setUserName] = useState('')
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -188,7 +189,10 @@ export default function DashboardPage() {
   useEffect(() => { void fetchData() }, [fetchData])
   useEffect(() => {
     void fetchCurrentUserProfile()
-      .then((profile) => setIsAdmin(isAdminUiRole(profile.role)))
+      .then((profile) => {
+        setIsAdmin(isAdminUiRole(profile.role))
+        setUserName(profile.name || profile.email?.split('@')[0] || '')
+      })
       .catch(() => setIsAdmin(false))
   }, [])
 
@@ -214,6 +218,8 @@ export default function DashboardPage() {
 
           {!selectedClient && (
             <>
+              {isAdmin && <AdminWelcomeCard userName={userName} />}
+
               <div className="grid gap-4 sm:grid-cols-3">
                 <KpiCard label="Pontos acumulados" value={formatPoints(metrics.totalPoints)} helper={period.label} icon={Coins} gradient="from-emerald-500/10 to-emerald-500/[0.02]" iconClass="bg-emerald-500/15 text-emerald-500" />
                 <KpiCard label="Resgates realizados" value={formatPoints(metrics.redemptionsCount)} helper={period.label} icon={Wallet} gradient="from-amber-500/10 to-amber-500/[0.02]" iconClass="bg-amber-500/15 text-amber-500" />
@@ -254,6 +260,52 @@ export default function DashboardPage() {
 }
 
 /* ── Extracted sections ── */
+
+function AdminWelcomeCard({ userName }: { userName: string }) {
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite'
+  const [dismissed, setDismissed] = useState(false)
+
+  useEffect(() => {
+    const key = `admin-welcome-${new Date().toISOString().slice(0, 10)}`
+    if (sessionStorage.getItem(key)) setDismissed(true)
+  }, [])
+
+  if (dismissed) return null
+
+  const dismiss = () => {
+    setDismissed(true)
+    const key = `admin-welcome-${new Date().toISOString().slice(0, 10)}`
+    try { sessionStorage.setItem(key, '1') } catch { /* ignore */ }
+  }
+
+  return (
+    <div className="relative rounded-xl border border-primary/15 bg-[linear-gradient(135deg,hsl(var(--primary)/0.08),transparent_50%),hsl(var(--surface-1))] p-5">
+      <button
+        onClick={dismiss}
+        className="absolute right-3 top-3 rounded-lg p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        aria-label="Fechar"
+      >
+        ✕
+      </button>
+      <div className="flex items-start gap-4">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-xl">
+          👋
+        </div>
+        <div>
+          <h3 className="text-base font-bold text-foreground">
+            {greeting}{userName ? `, ${userName}` : ''}!
+          </h3>
+          <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+            Não esqueça de verificar os <strong className="text-foreground">resgates pendentes</strong> e a{' '}
+            <strong className="text-foreground">disponibilidade dos produtos</strong> no catálogo. Uma revisão
+            rápida ajuda a garantir que todos os clientes sejam atendidos sem imprevistos. ✨
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function SearchBar({ ac, onSelectClient, selectedClient, onClearSelection }: {
   ac: ReturnType<typeof useAutocomplete>
