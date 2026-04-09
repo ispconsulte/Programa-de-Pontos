@@ -96,6 +96,13 @@ function GiftCatalogDialog({
     const file = event.target.files?.[0]
     if (!file) return
 
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      setError('Formato inválido. Envie imagens nos formatos JPG, PNG ou WebP.')
+      event.target.value = ''
+      return
+    }
+
     try {
       const imageUrl = await readImageAsDataUrl(file)
       setForm((current) => ({ ...current, imageUrl }))
