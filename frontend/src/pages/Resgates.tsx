@@ -45,6 +45,7 @@ function statusColor(s: string) {
 }
 
 export default function ResgatesPage() {
+  const navigate = useNavigate()
   const [reloadKey, setReloadKey] = useState(0)
   const [tab, setTab] = useState<RedemptionStatus | 'all'>('all')
   const [rows, setRows] = useState<RedemptionRow[]>([])
