@@ -53,6 +53,8 @@ export interface ClienteEmDiaRedemptionItem {
   id: string
   campanhaClienteId: string
   catalogoBrindeId: string
+  brindeNome: string
+  responsavelEntrega: string | null
   status: 'pendente' | 'aprovado' | 'entregue' | 'cancelado'
   pontosResgatados: number
   observacoes: string | null
@@ -187,6 +189,8 @@ function normalizeRedemptionItem(row: Record<string, unknown>): ClienteEmDiaRede
     id: String(row.id),
     campanhaClienteId: String(row.ixc_cliente_id ?? ''),
     catalogoBrindeId: String(row.brinde_id ?? ''),
+    brindeNome: String(row.brinde_nome ?? 'Brinde'),
+    responsavelEntrega: typeof row.responsavel_entrega === 'string' ? row.responsavel_entrega : null,
     status: String(row.status_resgate ?? 'pendente') as ClienteEmDiaRedemptionItem['status'],
     pontosResgatados: Number(row.pontos_utilizados ?? 0),
     observacoes: typeof row.observacoes === 'string' ? row.observacoes : null,
