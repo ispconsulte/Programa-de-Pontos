@@ -165,7 +165,7 @@ export default function PortalAccessPage() {
                       </div>
 
                       <div className="flex flex-col gap-3 sm:flex-row">
-                        <Button type="button" variant="outline" className="flex-1" onClick={() => navigate('/portal/meus-pontos')}>
+                        <Button type="button" variant="outline" className="flex-1" disabled>
                           Solicitar codigo
                         </Button>
                         <Button type="submit" className="flex-1 bg-emerald-500 text-white hover:bg-emerald-500/90">
