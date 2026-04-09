@@ -45,7 +45,6 @@ export default function RegisterPage() {
         }
         return
       }
-      }
 
       // 2. Se tiver sessão, chamar a Edge Function bootstrap-tenant
       //    que cria o registro na tabela tenants e users
