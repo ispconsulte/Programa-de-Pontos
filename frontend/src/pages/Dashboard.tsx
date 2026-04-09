@@ -26,6 +26,7 @@ import {
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import AlertBanner from '@/components/AlertBanner'
+import WelcomeModal from '@/components/WelcomeModal'
 import Spinner from '@/components/Spinner'
 import EmptyState from '@/components/EmptyState'
 import { statusBadge } from '@/components/Badge'
