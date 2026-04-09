@@ -154,7 +154,7 @@ export default function SettingsPage() {
               </div>
 
               {/* Base ativa */}
-              <Card className="overflow-hidden border-[hsl(var(--border))]">
+              <Card className="overflow-hidden border-[hsl(var(--border))] mb-4">
                 <CardHeader className="border-b border-[hsl(var(--border))]">
                   <div className="flex items-center gap-3">
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
