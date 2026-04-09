@@ -192,7 +192,7 @@ export default function DashboardPage() {
       setRedemptions(redemptionsData)
     } catch (err) {
       console.error('[Dashboard] selectClient error:', err)
-      setClientError(err instanceof Error ? err.message : 'Erro ao carregar faturas.')
+      setClientError(friendlyError(err))
     } finally { setDetailLoading(false) }
   }, [ac])
 
