@@ -72,6 +72,7 @@ async function fetchCurrentUserProfileFromSupabase(): Promise<CurrentUserProfile
     throw new Error('Sessão não encontrada.')
   }
 
+  // Try direct DB query first
   const directProfileQuery = await supabase
     .from('users')
     .select('id, tenant_id, email, role, created_at')
@@ -92,11 +93,20 @@ async function fetchCurrentUserProfileFromSupabase(): Promise<CurrentUserProfile
     }
   }
 
+  // Fallback: resolve role from JWT claims
+  const jwtRole = resolveSessionRole(sessionUser)
+  const rawRole = String(
+    sessionUser.app_metadata?.user_role ??
+    sessionUser.app_metadata?.role ??
+    jwtRole
+  ).trim()
+  const finalRole = rawRole || 'admin'
+
   return {
     id: sessionUser.id,
     tenant_id: String(sessionUser.app_metadata?.tenant_id ?? ''),
     email: sessionUser.email ?? 'Sem e-mail',
-    role: resolveSessionRole(sessionUser),
+    role: finalRole,
     is_active: true,
     name: resolveSessionName(sessionUser),
     last_sign_in_at: sessionUser.last_sign_in_at ?? null,
@@ -129,11 +139,14 @@ export async function fetchCurrentUserProfile(options?: { force?: boolean }): Pr
   if (!currentUserProfilePromise) {
     currentUserProfilePromise = backendRequest<CurrentUserProfile>('/users/me')
       .then((profile) => {
+        console.log('[user-management] profile from backend:', profile?.role)
         currentUserProfileCache = profile
         return profile
       })
-      .catch(async () => {
+      .catch(async (backendErr) => {
+        console.warn('[user-management] backend /users/me failed, using Supabase fallback:', backendErr?.message)
         const profile = await fetchCurrentUserProfileFromSupabase()
+        console.log('[user-management] profile from Supabase fallback:', profile?.role)
         currentUserProfileCache = profile
         return profile
       })
