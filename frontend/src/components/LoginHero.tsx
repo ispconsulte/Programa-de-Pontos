@@ -38,7 +38,7 @@ export default function LoginHero() {
       <div className="relative z-10 flex w-full max-w-[440px] flex-col items-center px-8">
         {/* Logo centerpiece — prominent */}
         <div
-          className="mb-14 transition-all duration-[1000ms]"
+          className="mb-14 transition-all duration-1000"
           style={{ opacity: v ? 1 : 0, transform: v ? 'translateY(0) scale(1)' : 'translateY(16px) scale(0.9)', ...d(0) }}
         >
           <LogoAnimated src={logoBonifica} size={360} />
