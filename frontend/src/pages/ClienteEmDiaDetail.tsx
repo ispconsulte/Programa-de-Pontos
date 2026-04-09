@@ -11,6 +11,21 @@ import { Link, useParams } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { ArrowLeft, ChevronRight, Gift, Settings, Star } from 'lucide-react'
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+function friendlyOrigem(raw: string): string {
+  if (!raw || raw === 'sistema') return 'Sistema'
+  if (UUID_RE.test(raw)) return 'Ajuste manual do administrador'
+  const map: Record<string, string> = {
+    sync_ixc_pagamentos: 'Pagamento detectado via IXC',
+    sync_ixc_contratos: 'Sincronização de contrato IXC',
+    manual: 'Ajuste manual',
+    resgate: 'Resgate de brinde',
+    admin: 'Administrador',
+  }
+  return map[raw] ?? raw.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
 export default function ClienteEmDiaDetailPage() {
   const { ixc_cliente_id } = useParams()
   const { loading, error, customerDetail, reload } = useClienteEmDia({
