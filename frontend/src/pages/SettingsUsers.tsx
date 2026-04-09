@@ -87,6 +87,10 @@ export default function SettingsUsersPage() {
 
     try {
       const me = await fetchCurrentUserProfile()
+      if (!me) {
+        throw new Error('Perfil do usuário não pôde ser carregado.')
+      }
+
       setCurrentUser(me)
 
       if (isAdminUiRole(me.role)) {
@@ -102,7 +106,7 @@ export default function SettingsUsersPage() {
 
   useEffect(() => {
     void loadData()
-  }, [])
+  }, []) 
 
   function openCreateDialog() {
     setDialogMode('create')
@@ -196,7 +200,7 @@ export default function SettingsUsersPage() {
     }
   }
 
-  const isAdmin = isAdminUiRole(currentUser?.role)
+  const isAdmin = Boolean(currentUser && isAdminUiRole(currentUser.role))
 
   return (
     <ProtectedRoute allowRoles={['admin']}>
