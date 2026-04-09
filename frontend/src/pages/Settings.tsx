@@ -60,7 +60,7 @@ export default function SettingsPage() {
         setIxcBaseUrl(data.ixcConnection?.ixc_base_url ?? '')
         setIxcUser(data.ixcConnection?.ixc_user ?? '')
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Não foi possível carregar as configurações.')
+        setError(friendlyError(err))
       } finally {
         setLoading(false)
       }
