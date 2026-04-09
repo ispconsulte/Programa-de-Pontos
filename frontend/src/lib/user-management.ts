@@ -110,7 +110,7 @@ async function fetchCurrentUserProfileFromSupabase(): Promise<CurrentUserProfile
     sessionUser.app_metadata?.role ??
     jwtRole
   ).trim()
-  const finalRole = rawRole || 'admin'
+  const finalRole = rawRole || 'operator'
 
   return {
     id: sessionUser.id,
@@ -153,14 +153,11 @@ export async function fetchCurrentUserProfile(options?: { force?: boolean }): Pr
           throw new Error('Resposta inválida ao carregar perfil do usuário.')
         }
 
-        console.log('[user-management] profile from backend:', profile?.role)
         currentUserProfileCache = profile
         return profile
       })
       .catch(async (backendErr) => {
-        console.warn('[user-management] backend /users/me failed, using Supabase fallback:', backendErr?.message)
         const profile = await fetchCurrentUserProfileFromSupabase()
-        console.log('[user-management] profile from Supabase fallback:', profile?.role)
         currentUserProfileCache = profile
         return profile
       })
@@ -178,8 +175,7 @@ export async function fetchManagedUsers(): Promise<ManagedUser[]> {
     const response = await backendRequest<{ data: ManagedUser[] } | null>('/users')
     const users = response?.data ?? []
     if (users.length > 0) return users
-  } catch (err) {
-    console.warn('[user-management] backend /users failed, using Supabase fallback:', (err as Error)?.message)
+  } catch {
   }
 
   // Fallback: query users table directly via Supabase

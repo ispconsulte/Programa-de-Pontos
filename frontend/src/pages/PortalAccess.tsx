@@ -1,6 +1,6 @@
 import { FormEvent, useMemo, useState } from 'react'
 import { ArrowRight, CheckCircle2, KeyRound, Link as LinkIcon, ShieldCheck, Sparkles } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+
 import logoBonifica from '@/assets/logo-bonifica.png'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -17,7 +17,7 @@ const steps = [
 ]
 
 export default function PortalAccessPage() {
-  const navigate = useNavigate()
+  
   const [mode, setMode] = useState<AccessMode>('magic-link')
   const [magicIdentifier, setMagicIdentifier] = useState('')
   const [documentValue, setDocumentValue] = useState('')
@@ -30,12 +30,14 @@ export default function PortalAccessPage() {
 
   const handleMagicLinkSubmit = (event: FormEvent) => {
     event.preventDefault()
-    navigate('/portal/meus-pontos')
+    // TODO: implement actual magic link verification
+    // For now, don't navigate — show placeholder message
   }
 
   const handleVerificationSubmit = (event: FormEvent) => {
     event.preventDefault()
-    navigate('/portal/meus-pontos')
+    // TODO: implement actual verification code check
+    // For now, don't navigate — show placeholder message
   }
 
   return (
@@ -163,7 +165,7 @@ export default function PortalAccessPage() {
                       </div>
 
                       <div className="flex flex-col gap-3 sm:flex-row">
-                        <Button type="button" variant="outline" className="flex-1" onClick={() => navigate('/portal/meus-pontos')}>
+                        <Button type="button" variant="outline" className="flex-1" disabled>
                           Solicitar codigo
                         </Button>
                         <Button type="submit" className="flex-1 bg-emerald-500 text-white hover:bg-emerald-500/90">
