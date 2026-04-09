@@ -160,7 +160,7 @@ export default function DashboardPage() {
       setMetrics(metricData)
       setRanking(rankingData)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar dados.')
+      setError(friendlyError(err))
     } finally { setLoading(false) }
   }, [period.from, period.to])
 
