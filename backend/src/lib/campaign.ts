@@ -218,9 +218,12 @@ export function describeRewardRedemption(rewardCode: string, pointsSpent: number
 }
 
 export function describePaymentCampaignEvent(points: number, paymentDate: string | Date, dueDate: string | Date): string {
-  const paymentIso = new Date(paymentDate).toISOString().slice(0, 10)
-  const dueIso = new Date(dueDate).toISOString().slice(0, 10)
-  return `Pagamento pontuado com ${points} pontos (${paymentIso} / vencimento ${dueIso})`
+  const fmtBR = (d: string | Date) => {
+    const iso = new Date(d).toISOString().slice(0, 10)
+    const [y, m, day] = iso.split('-')
+    return `${day}/${m}/${y}`
+  }
+  return `Pagamento pontuado com ${points} pontos (${fmtBR(paymentDate)} / vencimento ${fmtBR(dueDate)})`
 }
 
 function getMonthBounds(referenceDate?: string | Date) {
