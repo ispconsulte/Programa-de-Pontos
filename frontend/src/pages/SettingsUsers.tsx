@@ -265,7 +265,7 @@ export default function SettingsUsersPage() {
       setSuccess(`Usuário ${user.email} excluído com sucesso.`)
       await loadData()
     } catch (actionError) {
-      setError(actionError instanceof Error ? actionError.message : 'Não foi possível excluir o usuário.')
+      setError(friendlyError(actionError))
     } finally {
       setBusyUserId(null)
     }

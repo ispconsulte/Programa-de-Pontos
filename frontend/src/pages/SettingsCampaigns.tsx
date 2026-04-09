@@ -88,7 +88,7 @@ export default function SettingsCampaignsPage() {
       setSuccess('Regras da campanha salvas com sucesso.')
       setTimeout(() => setSuccess(''), 3500)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Não foi possível salvar as regras da campanha.')
+      setError(friendlyError(err))
     } finally {
       setSaving(false)
     }

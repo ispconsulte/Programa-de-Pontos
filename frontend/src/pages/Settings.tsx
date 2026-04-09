@@ -117,7 +117,7 @@ export default function SettingsPage() {
       )
       setTimeout(() => setSuccess(false), 4000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao salvar configurações.')
+      setError(friendlyError(err))
     } finally {
       setSaving(false)
     }
