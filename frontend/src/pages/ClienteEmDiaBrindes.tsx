@@ -26,6 +26,7 @@ import {
 } from '@/lib/loyalty-admin'
 import { fetchCurrentUserProfile, isAdminUiRole } from '@/lib/user-management'
 import {
+  AlertTriangle,
   Award,
   Box,
   CheckCircle,
@@ -96,6 +97,13 @@ function GiftCatalogDialog({
     const file = event.target.files?.[0]
     if (!file) return
 
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      setError('Formato inválido. Envie imagens nos formatos JPG, PNG ou WebP.')
+      event.target.value = ''
+      return
+    }
+
     try {
       const imageUrl = await readImageAsDataUrl(file)
       setForm((current) => ({ ...current, imageUrl }))
@@ -156,7 +164,7 @@ function GiftCatalogDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-xl border-[hsl(var(--border))] bg-[linear-gradient(180deg,rgba(16,185,129,0.06),rgba(255,255,255,0)_24%),hsl(var(--background))]">
+      <DialogContent className="max-w-xl border-[hsl(var(--border))] bg-[hsl(var(--background))]">
         <DialogHeader>
           <DialogTitle className="text-foreground">{isEditing ? 'Editar brinde' : 'Adicionar brinde'}</DialogTitle>
           <DialogDescription>
@@ -229,7 +237,9 @@ function GiftCatalogDialog({
                 <Label htmlFor="gift-image" className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
                   Imagem do brinde
                 </Label>
-                <p className="mt-1 text-xs text-muted-foreground">Envie um arquivo real de imagem ou mantenha a existente.</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Envie uma imagem JPG, PNG ou WebP de até 1,5 MB.
+                </p>
               </div>
               <Label
                 htmlFor="gift-image"
@@ -239,21 +249,26 @@ function GiftCatalogDialog({
                 Subir imagem
               </Label>
             </div>
-            <input id="gift-image" type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+            <input id="gift-image" type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleImageUpload} />
 
-            <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/20 p-3">
-              <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-lg border border-border bg-card">
-                {form.imageUrl ? (
-                  <img src={form.imageUrl} alt={form.name || 'Pré-visualização'} className="h-full w-full object-contain p-2" />
-                ) : (
-                  <span className="text-xs text-muted-foreground">Sem imagem</span>
-                )}
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-foreground">Pré-visualização</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  A imagem fica salva diretamente no catálogo e aparece no resgate.
-                </p>
+            <div className="rounded-xl border border-border bg-muted/30 p-4">
+              <div className="flex items-center gap-4">
+                <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-card">
+                  {form.imageUrl ? (
+                    <img src={form.imageUrl} alt={form.name || 'Pré-visualização'} className="h-full w-full object-contain p-1.5" />
+                  ) : (
+                    <span className="text-[10px] text-muted-foreground text-center leading-tight px-1">Sem imagem</span>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground">Pré-visualização</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    A imagem aparece no catálogo e no resgate.
+                  </p>
+                  <p className="mt-1 text-[10px] text-muted-foreground/70">
+                    Resolução recomendada: 400×400px (quadrada). Máx. 1,5 MB.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -300,6 +315,8 @@ export default function ClienteEmDiaBrindesPage() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [search, setSearch] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<ClienteEmDiaRewardItem | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     void fetchCurrentUserProfile()
@@ -322,18 +339,22 @@ export default function ClienteEmDiaBrindesPage() {
     await reload()
   }
 
-  async function handleDelete(reward: ClienteEmDiaRewardItem) {
-    if (!window.confirm(`Excluir o brinde "${reward.nome}"?`)) return
-
+  async function confirmDelete() {
+    if (!deleteTarget) return
+    setDeleting(true)
     try {
-      await deleteRewardCatalogItem(reward.id)
-      setFeedback({ type: 'success', message: `Brinde "${reward.nome}" excluído com sucesso.` })
+      await deleteRewardCatalogItem(deleteTarget.id)
+      setFeedback({ type: 'success', message: `Brinde "${deleteTarget.nome}" excluído com sucesso.` })
+      setDeleteTarget(null)
       await reload()
     } catch (deleteError) {
       setFeedback({
         type: 'error',
         message: deleteError instanceof Error ? deleteError.message : 'Não foi possível excluir o brinde.',
       })
+      setDeleteTarget(null)
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -494,7 +515,7 @@ export default function ClienteEmDiaBrindesPage() {
                               variant="outline"
                               size="sm"
                               className="text-destructive hover:text-destructive"
-                              onClick={() => void handleDelete(reward)}
+                              onClick={() => setDeleteTarget(reward)}
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                               Excluir
@@ -509,6 +530,33 @@ export default function ClienteEmDiaBrindesPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Delete confirmation dialog */}
+        <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}>
+          <DialogContent className="max-w-sm bg-[hsl(var(--background))]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-foreground">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
+                Confirmar exclusão
+              </DialogTitle>
+              <DialogDescription>
+                Tem certeza que deseja excluir o brinde <strong className="text-foreground">"{deleteTarget?.nome}"</strong>? Essa ação não pode ser desfeita.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deleting}>
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => void confirmDelete()}
+                disabled={deleting}
+              >
+                {deleting ? 'Excluindo...' : 'Sim, excluir'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </Layout>
     </ProtectedRoute>
   )
