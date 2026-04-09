@@ -315,6 +315,8 @@ export default function ClienteEmDiaBrindesPage() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [search, setSearch] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<ClienteEmDiaRewardItem | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     void fetchCurrentUserProfile()
@@ -337,18 +339,22 @@ export default function ClienteEmDiaBrindesPage() {
     await reload()
   }
 
-  async function handleDelete(reward: ClienteEmDiaRewardItem) {
-    if (!window.confirm(`Excluir o brinde "${reward.nome}"?`)) return
-
+  async function confirmDelete() {
+    if (!deleteTarget) return
+    setDeleting(true)
     try {
-      await deleteRewardCatalogItem(reward.id)
-      setFeedback({ type: 'success', message: `Brinde "${reward.nome}" excluído com sucesso.` })
+      await deleteRewardCatalogItem(deleteTarget.id)
+      setFeedback({ type: 'success', message: `Brinde "${deleteTarget.nome}" excluído com sucesso.` })
+      setDeleteTarget(null)
       await reload()
     } catch (deleteError) {
       setFeedback({
         type: 'error',
         message: deleteError instanceof Error ? deleteError.message : 'Não foi possível excluir o brinde.',
       })
+      setDeleteTarget(null)
+    } finally {
+      setDeleting(false)
     }
   }
 
