@@ -433,7 +433,7 @@ export default function SettingsUsersPage() {
         </div>
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent className="border-[hsl(var(--border))] bg-[linear-gradient(180deg,hsl(var(--primary)/0.04),transparent_30%),hsl(var(--background))]">
+          <DialogContent className="border-[hsl(var(--border))] bg-[hsl(var(--background))]">
             <DialogHeader>
               <DialogTitle>{dialogMode === 'create' ? 'Novo usuário' : 'Editar usuário'}</DialogTitle>
               <DialogDescription>
