@@ -147,7 +147,7 @@ export default function ResgatesPage() {
                   <div
                     key={row.id}
                     className="px-4 py-3 cursor-pointer transition-colors hover:bg-muted active:bg-muted/70"
-                    onClick={() => navigate(`/cliente-em-dia/${row.ixc_cliente_id}`)}
+                    onClick={() => navigate(`/cliente-em-dia/${row.ixc_cliente_id}`, { state: { from: '/resgates' } })}
                   >
                     <div className="flex items-start justify-between">
                       <div className="min-w-0 flex-1">
