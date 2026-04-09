@@ -366,9 +366,8 @@ export async function fetchLegacyRedemptions(options?: {
     const tenantId = await getCurrentTenantId()
     if (!tenantId) return []
 
-    // Get tenant customer IDs first
     let custQuery = supabase
-      .from('pontuacao_campanha_clientes')
+      .from('pontuacao_campanha_clientes' as any)
       .select('ixc_cliente_id, nome_cliente')
       .eq('tenant_id', tenantId)
 
@@ -376,23 +375,23 @@ export async function fetchLegacyRedemptions(options?: {
       custQuery = custQuery.eq('ixc_cliente_id', options.customerId)
     }
 
-    const { data: customers } = await custQuery.limit(10000)
+    const { data: customers } = await custQuery.limit(10000) as { data: any[] | null }
     if (!customers || customers.length === 0) return []
 
-    const customerIds = customers.map(c => String(c.ixc_cliente_id)).filter(Boolean)
-    const nameMap = new Map(customers.map(c => [String(c.ixc_cliente_id), String(c.nome_cliente ?? '')]))
+    const customerIds = customers.map((c: any) => String(c.ixc_cliente_id)).filter(Boolean)
+    const nameMap = new Map(customers.map((c: any) => [String(c.ixc_cliente_id), String(c.nome_cliente ?? '')]))
 
     const { data: resgates } = await supabase
-      .from('pontuacao_resgates')
+      .from('pontuacao_resgates' as any)
       .select('*')
       .in('ixc_cliente_id', customerIds)
       .order('created_at', { ascending: false })
-      .limit(options?.limit ?? 100)
+      .limit(options?.limit ?? 100) as { data: any[] | null }
 
-    return (resgates ?? []).map(r => ({
+    return (resgates ?? []).map((r: any) => ({
       ...r,
       cliente_nome: nameMap.get(String(r.ixc_cliente_id)) || null,
-    })) as unknown as RedemptionRow[]
+    })) as RedemptionRow[]
   }
 }
 
