@@ -142,10 +142,10 @@ function sortReceivables(items: Receivable[], sortBy: SortOption) {
 
 /** Color for score-based badge */
 function scoreBadge(score: number) {
-  if (score === 5) return <span className="inline-flex items-center rounded-md bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-400 ring-1 ring-inset ring-emerald-500/20">+5 pts</span>
-  if (score === 4) return <span className="inline-flex items-center rounded-md bg-sky-500/10 px-2 py-0.5 text-xs font-semibold text-sky-400 ring-1 ring-inset ring-sky-500/20">+4 pts</span>
-  if (score === 2) return <span className="inline-flex items-center rounded-md bg-amber-500/10 px-2 py-0.5 text-xs font-semibold text-amber-400 ring-1 ring-inset ring-amber-500/20">+2 pts</span>
-  return <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground">0 pts</span>
+  if (score === 5) return <span className="inline-flex items-center whitespace-nowrap rounded-md bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-400 ring-1 ring-inset ring-emerald-500/20">+5</span>
+  if (score === 4) return <span className="inline-flex items-center whitespace-nowrap rounded-md bg-sky-500/10 px-2 py-0.5 text-xs font-semibold text-sky-400 ring-1 ring-inset ring-sky-500/20">+4</span>
+  if (score === 2) return <span className="inline-flex items-center whitespace-nowrap rounded-md bg-amber-500/10 px-2 py-0.5 text-xs font-semibold text-amber-400 ring-1 ring-inset ring-amber-500/20">+2</span>
+  return <span className="inline-flex items-center whitespace-nowrap rounded-md bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground">0</span>
 }
 
 export default function ReceivablesPage() {
