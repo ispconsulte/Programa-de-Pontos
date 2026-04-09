@@ -155,27 +155,15 @@
     margin: 0;
   }
 
-  *,
-  *::before,
-  *::after {
-    transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+  /* Theme transitions only on key layout elements */
+  body,
+  .bg-card, .bg-background, .bg-muted, .bg-popover, .bg-sidebar,
+  [class*="bg-card"], [class*="bg-background"], [class*="bg-muted"],
+  nav, aside, header, main, footer,
+  .rounded-xl, .rounded-lg {
+    transition-property: background-color, border-color, color, box-shadow;
     transition-duration: 300ms;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  /* Opt-out elements that need instant transitions */
-  input, textarea, select, button,
-  [data-radix-popper-content-wrapper],
-  [role="dialog"],
-  [data-state],
-  .no-theme-transition {
-    transition-duration: 0ms !important;
-  }
-
-  /* Re-enable hover/focus transitions for buttons */
-  button:hover, button:focus-visible,
-  a:hover, a:focus-visible {
-    transition-duration: 150ms !important;
   }
 
   html {
