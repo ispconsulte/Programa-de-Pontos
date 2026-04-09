@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useClienteEmDia } from '@/hooks/useClienteEmDia'
 import { fetchCurrentUserProfile, isAdminUiRole } from '@/lib/user-management'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { ArrowLeft, ChevronRight, Gift, Settings, Star } from 'lucide-react'
 
