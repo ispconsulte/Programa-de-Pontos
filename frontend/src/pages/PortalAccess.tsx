@@ -1,6 +1,6 @@
 import { FormEvent, useMemo, useState } from 'react'
 import { ArrowRight, CheckCircle2, KeyRound, Link as LinkIcon, ShieldCheck, Sparkles } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+
 import logoBonifica from '@/assets/logo-bonifica.png'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -17,7 +17,7 @@ const steps = [
 ]
 
 export default function PortalAccessPage() {
-  const navigate = useNavigate()
+  
   const [mode, setMode] = useState<AccessMode>('magic-link')
   const [magicIdentifier, setMagicIdentifier] = useState('')
   const [documentValue, setDocumentValue] = useState('')
