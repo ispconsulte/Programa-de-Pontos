@@ -310,10 +310,14 @@ export async function ixcGet<T>(
   const token = decrypt(creds.ixcTokenEnc, creds.ixcTokenIv)
 
   let httpStatus = 0
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 30_000)
   const response = await fetch(url, {
     method: 'GET',
     headers: buildIxcRequestHeaders(creds, token, 'listar'),
+    signal: controller.signal,
   })
+  clearTimeout(timeout)
   httpStatus = response.status
 
   await writeAuditLog({
