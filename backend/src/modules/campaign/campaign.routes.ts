@@ -467,7 +467,7 @@ export async function campaignRoutes(app: FastifyInstance) {
       security: [{ bearerAuth: [] }],
     },
   }, async (request, reply) => {
-    const { id } = request.params as { id: string }
+    const { id } = z.object({ id: z.string().uuid() }).parse(request.params)
     const body = catalogRewardSchema.parse(request.body)
 
     const updateResult = await supabaseAdmin
