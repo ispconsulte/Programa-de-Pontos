@@ -6,8 +6,9 @@ import EmptyState from '@/components/EmptyState'
 import Spinner from '@/components/Spinner'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { Gift, Sparkles } from 'lucide-react'
+import { Gift, Sparkles, ChevronRight } from 'lucide-react'
 import { fetchLegacyRedemptions, getCurrentTenantId } from '@/lib/supabase-queries'
+import { useNavigate } from 'react-router-dom'
 
 type RedemptionStatus = 'pendente' | 'entregue' | 'cancelado'
 
@@ -44,6 +45,7 @@ function statusColor(s: string) {
 }
 
 export default function ResgatesPage() {
+  const navigate = useNavigate()
   const [reloadKey, setReloadKey] = useState(0)
   const [tab, setTab] = useState<RedemptionStatus | 'all'>('all')
   const [rows, setRows] = useState<RedemptionRow[]>([])
@@ -142,7 +144,11 @@ export default function ResgatesPage() {
               {/* Mobile list */}
               <div className="divide-y divide-border md:hidden">
                 {filtered.map((row) => (
-                  <div key={row.id} className="px-4 py-3">
+                  <div
+                    key={row.id}
+                    className="px-4 py-3 cursor-pointer transition-colors hover:bg-muted active:bg-muted/70"
+                    onClick={() => navigate(`/cliente-em-dia/${row.ixc_cliente_id}`)}
+                  >
                     <div className="flex items-start justify-between">
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-foreground">{row.cliente_nome}</p>
@@ -150,9 +156,12 @@ export default function ResgatesPage() {
                           resgatou <span className="font-medium text-foreground">{row.brinde_nome}</span>
                         </p>
                       </div>
-                      <span className={cn('ml-2 inline-flex rounded-md border px-2 py-0.5 text-[10px] font-semibold', statusColor(row.status_resgate))}>
-                        {statusLabel(row.status_resgate)}
-                      </span>
+                      <div className="ml-2 flex items-center gap-1.5">
+                        <span className={cn('inline-flex rounded-md border px-2 py-0.5 text-[10px] font-semibold', statusColor(row.status_resgate))}>
+                          {statusLabel(row.status_resgate)}
+                        </span>
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                      </div>
                     </div>
                     <div className="mt-1.5 flex items-center gap-3 text-[11px] text-muted-foreground">
                       <span>{row.pontos_utilizados} pts</span>
@@ -172,11 +181,16 @@ export default function ResgatesPage() {
                       <th className="px-3 py-3 text-center text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Pontos</th>
                       <th className="px-3 py-3 text-center text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Status</th>
                       <th className="px-3 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Data</th>
+                      <th className="w-10" />
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
                     {filtered.map((row) => (
-                      <tr key={row.id} className="transition-colors hover:bg-muted">
+                      <tr
+                        key={row.id}
+                        className="transition-colors hover:bg-muted cursor-pointer"
+                        onClick={() => navigate(`/cliente-em-dia/${row.ixc_cliente_id}`)}
+                      >
                         <td className="px-5 py-3 font-medium text-foreground">{row.cliente_nome}</td>
                         <td className="px-3 py-3 text-foreground">{row.brinde_nome}</td>
                         <td className="px-3 py-3 text-center font-semibold text-muted-foreground">{row.pontos_utilizados}</td>
@@ -186,6 +200,9 @@ export default function ResgatesPage() {
                           </span>
                         </td>
                         <td className="px-3 py-3 text-muted-foreground">{new Date(row.created_at).toLocaleDateString('pt-BR')}</td>
+                        <td className="px-3 py-3 text-muted-foreground">
+                          <ChevronRight className="h-4 w-4" />
+                        </td>
                       </tr>
                     ))}
                   </tbody>
