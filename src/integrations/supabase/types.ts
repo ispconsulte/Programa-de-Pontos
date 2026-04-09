@@ -712,6 +712,7 @@ export type Database = {
           pontos_utilizados: number
           responsavel_entrega: string | null
           status_resgate: string
+          tenant_id: string
           updated_at: string
         }
         Insert: {
@@ -727,6 +728,7 @@ export type Database = {
           pontos_utilizados: number
           responsavel_entrega?: string | null
           status_resgate?: string
+          tenant_id: string
           updated_at?: string
         }
         Update: {
@@ -742,6 +744,7 @@ export type Database = {
           pontos_utilizados?: number
           responsavel_entrega?: string | null
           status_resgate?: string
+          tenant_id?: string
           updated_at?: string
         }
         Relationships: [
