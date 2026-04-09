@@ -348,12 +348,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           collapsed ? 'h-14 px-2' : 'h-[7.5rem] px-4'
         )}>
           <div className={cn(
-            'flex items-center justify-center transition-all duration-300 mt-2',
-            collapsed ? 'h-9 w-9' : 'h-[4rem] w-[4rem]'
+            'flex items-center justify-center transition-all duration-300',
+            collapsed ? 'h-9 w-9' : 'mt-2 h-[4rem] w-[4rem]'
           )}>
-            <div className={collapsed ? 'scale-[0.45] transform' : ''}>
-              <AnimatedGiftBox size={collapsed ? 32 : 64} />
-            </div>
+            {collapsed ? (
+              <Gift className="h-5 w-5 text-primary" />
+            ) : (
+              <AnimatedGiftBox size={64} />
+            )}
           </div>
           {!collapsed && (
             <div className="text-center -mt-0.5">
