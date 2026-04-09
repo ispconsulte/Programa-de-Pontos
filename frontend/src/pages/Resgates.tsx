@@ -106,17 +106,16 @@ export default function ResgatesPage() {
           </div>
 
           {/* Status tabs */}
-          <div className="flex items-start gap-3 rounded-xl border border-primary/15 bg-primary/[0.06] p-4">
-             <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/15">
-               <Gift className="h-4 w-4 text-primary" />
-             </div>
-             <div>
-               <p className="text-sm font-medium text-foreground">💡 Lembrete rápido</p>
-               <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-                 Para garantir a melhor experiência ao cliente, confirme a disponibilidade do item em estoque antes de registrar o resgate. Isso ajuda a manter o fluxo de atendimento organizado!
-               </p>
-             </div>
-           </div>
+          <WelcomeModal
+            storagePrefix="operator-resgates"
+            message={
+              <>
+                <strong className="text-foreground">💡 Lembrete rápido:</strong> antes de registrar um resgate,
+                confirme a disponibilidade do item no estoque físico. Uma verificação rápida no catálogo
+                garante que o cliente saia satisfeito e evita surpresas durante o atendimento!
+              </>
+            }
+          />
 
           <div className="flex gap-1 rounded-lg border border-border bg-card p-1">
             {STATUS_TABS.map((t) => (

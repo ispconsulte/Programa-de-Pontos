@@ -218,7 +218,20 @@ export default function DashboardPage() {
 
           {!selectedClient && (
             <>
-              {isAdmin && <AdminWelcomeCard userName={userName} />}
+              {isAdmin && (
+                <WelcomeModal
+                  storagePrefix="admin-welcome"
+                  userName={userName}
+                  message={
+                    <>
+                      <strong className="text-foreground">💡 Dica do dia:</strong> uma conferência rápida no{' '}
+                      <strong className="text-foreground">estoque do catálogo</strong> logo no início do expediente
+                      mantém o atendimento fluindo sem surpresas. Realize as devidas verificações
+                      na quantidade de produtos físicos para evitar imprevistos. Bom trabalho!
+                    </>
+                  }
+                />
+              )}
 
               <div className="grid gap-4 sm:grid-cols-3">
                 <KpiCard label="Pontos acumulados" value={formatPoints(metrics.totalPoints)} helper={period.label} icon={Coins} gradient="from-emerald-500/10 to-emerald-500/[0.02]" iconClass="bg-emerald-500/15 text-emerald-500" />
