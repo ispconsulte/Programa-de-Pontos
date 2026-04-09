@@ -47,7 +47,7 @@ export default function ClienteEmDiaDetailPage() {
   return (
     <ProtectedRoute>
       <Layout>
-        <div className="space-y-6">
+        <div className="page-stack">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Link to={backPath} className="inline-flex items-center gap-1 transition-colors hover:text-foreground">
             <ArrowLeft className="h-3.5 w-3.5" />
