@@ -49,6 +49,7 @@ import {
   type RedemptionRow,
 } from '@/lib/supabase-queries'
 import { fetchCurrentUserProfile, isAdminUiRole } from '@/lib/user-management'
+import { friendlyError } from '@/lib/friendly-errors'
 
 /* ── Helpers ──────────────────────────────────────────────────────────── */
 
@@ -159,7 +160,7 @@ export default function DashboardPage() {
       setMetrics(metricData)
       setRanking(rankingData)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar dados.')
+      setError(friendlyError(err))
     } finally { setLoading(false) }
   }, [period.from, period.to])
 
@@ -191,7 +192,7 @@ export default function DashboardPage() {
       setRedemptions(redemptionsData)
     } catch (err) {
       console.error('[Dashboard] selectClient error:', err)
-      setClientError(err instanceof Error ? err.message : 'Erro ao carregar faturas.')
+      setClientError(friendlyError(err))
     } finally { setDetailLoading(false) }
   }, [ac])
 
@@ -210,7 +211,7 @@ export default function DashboardPage() {
       setFaturas(faturasData)
       setRedemptions(redemptionsData)
     } catch (err) {
-      setClientError(err instanceof Error ? err.message : 'Erro ao atualizar.')
+      setClientError(friendlyError(err))
     } finally { setDetailLoading(false) }
   }, [selectedClient])
 

@@ -16,6 +16,7 @@ import {
   type CampaignRuleSettings,
 } from '@/lib/supabase-queries'
 import { ArrowLeft, Megaphone, Save, Zap } from 'lucide-react'
+import { friendlyError } from '@/lib/friendly-errors'
 
 /* ── Points tier visual ── */
 function PointsTier({ tier, label, value }: { tier: number; label: string; value: number }) {
@@ -57,7 +58,7 @@ export default function SettingsCampaignsPage() {
         const loaded = await fetchActiveCampaignRuleSettings(currentTenantId)
         setSettings(loaded)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Falha ao carregar configurações da campanha.')
+        setError(friendlyError(err))
       } finally {
         setLoading(false)
       }
@@ -87,7 +88,7 @@ export default function SettingsCampaignsPage() {
       setSuccess('Regras da campanha salvas com sucesso.')
       setTimeout(() => setSuccess(''), 3500)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Não foi possível salvar as regras da campanha.')
+      setError(friendlyError(err))
     } finally {
       setSaving(false)
     }

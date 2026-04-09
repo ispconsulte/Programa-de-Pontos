@@ -5,6 +5,7 @@ import ProtectedRoute from '@/components/ProtectedRoute'
 import PageHeader from '@/components/PageHeader'
 import AlertBanner from '@/components/AlertBanner'
 import { supabase } from '@/lib/supabase-client'
+import { friendlyError } from '@/lib/friendly-errors'
 import { fetchTenantSettings, getCurrentTenantId, type TenantSettings } from '@/lib/supabase-queries'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -59,7 +60,7 @@ export default function SettingsPage() {
         setIxcBaseUrl(data.ixcConnection?.ixc_base_url ?? '')
         setIxcUser(data.ixcConnection?.ixc_user ?? '')
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Não foi possível carregar as configurações.')
+        setError(friendlyError(err))
       } finally {
         setLoading(false)
       }
@@ -116,7 +117,7 @@ export default function SettingsPage() {
       )
       setTimeout(() => setSuccess(false), 4000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao salvar configurações.')
+      setError(friendlyError(err))
     } finally {
       setSaving(false)
     }

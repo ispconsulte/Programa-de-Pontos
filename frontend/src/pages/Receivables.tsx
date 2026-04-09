@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useThrottledAction } from '@/hooks/useThrottledAction'
+import { friendlyError } from '@/lib/friendly-errors'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Users, RefreshCw, Search, ShieldAlert, TrendingUp, Award, Clock } from 'lucide-react'
 import Layout from '@/components/Layout'
@@ -210,7 +211,7 @@ export default function ReceivablesPage() {
       setTotal(result.total)
       setTotalPages(result.totalPages)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar recebimentos.')
+      setError(friendlyError(err))
       setReceivables([])
     } finally {
       setLoading(false)

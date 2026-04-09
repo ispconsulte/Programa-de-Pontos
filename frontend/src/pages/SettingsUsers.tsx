@@ -31,6 +31,7 @@ import {
   type ManagedUser,
 } from '@/lib/user-management'
 import { Edit3, KeyRound, LogOut, Shield, Trash2, UserCog, UserPlus, Users } from 'lucide-react'
+import { friendlyError } from '@/lib/friendly-errors'
 
 type DialogMode = 'create' | 'edit'
 
@@ -172,7 +173,7 @@ export default function SettingsUsersPage() {
       }
     } catch (loadError) {
       console.error('[SettingsUsers] loadData error:', loadError)
-      setError(loadError instanceof Error ? loadError.message : 'Não foi possível carregar os usuários.')
+      setError(friendlyError(loadError))
     } finally {
       setLoading(false)
     }
@@ -230,7 +231,7 @@ export default function SettingsUsersPage() {
       setForm(initialFormState)
       await loadData()
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Não foi possível salvar o usuário.')
+      setError(friendlyError(submitError))
     } finally {
       setSaving(false)
     }
@@ -246,7 +247,7 @@ export default function SettingsUsersPage() {
       setSuccess(`Sessão revogada para ${user.email}.`)
       await loadData()
     } catch (actionError) {
-      setError(actionError instanceof Error ? actionError.message : 'Não foi possível desconectar o usuário.')
+      setError(friendlyError(actionError))
     } finally {
       setBusyUserId(null)
     }
@@ -264,7 +265,7 @@ export default function SettingsUsersPage() {
       setSuccess(`Usuário ${user.email} excluído com sucesso.`)
       await loadData()
     } catch (actionError) {
-      setError(actionError instanceof Error ? actionError.message : 'Não foi possível excluir o usuário.')
+      setError(friendlyError(actionError))
     } finally {
       setBusyUserId(null)
     }
