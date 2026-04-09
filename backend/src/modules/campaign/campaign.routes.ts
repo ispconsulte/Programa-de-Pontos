@@ -621,6 +621,7 @@ export async function campaignRoutes(app: FastifyInstance) {
       .from('pontuacao_resgates')
       .insert({
         ixc_cliente_id: client.ixc_cliente_id,
+        tenant_id: request.tenantId,
         brinde_id: reward.id,
         brinde_nome: reward.nome,
         pontos_utilizados: spentPoints,
