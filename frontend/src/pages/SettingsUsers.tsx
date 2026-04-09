@@ -167,9 +167,11 @@ export default function SettingsUsersPage() {
 
       if (isAdminUiRole(me.role)) {
         const managedUsers = await fetchManagedUsers()
+        console.log('[SettingsUsers] managedUsers loaded:', managedUsers.length)
         setUsers(managedUsers)
       }
     } catch (loadError) {
+      console.error('[SettingsUsers] loadData error:', loadError)
       setError(loadError instanceof Error ? loadError.message : 'Não foi possível carregar os usuários.')
     } finally {
       setLoading(false)
