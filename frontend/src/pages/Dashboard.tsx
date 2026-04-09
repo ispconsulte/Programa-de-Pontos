@@ -296,11 +296,12 @@ function AdminWelcomeCard({ userName }: { userName: string }) {
           <h3 className="text-base font-bold text-foreground">
             {greeting}{userName ? `, ${userName}` : ''}!
           </h3>
-          <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-            Não esqueça de verificar os <strong className="text-foreground">resgates pendentes</strong> e a{' '}
-            <strong className="text-foreground">disponibilidade dos produtos</strong> no catálogo. Uma revisão
-            rápida ajuda a garantir que todos os clientes sejam atendidos sem imprevistos. ✨
-          </p>
+           <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+             💡 <strong className="text-foreground">Dica do dia:</strong> uma conferência rápida nos{' '}
+             <strong className="text-foreground">resgates pendentes</strong> e no{' '}
+             <strong className="text-foreground">estoque do catálogo</strong> logo no início do expediente
+             mantém o atendimento fluindo sem surpresas. Bom trabalho! ✨
+           </p>
         </div>
       </div>
     </div>
