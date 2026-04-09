@@ -44,6 +44,16 @@ export function isAdminUiRole(role: string | null | undefined): boolean {
   return ['admin', 'owner', 'manager'].includes(String(role ?? '').toLowerCase())
 }
 
+function isCurrentUserProfile(value: unknown): value is CurrentUserProfile {
+  if (!value || typeof value !== 'object') return false
+
+  const candidate = value as Partial<CurrentUserProfile>
+  return typeof candidate.id === 'string'
+    && typeof candidate.tenant_id === 'string'
+    && typeof candidate.email === 'string'
+    && typeof candidate.role === 'string'
+}
+
 function resolveSessionRole(user: any): string {
   const appRole = String(user?.app_metadata?.role ?? '').trim()
   if (appRole) return appRole
@@ -139,6 +149,10 @@ export async function fetchCurrentUserProfile(options?: { force?: boolean }): Pr
   if (!currentUserProfilePromise) {
     currentUserProfilePromise = backendRequest<CurrentUserProfile>('/users/me')
       .then((profile) => {
+        if (!isCurrentUserProfile(profile)) {
+          throw new Error('Resposta inválida ao carregar perfil do usuário.')
+        }
+
         console.log('[user-management] profile from backend:', profile?.role)
         currentUserProfileCache = profile
         return profile
