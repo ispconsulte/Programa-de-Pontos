@@ -164,158 +164,102 @@ function GiftCatalogDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-4xl border-[hsl(var(--border))] bg-[hsl(var(--background))]">
+      <DialogContent className="max-w-lg border-[hsl(var(--border))] bg-[hsl(var(--background))]">
         <DialogHeader>
-          <DialogTitle className="text-foreground">{isEditing ? 'Editar brinde' : 'Adicionar brinde'}</DialogTitle>
+          <DialogTitle className="text-foreground">{isEditing ? 'Editar brinde' : 'Novo brinde'}</DialogTitle>
           <DialogDescription>
-            Organize o item com uma apresentação mais clara, imagem ajustada ao card e informações fáceis de revisar antes de salvar.
+            Preencha as informações abaixo para {isEditing ? 'atualizar' : 'cadastrar'} o brinde no catálogo.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="px-5 py-5 sm:px-6">
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.85fr)]">
-            <div className="space-y-5">
-              {error && <AlertBanner variant="error" message={error} />}
+        <div className="space-y-5 px-5 py-4 sm:px-6">
+          {error && <AlertBanner variant="error" message={error} />}
 
-              <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
-                <div className="mb-4">
-                  <p className="text-sm font-semibold text-foreground">Informações principais</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Preencha o essencial do brinde sem excessos visuais.
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="max-w-xl space-y-2">
-                    <Label htmlFor="gift-name" className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
-                      Nome do brinde
-                    </Label>
-                    <Input
-                      id="gift-name"
-                      value={form.name}
-                      onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
-                      placeholder="Ex.: Mousepad, squeeze, camiseta"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="gift-description" className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
-                      Descrição
-                    </Label>
-                    <textarea
-                      id="gift-description"
-                      value={form.description}
-                      onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
-                      placeholder="Descreva rapidamente o item, acabamento ou observações importantes"
-                      rows={4}
-                      className="flex w-full rounded-xl border border-input bg-background px-3 py-3 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
-                    />
-                  </div>
-                </div>
-              </section>
-
-              <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
-                <div className="mb-4">
-                  <p className="text-sm font-semibold text-foreground">Regras do resgate</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Defina a pontuação e, se quiser, controle o estoque disponível.
-                  </p>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="max-w-xs space-y-2">
-                    <Label htmlFor="gift-points" className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
-                      Pontos necessários
-                    </Label>
-                    <Input
-                      id="gift-points"
-                      type="number"
-                      min="1"
-                      step="1"
-                      value={form.requiredPoints}
-                      onChange={(event) => setForm((current) => ({ ...current, requiredPoints: event.target.value }))}
-                      placeholder="Ex.: 50"
-                    />
-                  </div>
-
-                  <div className="max-w-xs space-y-2">
-                    <Label htmlFor="gift-stock" className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
-                      Estoque
-                    </Label>
-                    <Input
-                      id="gift-stock"
-                      type="number"
-                      min="0"
-                      step="1"
-                      value={form.stock}
-                      onChange={(event) => setForm((current) => ({ ...current, stock: event.target.value }))}
-                      placeholder="Vazio = ilimitado"
-                    />
-                  </div>
-                </div>
-              </section>
-            </div>
-
-            <aside className="space-y-5">
-              <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">Imagem do brinde</p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Use imagem quadrada para o card ficar bonito.
-                    </p>
-                  </div>
-                  <Label
-                    htmlFor="gift-image"
-                    className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-                  >
-                    <Upload className="h-4 w-4" />
-                    Subir
-                  </Label>
-                </div>
-
-                <input id="gift-image" type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleImageUpload} />
-
-                <div className="mt-4 rounded-2xl border border-border bg-muted/20 p-4">
-                  <div className="flex min-h-52 items-center justify-center rounded-xl border border-border bg-background">
-                    {form.imageUrl ? (
-                      <img src={form.imageUrl} alt={form.name || 'Pré-visualização'} className="h-40 w-40 object-contain" />
-                    ) : (
-                      <div className="px-4 text-center">
-                        <p className="text-sm font-medium text-foreground">Sem imagem enviada</p>
-                        <p className="mt-1 text-xs text-muted-foreground">JPG, PNG ou WebP · até 1,5 MB</p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="mt-4 rounded-xl border border-border bg-background px-3 py-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Guia rápido</p>
-                    <ul className="mt-2 space-y-1.5 text-xs text-muted-foreground">
-                      <li>• Tamanho ideal: 400×400 px</li>
-                      <li>• Formato: JPG, PNG ou WebP</li>
-                      <li>• Fundo limpo ajuda a destacar no catálogo</li>
-                    </ul>
-                  </div>
-                </div>
-              </section>
-
-              <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
-                <p className="text-sm font-semibold text-foreground">Publicação</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Controle se o item já pode aparecer para resgate.
-                </p>
-
-                <label className="mt-4 flex items-center gap-3 rounded-xl border border-border bg-muted/20 px-3 py-3 text-sm text-foreground">
-                  <input
-                    type="checkbox"
-                    checked={form.active}
-                    onChange={(event) => setForm((current) => ({ ...current, active: event.target.checked }))}
-                  />
-                  Brinde ativo para resgate
-                </label>
-              </section>
-            </aside>
+          <div className="space-y-1.5">
+            <Label htmlFor="gift-name" className="text-xs font-medium text-muted-foreground">Nome</Label>
+            <Input
+              id="gift-name"
+              value={form.name}
+              onChange={(e) => setForm((c) => ({ ...c, name: e.target.value }))}
+              placeholder="Ex.: Mousepad, squeeze, camiseta"
+            />
           </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="gift-description" className="text-xs font-medium text-muted-foreground">Descrição</Label>
+            <Input
+              id="gift-description"
+              value={form.description}
+              onChange={(e) => setForm((c) => ({ ...c, description: e.target.value }))}
+              placeholder="Breve descrição do item"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="gift-points" className="text-xs font-medium text-muted-foreground">Pontos</Label>
+              <Input
+                id="gift-points"
+                type="number"
+                min="1"
+                step="1"
+                value={form.requiredPoints}
+                onChange={(e) => setForm((c) => ({ ...c, requiredPoints: e.target.value }))}
+                placeholder="Ex.: 50"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="gift-stock" className="text-xs font-medium text-muted-foreground">Estoque</Label>
+              <Input
+                id="gift-stock"
+                type="number"
+                min="0"
+                step="1"
+                value={form.stock}
+                onChange={(e) => setForm((c) => ({ ...c, stock: e.target.value }))}
+                placeholder="Vazio = ilimitado"
+              />
+            </div>
+          </div>
+
+          {/* Image upload */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-medium text-muted-foreground">Imagem</Label>
+              <Label
+                htmlFor="gift-image"
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+              >
+                <Upload className="h-3.5 w-3.5" />
+                {form.imageUrl ? 'Trocar' : 'Enviar'}
+              </Label>
+            </div>
+            <input id="gift-image" type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleImageUpload} />
+
+            <div className="flex items-center gap-4 rounded-xl border border-border bg-muted/15 p-3">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-card">
+                {form.imageUrl ? (
+                  <img src={form.imageUrl} alt={form.name || 'Preview'} className="h-full w-full object-contain p-1" />
+                ) : (
+                  <Gift className="h-5 w-5 text-muted-foreground/40" />
+                )}
+              </div>
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
+                JPG, PNG ou WebP · até 1,5 MB · ideal 400×400 px
+              </p>
+            </div>
+          </div>
+
+          {/* Active toggle */}
+          <label className="flex items-center gap-3 text-sm text-foreground cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={form.active}
+              onChange={(e) => setForm((c) => ({ ...c, active: e.target.checked }))}
+              className="h-4 w-4 rounded border-border"
+            />
+            Brinde ativo para resgate
+          </label>
         </div>
 
         <DialogFooter>
