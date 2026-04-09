@@ -107,6 +107,7 @@ export default function DashboardPage() {
   const [detailLoading, setDetailLoading] = useState(false)
   const [clientError, setClientError] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
+  const [userName, setUserName] = useState('')
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -188,7 +189,10 @@ export default function DashboardPage() {
   useEffect(() => { void fetchData() }, [fetchData])
   useEffect(() => {
     void fetchCurrentUserProfile()
-      .then((profile) => setIsAdmin(isAdminUiRole(profile.role)))
+      .then((profile) => {
+        setIsAdmin(isAdminUiRole(profile.role))
+        setUserName(profile.name || profile.email?.split('@')[0] || '')
+      })
       .catch(() => setIsAdmin(false))
   }, [])
 
@@ -214,6 +218,8 @@ export default function DashboardPage() {
 
           {!selectedClient && (
             <>
+              {isAdmin && <AdminWelcomeCard userName={userName} />}
+
               <div className="grid gap-4 sm:grid-cols-3">
                 <KpiCard label="Pontos acumulados" value={formatPoints(metrics.totalPoints)} helper={period.label} icon={Coins} gradient="from-emerald-500/10 to-emerald-500/[0.02]" iconClass="bg-emerald-500/15 text-emerald-500" />
                 <KpiCard label="Resgates realizados" value={formatPoints(metrics.redemptionsCount)} helper={period.label} icon={Wallet} gradient="from-amber-500/10 to-amber-500/[0.02]" iconClass="bg-amber-500/15 text-amber-500" />
