@@ -202,7 +202,7 @@ export async function fetchManagedUsers(): Promise<ManagedUser[]> {
 
   if (!rows || rows.length === 0) return []
 
-  return rows.map((row) => ({
+  return rows.map((row: any) => ({
     id: row.id,
     email: row.email,
     role: row.role,
