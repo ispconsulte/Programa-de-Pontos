@@ -159,15 +159,15 @@ export default function LoginPage() {
     setLoading(true)
     try {
       const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
-      if (signInError || !data.session?.access_token) { setError(signInError?.message || 'Credenciais inválidas.'); return }
+      if (signInError || !data.session?.access_token) { setError('E-mail ou senha incorretos.'); return }
 
       try {
         await supabase.functions.invoke('bootstrap-tenant', { body: {} })
       } catch { /* edge function unreachable - ok */ }
 
       navigate('/dashboard', { replace: true })
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao fazer login. Tente novamente.')
+    } catch {
+      setError('Erro ao fazer login. Verifique sua conexão e tente novamente.')
     } finally {
       setLoading(false)
     }

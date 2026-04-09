@@ -35,8 +35,16 @@ export default function RegisterPage() {
       // 1. Criar usuário no Supabase Auth
       const { data, error: signUpError } = await supabase.auth.signUp({ email, password })
       if (signUpError) {
-        setError(signUpError.message || 'Erro ao criar conta.')
+        const msg = signUpError.message?.toLowerCase() ?? ''
+        if (msg.includes('already') || msg.includes('duplicate')) {
+          setError('Este e-mail já está cadastrado. Tente fazer login.')
+        } else if (msg.includes('password') && msg.includes('short')) {
+          setError('A senha precisa ter no mínimo 8 caracteres.')
+        } else {
+          setError('Não foi possível criar a conta. Tente novamente.')
+        }
         return
+      }
       }
 
       // 2. Se tiver sessão, chamar a Edge Function bootstrap-tenant
@@ -54,8 +62,8 @@ export default function RegisterPage() {
 
       await supabase.auth.signOut()
       navigate('/login?registered=1')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro de conexão.')
+    } catch {
+      setError('Erro de conexão. Verifique sua internet e tente novamente.')
     } finally {
       setLoading(false)
     }
