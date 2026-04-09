@@ -231,7 +231,7 @@ export default function SettingsUsersPage() {
       setForm(initialFormState)
       await loadData()
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Não foi possível salvar o usuário.')
+      setError(friendlyError(submitError))
     } finally {
       setSaving(false)
     }
