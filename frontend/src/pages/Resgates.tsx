@@ -182,10 +182,15 @@ export default function ResgatesPage() {
                       <th className="px-3 py-3 text-center text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Status</th>
                       <th className="px-3 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Data</th>
                       <th className="w-10" />
+                    </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
                     {filtered.map((row) => (
-                      <tr key={row.id} className="transition-colors hover:bg-muted">
+                      <tr
+                        key={row.id}
+                        className="transition-colors hover:bg-muted cursor-pointer"
+                        onClick={() => navigate(`/cliente-em-dia/${row.ixc_cliente_id}`)}
+                      >
                         <td className="px-5 py-3 font-medium text-foreground">{row.cliente_nome}</td>
                         <td className="px-3 py-3 text-foreground">{row.brinde_nome}</td>
                         <td className="px-3 py-3 text-center font-semibold text-muted-foreground">{row.pontos_utilizados}</td>
@@ -195,6 +200,9 @@ export default function ResgatesPage() {
                           </span>
                         </td>
                         <td className="px-3 py-3 text-muted-foreground">{new Date(row.created_at).toLocaleDateString('pt-BR')}</td>
+                        <td className="px-3 py-3 text-muted-foreground">
+                          <ChevronRight className="h-4 w-4" />
+                        </td>
                       </tr>
                     ))}
                   </tbody>
