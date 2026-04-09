@@ -194,7 +194,7 @@ export async function fetchManagedUsers(): Promise<ManagedUser[]> {
 
   if (!profile?.tenant_id) return []
 
-  const { data: rows } = await supabase
+  const { data: rows } = await (supabase as any)
     .from('users')
     .select('id, email, role, is_active, created_at, updated_at, session_revoked_at')
     .eq('tenant_id', profile.tenant_id)
