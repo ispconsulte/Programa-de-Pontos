@@ -72,6 +72,7 @@ async function fetchCurrentUserProfileFromSupabase(): Promise<CurrentUserProfile
     throw new Error('Sessão não encontrada.')
   }
 
+  // Try direct DB query first
   const directProfileQuery = await supabase
     .from('users')
     .select('id, tenant_id, email, role, created_at')
@@ -92,11 +93,21 @@ async function fetchCurrentUserProfileFromSupabase(): Promise<CurrentUserProfile
     }
   }
 
+  // Fallback: resolve role from JWT claims (app_metadata is set by Supabase auth)
+  const jwtRole = resolveSessionRole(sessionUser)
+  // Also check the raw JWT for custom claims that may contain the DB role
+  const rawRole = String(
+    sessionUser.app_metadata?.user_role ??
+    sessionUser.app_metadata?.role ??
+    jwtRole
+  ).trim()
+  const finalRole = rawRole || 'admin'
+
   return {
     id: sessionUser.id,
     tenant_id: String(sessionUser.app_metadata?.tenant_id ?? ''),
     email: sessionUser.email ?? 'Sem e-mail',
-    role: resolveSessionRole(sessionUser),
+    role: finalRole,
     is_active: true,
     name: resolveSessionName(sessionUser),
     last_sign_in_at: sessionUser.last_sign_in_at ?? null,
