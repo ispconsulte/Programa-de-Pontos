@@ -163,7 +163,7 @@ function GiftCatalogDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-xl border-[hsl(var(--border))] bg-[linear-gradient(180deg,rgba(16,185,129,0.06),rgba(255,255,255,0)_24%),hsl(var(--background))]">
+      <DialogContent className="max-w-xl border-[hsl(var(--border))] bg-[hsl(var(--background))]">
         <DialogHeader>
           <DialogTitle className="text-foreground">{isEditing ? 'Editar brinde' : 'Adicionar brinde'}</DialogTitle>
           <DialogDescription>
