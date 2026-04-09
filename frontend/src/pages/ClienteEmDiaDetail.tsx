@@ -12,6 +12,12 @@ import { useEffect, useState } from 'react'
 import { ArrowLeft, ChevronRight, Gift, Settings, Star } from 'lucide-react'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const ISO_DATE_RE = /\b(\d{4})-(\d{2})-(\d{2})\b/g
+
+/** Convert any ISO dates (YYYY-MM-DD) in a string to DD/MM/YYYY */
+function normalizeDatesBR(text: string): string {
+  return text.replace(ISO_DATE_RE, (_, y, m, d) => `${d}/${m}/${y}`)
+}
 
 function friendlyOrigem(raw: string): string {
   if (!raw || raw === 'sistema') return 'Sistema'
