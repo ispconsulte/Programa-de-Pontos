@@ -209,7 +209,7 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="pt-5">
+                <CardContent className="pt-8">
                   <form onSubmit={handleSubmit} className="space-y-5">
                     {error && <AlertBanner variant="error" message={error} />}
                     {success && <AlertBanner variant="success" message="Configurações salvas com sucesso." />}
