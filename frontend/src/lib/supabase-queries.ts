@@ -355,11 +355,44 @@ export async function fetchLegacyRedemptions(options?: {
   customerId?: string
   limit?: number
 }): Promise<RedemptionRow[]> {
-  const params = new URLSearchParams()
-  if (options?.customerId) params.set('customerId', options.customerId)
-  params.set('limit', String(options?.limit ?? 100))
-  const response = await backendRequest<{ data: RedemptionRow[] }>(`/campaign/legacy-redemptions?${params.toString()}`)
-  return response.data ?? []
+  try {
+    const params = new URLSearchParams()
+    if (options?.customerId) params.set('customerId', options.customerId)
+    params.set('limit', String(options?.limit ?? 100))
+    const response = await backendRequest<{ data: RedemptionRow[] }>(`/campaign/legacy-redemptions?${params.toString()}`)
+    return response.data ?? []
+  } catch {
+    // Fallback: query Supabase directly when backend is unavailable
+    const tenantId = await getCurrentTenantId()
+    if (!tenantId) return []
+
+    let custQuery = supabase
+      .from('pontuacao_campanha_clientes' as any)
+      .select('ixc_cliente_id, nome_cliente')
+      .eq('tenant_id', tenantId)
+
+    if (options?.customerId) {
+      custQuery = custQuery.eq('ixc_cliente_id', options.customerId)
+    }
+
+    const { data: customers } = await custQuery.limit(10000) as { data: any[] | null }
+    if (!customers || customers.length === 0) return []
+
+    const customerIds = customers.map((c: any) => String(c.ixc_cliente_id)).filter(Boolean)
+    const nameMap = new Map(customers.map((c: any) => [String(c.ixc_cliente_id), String(c.nome_cliente ?? '')]))
+
+    const { data: resgates } = await supabase
+      .from('pontuacao_resgates' as any)
+      .select('*')
+      .in('ixc_cliente_id', customerIds)
+      .order('created_at', { ascending: false })
+      .limit(options?.limit ?? 100) as { data: any[] | null }
+
+    return (resgates ?? []).map((r: any) => ({
+      ...r,
+      cliente_nome: nameMap.get(String(r.ixc_cliente_id)) || null,
+    })) as RedemptionRow[]
+  }
 }
 
 export async function fetchCampaignClientRedemptions(
