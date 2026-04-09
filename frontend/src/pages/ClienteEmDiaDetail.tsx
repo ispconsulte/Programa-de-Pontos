@@ -220,7 +220,7 @@ export default function ClienteEmDiaDetailPage() {
                       <div key={item.id} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3">
                         <div className="flex items-start justify-between gap-4">
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium text-foreground">{item.descricao}</p>
+                            <p className="text-sm font-medium text-foreground">{normalizeDatesBR(item.descricao)}</p>
                             <p className="mt-1 text-xs text-muted-foreground">{friendlyOrigem(item.origem)}</p>
                           </div>
                           <div className="shrink-0 text-right">
