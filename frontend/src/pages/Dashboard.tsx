@@ -225,10 +225,10 @@ export default function DashboardPage() {
                   userName={userName}
                   message={
                     <>
-                      <strong className="text-foreground">💡 Dica do dia:</strong> uma conferência rápida no{' '}
-                      <strong className="text-foreground">estoque do catálogo</strong> logo no início do expediente
-                      mantém o atendimento fluindo sem surpresas. Realize as devidas verificações
-                      na quantidade de produtos físicos para evitar imprevistos. Bom trabalho!
+                      Uma conferência rápida no <strong>estoque do catálogo</strong> logo no início do
+                      expediente mantém o atendimento fluindo sem surpresas. Realize as devidas
+                      verificações na quantidade de produtos físicos para evitar imprevistos. Bom trabalho!
+                    </>
                     </>
                   }
                 />

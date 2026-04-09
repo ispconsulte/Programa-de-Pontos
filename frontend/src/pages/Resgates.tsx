@@ -111,9 +111,10 @@ export default function ResgatesPage() {
             storagePrefix="operator-resgates"
             message={
               <>
-                <strong className="text-foreground">💡 Lembrete rápido:</strong> antes de registrar um resgate,
-                confirme a disponibilidade do item no estoque físico. Uma verificação rápida no catálogo
-                garante que o cliente saia satisfeito e evita surpresas durante o atendimento!
+                Antes de registrar um resgate, confirme a disponibilidade do item no
+                <strong> estoque físico</strong>. Uma verificação rápida no catálogo garante que o
+                cliente saia satisfeito e evita surpresas durante o atendimento!
+              </>
               </>
             }
           />
