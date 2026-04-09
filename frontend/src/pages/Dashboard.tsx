@@ -211,7 +211,7 @@ export default function DashboardPage() {
       setFaturas(faturasData)
       setRedemptions(redemptionsData)
     } catch (err) {
-      setClientError(err instanceof Error ? err.message : 'Erro ao atualizar.')
+      setClientError(friendlyError(err))
     } finally { setDetailLoading(false) }
   }, [selectedClient])
 
