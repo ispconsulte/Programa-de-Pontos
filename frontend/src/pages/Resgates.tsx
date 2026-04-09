@@ -189,7 +189,7 @@ export default function ResgatesPage() {
                       <tr
                         key={row.id}
                         className="transition-colors hover:bg-muted cursor-pointer"
-                        onClick={() => navigate(`/cliente-em-dia/${row.ixc_cliente_id}`)}
+                        onClick={() => navigate(`/cliente-em-dia/${row.ixc_cliente_id}`, { state: { from: '/resgates' } })}
                       >
                         <td className="px-5 py-3 font-medium text-foreground">{row.cliente_nome}</td>
                         <td className="px-3 py-3 text-foreground">{row.brinde_nome}</td>
