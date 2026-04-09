@@ -115,7 +115,6 @@ export default function ResgatesPage() {
                 <strong> estoque físico</strong>. Uma verificação rápida no catálogo garante que o
                 cliente saia satisfeito e evita surpresas durante o atendimento!
               </>
-              </>
             }
           />
 

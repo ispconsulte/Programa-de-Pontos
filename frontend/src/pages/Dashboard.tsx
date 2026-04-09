@@ -229,7 +229,6 @@ export default function DashboardPage() {
                       expediente mantém o atendimento fluindo sem surpresas. Realize as devidas
                       verificações na quantidade de produtos físicos para evitar imprevistos. Bom trabalho!
                     </>
-                    </>
                   }
                 />
               )}
