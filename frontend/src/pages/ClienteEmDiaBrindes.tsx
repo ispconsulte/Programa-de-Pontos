@@ -236,7 +236,9 @@ function GiftCatalogDialog({
                 <Label htmlFor="gift-image" className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
                   Imagem do brinde
                 </Label>
-                <p className="mt-1 text-xs text-muted-foreground">Envie um arquivo real de imagem ou mantenha a existente.</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Envie uma imagem JPG, PNG ou WebP de até 1,5 MB.
+                </p>
               </div>
               <Label
                 htmlFor="gift-image"
@@ -246,21 +248,26 @@ function GiftCatalogDialog({
                 Subir imagem
               </Label>
             </div>
-            <input id="gift-image" type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+            <input id="gift-image" type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleImageUpload} />
 
-            <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/20 p-3">
-              <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-lg border border-border bg-card">
-                {form.imageUrl ? (
-                  <img src={form.imageUrl} alt={form.name || 'Pré-visualização'} className="h-full w-full object-contain p-2" />
-                ) : (
-                  <span className="text-xs text-muted-foreground">Sem imagem</span>
-                )}
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-foreground">Pré-visualização</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  A imagem fica salva diretamente no catálogo e aparece no resgate.
-                </p>
+            <div className="rounded-xl border border-border bg-muted/30 p-4">
+              <div className="flex items-center gap-4">
+                <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-card">
+                  {form.imageUrl ? (
+                    <img src={form.imageUrl} alt={form.name || 'Pré-visualização'} className="h-full w-full object-contain p-1.5" />
+                  ) : (
+                    <span className="text-[10px] text-muted-foreground text-center leading-tight px-1">Sem imagem</span>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground">Pré-visualização</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    A imagem aparece no catálogo e no resgate.
+                  </p>
+                  <p className="mt-1 text-[10px] text-muted-foreground/70">
+                    Resolução recomendada: 400×400px (quadrada). Máx. 1,5 MB.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
