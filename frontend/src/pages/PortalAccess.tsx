@@ -30,12 +30,14 @@ export default function PortalAccessPage() {
 
   const handleMagicLinkSubmit = (event: FormEvent) => {
     event.preventDefault()
-    navigate('/portal/meus-pontos')
+    // TODO: implement actual magic link verification
+    // For now, don't navigate — show placeholder message
   }
 
   const handleVerificationSubmit = (event: FormEvent) => {
     event.preventDefault()
-    navigate('/portal/meus-pontos')
+    // TODO: implement actual verification code check
+    // For now, don't navigate — show placeholder message
   }
 
   return (
