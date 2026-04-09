@@ -136,7 +136,7 @@ export default function SettingsPage() {
           {loading ? (
             <div className="flex justify-center py-16"><Spinner /></div>
           ) : (
-            <>
+            <div className="space-y-6">
               {/* Quick navigation */}
               <div className="grid gap-3 sm:grid-cols-2">
                 <AdminLinkCard
