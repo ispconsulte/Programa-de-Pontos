@@ -58,7 +58,7 @@ export default function SettingsCampaignsPage() {
         const loaded = await fetchActiveCampaignRuleSettings(currentTenantId)
         setSettings(loaded)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Falha ao carregar configurações da campanha.')
+        setError(friendlyError(err))
       } finally {
         setLoading(false)
       }
