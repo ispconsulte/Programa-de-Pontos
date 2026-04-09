@@ -93,9 +93,8 @@ async function fetchCurrentUserProfileFromSupabase(): Promise<CurrentUserProfile
     }
   }
 
-  // Fallback: resolve role from JWT claims (app_metadata is set by Supabase auth)
+  // Fallback: resolve role from JWT claims
   const jwtRole = resolveSessionRole(sessionUser)
-  // Also check the raw JWT for custom claims that may contain the DB role
   const rawRole = String(
     sessionUser.app_metadata?.user_role ??
     sessionUser.app_metadata?.role ??
