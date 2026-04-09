@@ -26,6 +26,7 @@ import {
 } from '@/lib/loyalty-admin'
 import { fetchCurrentUserProfile, isAdminUiRole } from '@/lib/user-management'
 import {
+  AlertTriangle,
   Award,
   Box,
   CheckCircle,
