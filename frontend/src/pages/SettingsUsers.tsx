@@ -247,7 +247,7 @@ export default function SettingsUsersPage() {
       setSuccess(`Sessão revogada para ${user.email}.`)
       await loadData()
     } catch (actionError) {
-      setError(actionError instanceof Error ? actionError.message : 'Não foi possível desconectar o usuário.')
+      setError(friendlyError(actionError))
     } finally {
       setBusyUserId(null)
     }
