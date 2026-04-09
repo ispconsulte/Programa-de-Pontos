@@ -31,6 +31,7 @@ import {
   type ManagedUser,
 } from '@/lib/user-management'
 import { Edit3, KeyRound, LogOut, Shield, Trash2, UserCog, UserPlus, Users } from 'lucide-react'
+import { friendlyError } from '@/lib/friendly-errors'
 
 type DialogMode = 'create' | 'edit'
 

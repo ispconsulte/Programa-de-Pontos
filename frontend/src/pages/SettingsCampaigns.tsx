@@ -16,6 +16,7 @@ import {
   type CampaignRuleSettings,
 } from '@/lib/supabase-queries'
 import { ArrowLeft, Megaphone, Save, Zap } from 'lucide-react'
+import { friendlyError } from '@/lib/friendly-errors'
 
 /* ── Points tier visual ── */
 function PointsTier({ tier, label, value }: { tier: number; label: string; value: number }) {
