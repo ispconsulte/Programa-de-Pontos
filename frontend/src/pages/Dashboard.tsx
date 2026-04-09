@@ -49,6 +49,7 @@ import {
   type RedemptionRow,
 } from '@/lib/supabase-queries'
 import { fetchCurrentUserProfile, isAdminUiRole } from '@/lib/user-management'
+import { friendlyError } from '@/lib/friendly-errors'
 
 /* ── Helpers ──────────────────────────────────────────────────────────── */
 
