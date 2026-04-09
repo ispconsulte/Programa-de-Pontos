@@ -211,7 +211,7 @@ export default function ReceivablesPage() {
       setTotal(result.total)
       setTotalPages(result.totalPages)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar recebimentos.')
+      setError(friendlyError(err))
       setReceivables([])
     } finally {
       setLoading(false)
