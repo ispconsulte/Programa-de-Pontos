@@ -3,6 +3,7 @@ import { useThrottledAction } from '@/hooks/useThrottledAction'
 import { friendlyError } from '@/lib/friendly-errors'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Users, RefreshCw, Search, ShieldAlert, TrendingUp, Award, Clock } from 'lucide-react'
+import DevelopmentAreaGate from '@/components/DevelopmentAreaGate'
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import PageHeader from '@/components/PageHeader'
@@ -255,9 +256,10 @@ export default function ReceivablesPage() {
 
   return (
     <ProtectedRoute>
-      <Layout>
-        <PageHeader
-          icon={TrendingUp}
+      <DevelopmentAreaGate area="contas" title="Contas">
+        <Layout>
+          <PageHeader
+            icon={TrendingUp}
           title="Gestão de Pontuação"
           subtitle="Acompanhe pagamentos e pontos dos clientes"
         />
@@ -481,7 +483,8 @@ export default function ReceivablesPage() {
             </CardContent>
           </Card>
         </div>
-      </Layout>
+        </Layout>
+      </DevelopmentAreaGate>
     </ProtectedRoute>
   )
 }
