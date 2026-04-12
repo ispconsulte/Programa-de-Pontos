@@ -1,5 +1,4 @@
 import type { FastifyInstance } from 'fastify'
-import { compare } from 'bcryptjs'
 import { z } from 'zod'
 import { AppError } from '../../lib/app-error.js'
 import { writeAuditLog } from '../../lib/audit.js'
@@ -20,11 +19,6 @@ const updateUserSchema = z.object({
   role: managedRoleSchema.optional(),
   password: z.string().min(8).optional(),
   isActive: z.boolean().optional(),
-})
-
-const devAreaUnlockSchema = z.object({
-  area: z.enum(['codano', 'contas']),
-  password: z.string().min(1),
 })
 
 interface TenantUserRow {
@@ -160,40 +154,6 @@ export async function usersRoutes(app: FastifyInstance) {
       last_sign_in_at: authUser.last_sign_in_at ?? null,
       created_at: dbUser.created_at,
       updated_at: dbUser.updated_at,
-    })
-  })
-
-  app.post('/dev-area/unlock', {
-    onRequest: authenticate,
-    schema: {
-      tags: ['Users'],
-      summary: 'Validar senha compartilhada da área de desenvolvimento',
-      security: [{ bearerAuth: [] }],
-    },
-  }, async (request, reply) => {
-    const body = devAreaUnlockSchema.parse(request.body)
-
-    const { data, error } = await supabaseAdmin
-      .from('tenants')
-      .select('dev_area_shared_password_hash')
-      .eq('id', request.tenantId)
-      .maybeSingle()
-
-    if (error) {
-      throw new AppError(500, error.message)
-    }
-    if (!data?.dev_area_shared_password_hash) {
-      throw new AppError(409, 'Proteção da área de desenvolvimento não configurada.')
-    }
-
-    const isValid = await compare(body.password, data.dev_area_shared_password_hash)
-    if (!isValid) {
-      throw new AppError(400, 'Senha inválida.')
-    }
-
-    return reply.send({
-      success: true,
-      area: body.area,
     })
   })
 

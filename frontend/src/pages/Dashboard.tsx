@@ -24,7 +24,6 @@ import {
   Zap,
 } from 'lucide-react'
 import Layout from '@/components/Layout'
-import DevelopmentAreaGate from '@/components/DevelopmentAreaGate'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import AlertBanner from '@/components/AlertBanner'
 import WelcomeModal from '@/components/WelcomeModal'
@@ -200,77 +199,75 @@ export default function DashboardPage() {
 
   return (
     <ProtectedRoute>
-      <DevelopmentAreaGate area="codano" title="Codano">
-        <Layout>
-          <div className="page-stack">
-            {selectedClient && (
-              <SelectedClientView
-                client={selectedClient}
-                faturas={faturas}
-                redemptions={redemptions}
-                detailLoading={detailLoading}
-                clientError={clientError}
-                clientRefreshBusy={clientRefreshBusy}
-                isAdmin={isAdmin}
-                ac={ac}
-                onClearSelection={clearSelection}
-                onSelectClient={selectClient}
-                onRefreshClient={() => void throttledClientRefresh()}
-              />
-            )}
-
-            {!selectedClient && (
-              <>
-                {isAdmin && (
-                  <WelcomeModal
-                    storagePrefix="admin-welcome"
-                    userName={userName}
-                    message={
-                      <>
-                        Uma conferência rápida no <strong>estoque do catálogo</strong> logo no início do
-                        expediente mantém o atendimento fluindo sem surpresas. Realize as devidas
-                        verificações na quantidade de produtos físicos para evitar imprevistos. Bom trabalho!
-                      </>
-                    }
-                  />
-                )}
-
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <KpiCard label="Pontos acumulados" value={formatPoints(metrics.totalPoints)} helper={period.label} icon={Coins} gradient="from-emerald-500/10 to-emerald-500/[0.02]" iconClass="bg-emerald-500/15 text-emerald-500" />
-                  <KpiCard label="Resgates realizados" value={formatPoints(metrics.redemptionsCount)} helper={period.label} icon={Wallet} gradient="from-amber-500/10 to-amber-500/[0.02]" iconClass="bg-amber-500/15 text-amber-500" />
-                  <KpiCard label="Pontos disponíveis" value={formatPoints(metrics.availablePoints)} helper={period.label} icon={Zap} gradient="from-primary/10 to-primary/[0.02]" iconClass="bg-primary/15 text-primary" />
-                </div>
-
-                <SearchBar ac={ac} onSelectClient={selectClient} selectedClient={selectedClient} onClearSelection={clearSelection} />
-
-                <RankingSection
-                  ranking={ranking}
-                  loading={loading}
-                  error={error}
-                  rankingOpen={rankingOpen}
-                  refreshBusy={refreshBusy}
-                  onToggleRanking={() => setRankingOpen(!rankingOpen)}
-                  onRefresh={handleRefresh}
-                  onRetry={() => void fetchData()}
-                />
-              </>
-            )}
-          </div>
-
-          {showCalmModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowCalmModal(false)}>
-              <div className="mx-4 w-full max-w-sm rounded-xl border border-border bg-card p-6 text-center shadow-2xl animate-scale-in" onClick={(e) => e.stopPropagation()}>
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-                  <RefreshCw className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="text-lg font-bold text-foreground">Calma! 😊</h3>
-                <p className="mt-2 text-sm text-muted-foreground">Seus dados estão sendo atualizados. Não é necessário ter pressa.</p>
-                <Button className="mt-5 w-full" onClick={() => setShowCalmModal(false)}>Entendi</Button>
-              </div>
-            </div>
+      <Layout>
+        <div className="page-stack">
+          {selectedClient && (
+            <SelectedClientView
+              client={selectedClient}
+              faturas={faturas}
+              redemptions={redemptions}
+              detailLoading={detailLoading}
+              clientError={clientError}
+              clientRefreshBusy={clientRefreshBusy}
+              isAdmin={isAdmin}
+              ac={ac}
+              onClearSelection={clearSelection}
+              onSelectClient={selectClient}
+              onRefreshClient={() => void throttledClientRefresh()}
+            />
           )}
-        </Layout>
-      </DevelopmentAreaGate>
+
+          {!selectedClient && (
+            <>
+              {isAdmin && (
+                <WelcomeModal
+                  storagePrefix="admin-welcome"
+                  userName={userName}
+                  message={
+                    <>
+                      Uma conferência rápida no <strong>estoque do catálogo</strong> logo no início do
+                      expediente mantém o atendimento fluindo sem surpresas. Realize as devidas
+                      verificações na quantidade de produtos físicos para evitar imprevistos. Bom trabalho!
+                    </>
+                  }
+                />
+              )}
+
+              <div className="grid gap-4 sm:grid-cols-3">
+                <KpiCard label="Pontos acumulados" value={formatPoints(metrics.totalPoints)} helper={period.label} icon={Coins} gradient="from-emerald-500/10 to-emerald-500/[0.02]" iconClass="bg-emerald-500/15 text-emerald-500" />
+                <KpiCard label="Resgates realizados" value={formatPoints(metrics.redemptionsCount)} helper={period.label} icon={Wallet} gradient="from-amber-500/10 to-amber-500/[0.02]" iconClass="bg-amber-500/15 text-amber-500" />
+                <KpiCard label="Pontos disponíveis" value={formatPoints(metrics.availablePoints)} helper={period.label} icon={Zap} gradient="from-primary/10 to-primary/[0.02]" iconClass="bg-primary/15 text-primary" />
+              </div>
+
+              <SearchBar ac={ac} onSelectClient={selectClient} selectedClient={selectedClient} onClearSelection={clearSelection} />
+
+              <RankingSection
+                ranking={ranking}
+                loading={loading}
+                error={error}
+                rankingOpen={rankingOpen}
+                refreshBusy={refreshBusy}
+                onToggleRanking={() => setRankingOpen(!rankingOpen)}
+                onRefresh={handleRefresh}
+                onRetry={() => void fetchData()}
+              />
+            </>
+          )}
+        </div>
+
+        {showCalmModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowCalmModal(false)}>
+            <div className="mx-4 w-full max-w-sm rounded-xl border border-border bg-card p-6 text-center shadow-2xl animate-scale-in" onClick={(e) => e.stopPropagation()}>
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+                <RefreshCw className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="text-lg font-bold text-foreground">Calma! 😊</h3>
+              <p className="mt-2 text-sm text-muted-foreground">Seus dados estão sendo atualizados. Não é necessário ter pressa.</p>
+              <Button className="mt-5 w-full" onClick={() => setShowCalmModal(false)}>Entendi</Button>
+            </div>
+          </div>
+        )}
+      </Layout>
     </ProtectedRoute>
   )
 }
