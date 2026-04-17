@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { Gift, Search } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { AlertTriangle, CheckCircle2, Gift, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -19,7 +19,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { CampaignClientRow } from '@/lib/supabase-queries'
+import { cn } from '@/lib/utils'
+import { autocompleteCampaignClients, getCurrentTenantId, type CampaignClientRow } from '@/lib/supabase-queries'
+import {
+  fetchRewardCatalogItems,
+  registerRewardRedemption,
+  type RewardCatalogRow,
+  type RewardRedemptionResult,
+} from '@/lib/loyalty-admin'
+import Spinner from '@/components/Spinner'
 
 interface RegisterRedemptionDialogProps {
   trigger: ReactNode
@@ -31,19 +39,13 @@ interface GiftOption {
   id: string
   name: string
   requiredPoints: number
+  stock: number | null
 }
-
-const MOCK_GIFTS: GiftOption[] = [
-  { id: 'gift-1', name: 'Caneca térmica', requiredPoints: 30 },
-  { id: 'gift-2', name: 'Squeeze premium', requiredPoints: 20 },
-  { id: 'gift-3', name: 'Kit boas-vindas', requiredPoints: 50 },
-]
-
-const LEAVE_WARNING_MESSAGE = 'Você iniciou um resgate e ainda não concluiu o registro. Tem certeza que deseja sair sem salvar?'
 
 interface RedemptionFormState {
   isActiveCustomer: boolean
-  clientQuery: string
+  customerQuery: string
+  selectedClientId: string
   leadName: string
   leadPhone: string
   selectedGiftId: string
@@ -52,23 +54,55 @@ interface RedemptionFormState {
   notes: string
 }
 
+const LEAVE_WARNING_MESSAGE = 'Você iniciou um resgate e ainda não concluiu o registro. Tem certeza que deseja sair sem salvar?'
+
+function formatPhonePtBr(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 11)
+  if (digits.length <= 2) return digits
+  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`
+  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`
+}
+
 export default function RegisterRedemptionDialog({
   trigger,
   preselectedClient,
+  onRedemptionComplete,
 }: RegisterRedemptionDialogProps) {
   const [open, setOpen] = useState(false)
   const [isActiveCustomer, setIsActiveCustomer] = useState(true)
-  const [clientQuery, setClientQuery] = useState('')
+  const [customerQuery, setCustomerQuery] = useState('')
+  const [suggestions, setSuggestions] = useState<CampaignClientRow[]>([])
+  const [searchLoading, setSearchLoading] = useState(false)
+  const [selectedClient, setSelectedClient] = useState<CampaignClientRow | null>(null)
+  const [gifts, setGifts] = useState<GiftOption[]>([])
+  const [selectedGiftId, setSelectedGiftId] = useState('')
+  const [giftsLoading, setGiftsLoading] = useState(false)
   const [leadName, setLeadName] = useState('')
   const [leadPhone, setLeadPhone] = useState('')
-  const [selectedGiftId, setSelectedGiftId] = useState('')
   const [quantity, setQuantity] = useState('1')
   const [responsible, setResponsible] = useState('')
   const [notes, setNotes] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
+  const [success, setSuccess] = useState<RewardRedemptionResult | null>(null)
+
+  const selectedGift = useMemo(
+    () => gifts.find((gift) => gift.id === selectedGiftId) ?? null,
+    [gifts, selectedGiftId],
+  )
+  const normalizedQuantity = Math.max(1, Number.parseInt(quantity || '1', 10) || 1)
+  const availablePoints = selectedClient?.pontos_disponiveis ?? 0
+  const requiredPoints = (selectedGift?.requiredPoints ?? 0) * normalizedQuantity
+  const isOutOfStock = !!selectedGift && selectedGift.stock != null && selectedGift.stock < normalizedQuantity
+  const isBlocked = isActiveCustomer && !!selectedGift && !!selectedClient && availablePoints < requiredPoints
+  const hasTarget = isActiveCustomer ? !!selectedClient : !!leadName.trim() && !!leadPhone.trim()
+  const canConfirm = hasTarget && !!selectedGift && !!responsible.trim() && !isOutOfStock && !isBlocked && !submitting
 
   const initialFormState = useMemo<RedemptionFormState>(() => ({
     isActiveCustomer: true,
-    clientQuery: preselectedClient?.nome_cliente ?? '',
+    customerQuery: preselectedClient?.nome_cliente ?? '',
+    selectedClientId: preselectedClient?.id ?? '',
     leadName: '',
     leadPhone: '',
     selectedGiftId: '',
@@ -77,13 +111,10 @@ export default function RegisterRedemptionDialog({
     notes: '',
   }), [preselectedClient])
 
-  const selectedGift = useMemo(
-    () => MOCK_GIFTS.find((gift) => gift.id === selectedGiftId) ?? null,
-    [selectedGiftId],
-  )
   const currentFormState = useMemo<RedemptionFormState>(() => ({
     isActiveCustomer,
-    clientQuery,
+    customerQuery,
+    selectedClientId: selectedClient?.id ?? '',
     leadName,
     leadPhone,
     selectedGiftId,
@@ -91,29 +122,66 @@ export default function RegisterRedemptionDialog({
     responsible,
     notes,
   }), [
-    clientQuery,
+    customerQuery,
     isActiveCustomer,
     leadName,
     leadPhone,
     notes,
     quantity,
     responsible,
+    selectedClient?.id,
     selectedGiftId,
   ])
+
   const isDirty = JSON.stringify(currentFormState) !== JSON.stringify(initialFormState)
+
+  useEffect(() => {
+    if (!open) return
+    let mounted = true
+
+    const loadGifts = async () => {
+      setGiftsLoading(true)
+      try {
+        const data = await fetchRewardCatalogItems()
+        if (!mounted) return
+        setGifts((data ?? [])
+          .filter((gift) => gift.ativo)
+          .map((gift) => ({
+            id: gift.id,
+            name: gift.nome,
+            requiredPoints: gift.pontos_necessarios,
+            stock: gift.estoque ?? null,
+          })))
+      } catch {
+        if (!mounted) return
+        setGifts([])
+      } finally {
+        if (mounted) setGiftsLoading(false)
+      }
+    }
+
+    void loadGifts()
+    return () => {
+      mounted = false
+    }
+  }, [open])
 
   useEffect(() => {
     if (!open) return
 
     setIsActiveCustomer(initialFormState.isActiveCustomer)
-    setClientQuery(initialFormState.clientQuery)
+    setCustomerQuery(initialFormState.customerQuery)
+    setSelectedClient(preselectedClient ?? null)
+    setSuggestions([])
     setLeadName(initialFormState.leadName)
     setLeadPhone(initialFormState.leadPhone)
     setSelectedGiftId(initialFormState.selectedGiftId)
     setQuantity(initialFormState.quantity)
     setResponsible(initialFormState.responsible)
     setNotes(initialFormState.notes)
-  }, [initialFormState, open])
+    setSubmitError('')
+    setSuccess(null)
+  }, [initialFormState, open, preselectedClient])
 
   useEffect(() => {
     if (!open || !isDirty) return
@@ -130,7 +198,35 @@ export default function RegisterRedemptionDialog({
     }
   }, [isDirty, open])
 
-  const normalizedQuantity = Math.max(1, Number.parseInt(quantity || '1', 10) || 1)
+  const searchCustomers = useCallback(async (query: string) => {
+    const trimmed = query.trim()
+    if (trimmed.length < 2) {
+      setSuggestions([])
+      return
+    }
+
+    setSearchLoading(true)
+    try {
+      const tenantId = await getCurrentTenantId()
+      if (!tenantId) return
+      const results = await autocompleteCampaignClients({ tenantId, query: trimmed })
+      setSuggestions(results)
+    } catch {
+      setSuggestions([])
+    } finally {
+      setSearchLoading(false)
+    }
+  }, [])
+
+  const handleSearchChange = useCallback((value: string) => {
+    setCustomerQuery(value)
+    setSelectedClient(null)
+    const timer = setTimeout(() => {
+      void searchCustomers(value)
+    }, 250)
+
+    return () => clearTimeout(timer)
+  }, [searchCustomers])
 
   const requestClose = () => {
     if (isDirty && !window.confirm(LEAVE_WARNING_MESSAGE)) {
@@ -138,6 +234,42 @@ export default function RegisterRedemptionDialog({
     }
 
     setOpen(false)
+  }
+
+  const handleConfirm = async () => {
+    if (!canConfirm || !selectedGift) return
+
+    setSubmitting(true)
+    setSubmitError('')
+    try {
+      const result = await registerRewardRedemption({
+        isActiveCustomer,
+        client: selectedClient,
+        leadName,
+        leadPhone,
+        reward: {
+          id: selectedGift.id,
+          nome: selectedGift.name,
+          descricao: null,
+          pontos_necessarios: selectedGift.requiredPoints,
+          ativo: true,
+          estoque: selectedGift.stock,
+          imagem_url: null,
+        } as RewardCatalogRow,
+        responsible,
+        notes,
+      })
+
+      setSuccess(result)
+      setTimeout(() => {
+        setOpen(false)
+        onRedemptionComplete?.()
+      }, 1200)
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'Não foi possível registrar o resgate.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -168,117 +300,241 @@ export default function RegisterRedemptionDialog({
           </div>
         </DialogHeader>
 
-        <div className="space-y-4 px-6 pb-2">
-          <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 px-3 py-2.5">
-            <input
-              id="cliente-ativo"
-              type="checkbox"
-              checked={isActiveCustomer}
-              onChange={(event) => setIsActiveCustomer(event.target.checked)}
-              className="h-4 w-4 rounded border-input bg-background accent-emerald-500"
-            />
-            <Label htmlFor="cliente-ativo" className="text-sm font-medium text-foreground">
-              Cliente ativo
-            </Label>
+        {success ? (
+          <div className="flex flex-col items-center justify-center px-6 py-12">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10">
+              <CheckCircle2 className="h-8 w-8 text-emerald-400" />
+            </div>
+            <p className="mt-4 text-lg font-bold text-foreground">Resgate registrado!</p>
+            <p className="mt-1 text-center text-sm text-muted-foreground">
+              <span className="font-semibold text-foreground">{success.redemption.brinde_nome}</span> registrado com sucesso.
+            </p>
           </div>
-
-          {isActiveCustomer ? (
-            <div className="space-y-2">
-              <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Cliente</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={clientQuery}
-                  onChange={(event) => setClientQuery(event.target.value)}
-                  placeholder="Nome ou CPF do cliente"
-                  className="pl-9"
+        ) : (
+          <div className="space-y-4 px-6 pb-2 pt-2">
+            <div className="rounded-lg border border-border bg-muted/30 p-3">
+              <div className="flex items-center gap-3">
+                <input
+                  id="cliente-ativo"
+                  type="checkbox"
+                  checked={isActiveCustomer}
+                  onChange={(event) => {
+                    const next = event.target.checked
+                    setIsActiveCustomer(next)
+                    setSubmitError('')
+                    if (next) {
+                      setLeadName('')
+                      setLeadPhone('')
+                    } else {
+                      setCustomerQuery('')
+                      setSelectedClient(null)
+                      setSuggestions([])
+                    }
+                  }}
+                  className="h-4 w-4 rounded border-input bg-background accent-emerald-500"
                 />
+                <Label htmlFor="cliente-ativo" className="text-sm font-medium text-foreground">
+                  Cliente ativo
+                </Label>
               </div>
             </div>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
+
+            {isActiveCustomer ? (
+              <>
+                <div className="space-y-2">
+                  <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Cliente</Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={customerQuery}
+                      onChange={(event) => handleSearchChange(event.target.value)}
+                      placeholder="Nome ou CPF do cliente"
+                      className="pl-9"
+                    />
+                    {searchLoading && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <Spinner size="sm" />
+                      </div>
+                    )}
+                    {suggestions.length > 0 && !selectedClient && (
+                      <div className="absolute z-50 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-border bg-card shadow-lg">
+                        {suggestions.map((client) => (
+                          <button
+                            key={client.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedClient(client)
+                              setCustomerQuery(client.nome_cliente || '')
+                              setSuggestions([])
+                            }}
+                            className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm transition-colors hover:bg-muted"
+                          >
+                            <div className="min-w-0">
+                              <p className="truncate font-medium text-foreground">{client.nome_cliente}</p>
+                              <p className="text-xs text-muted-foreground">{client.documento || `IXC #${client.ixc_cliente_id}`}</p>
+                            </div>
+                            <span className="ml-2 shrink-0 text-xs font-bold text-emerald-400">
+                              {(client.pontos_disponiveis ?? 0).toLocaleString('pt-BR')} pts
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {selectedClient && (
+                  <div className="flex items-center gap-3 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.06] p-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-bold text-emerald-400">
+                      {(selectedClient.nome_cliente?.[0] || '?').toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-foreground">{selectedClient.nome_cliente}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {selectedClient.pontos_disponiveis?.toLocaleString('pt-BR') ?? 0} pts disponíveis
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => {
+                        setSelectedClient(null)
+                        setCustomerQuery('')
+                      }}
+                    >
+                      Trocar
+                    </Button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Nome</Label>
+                  <Input
+                    value={leadName}
+                    onChange={(event) => setLeadName(event.target.value)}
+                    placeholder="Nome"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Telefone</Label>
+                  <Input
+                    value={leadPhone}
+                    onChange={(event) => setLeadPhone(formatPhonePtBr(event.target.value))}
+                    placeholder="(11) 99999-9999"
+                    inputMode="numeric"
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_120px]">
               <div className="space-y-2">
-                <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Nome</Label>
-                <Input
-                  value={leadName}
-                  onChange={(event) => setLeadName(event.target.value)}
-                  placeholder="Nome"
-                />
+                <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Brinde</Label>
+                {giftsLoading ? (
+                  <div className="flex items-center justify-center py-4"><Spinner size="sm" /></div>
+                ) : (
+                  <Select value={selectedGiftId} onValueChange={setSelectedGiftId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={gifts.length === 0 ? 'Nenhum brinde disponível' : 'Selecione o brinde'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {gifts.map((gift) => (
+                        <SelectItem key={gift.id} value={gift.id}>
+                          {gift.name} - {gift.requiredPoints} pts
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
+
               <div className="space-y-2">
-                <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Telefone</Label>
+                <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Quantidade</Label>
                 <Input
-                  value={leadPhone}
-                  onChange={(event) => setLeadPhone(event.target.value)}
-                  placeholder="Telefone"
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={quantity}
+                  onChange={(event) => setQuantity(String(Math.max(1, Number.parseInt(event.target.value || '1', 10) || 1)))}
                 />
               </div>
             </div>
-          )}
 
-          <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_120px]">
-            <div className="space-y-2">
-              <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Brinde</Label>
-              <Select value={selectedGiftId} onValueChange={setSelectedGiftId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o brinde" />
-                </SelectTrigger>
-                <SelectContent>
-                  {MOCK_GIFTS.map((gift) => (
-                    <SelectItem key={gift.id} value={gift.id}>
-                      {gift.name} - {gift.requiredPoints} pts
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {selectedGift && (
+              <p className="text-xs text-muted-foreground">
+                Total desta seleção: <span className="font-semibold text-foreground">{requiredPoints} pts</span>
+                {selectedGift.stock != null ? <> · Estoque disponível: <span className="font-semibold text-foreground">{selectedGift.stock}</span></> : null}
+              </p>
+            )}
 
             <div className="space-y-2">
-              <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Quantidade</Label>
+              <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Responsável pela entrega</Label>
               <Input
-                type="number"
-                min={1}
-                step={1}
-                value={quantity}
-                onChange={(event) => setQuantity(String(Math.max(1, Number.parseInt(event.target.value || '1', 10) || 1)))}
+                value={responsible}
+                onChange={(event) => setResponsible(event.target.value)}
+                placeholder="Responsável pela entrega"
               />
             </div>
+
+            <div className="space-y-2">
+              <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Observações (opcional)</Label>
+              <textarea
+                value={notes}
+                onChange={(event) => setNotes(event.target.value)}
+                placeholder="Observações (opcional)"
+                className="min-h-[88px] w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20"
+              />
+            </div>
+
+            {isBlocked && (
+              <div className="flex items-start gap-3 rounded-lg border border-destructive/20 bg-destructive/[0.06] p-3">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+                <div>
+                  <p className="text-sm font-semibold text-destructive">Saldo insuficiente</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    O cliente tem {availablePoints.toLocaleString('pt-BR')} pts, mas precisa de {requiredPoints.toLocaleString('pt-BR')} pts.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {isOutOfStock && (
+              <div className="flex items-start gap-3 rounded-lg border border-amber-500/20 bg-amber-500/[0.06] p-3">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+                <div>
+                  <p className="text-sm font-semibold text-amber-400">Estoque indisponível</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    A quantidade escolhida é maior que o estoque disponível deste brinde.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {submitError && (
+              <div className="rounded-lg border border-destructive/20 bg-destructive/[0.06] p-3">
+                <p className="text-sm text-destructive">{submitError}</p>
+              </div>
+            )}
           </div>
+        )}
 
-          {selectedGift && (
-            <p className="text-xs text-muted-foreground">
-              Total desta seleção: <span className="font-semibold text-foreground">{selectedGift.requiredPoints * normalizedQuantity} pts</span>
-            </p>
-          )}
-
-          <div className="space-y-2">
-            <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Responsável pela entrega</Label>
-            <Input
-              value={responsible}
-              onChange={(event) => setResponsible(event.target.value)}
-              placeholder="Responsável pela entrega"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Observações (opcional)</Label>
-            <textarea
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-              placeholder="Observações (opcional)"
-              className="min-h-[88px] w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20"
-            />
-          </div>
-        </div>
-
-        <DialogFooter className="border-t border-border px-6 py-4">
-          <Button variant="outline" onClick={requestClose}>
-            Cancelar
-          </Button>
-          <Button className="bg-emerald-600 text-white hover:bg-emerald-500">
-            Confirmar resgate
-          </Button>
-        </DialogFooter>
+        {!success && (
+          <DialogFooter className="border-t border-border px-6 py-4">
+            <Button variant="outline" onClick={requestClose} disabled={submitting}>
+              Cancelar
+            </Button>
+            <Button
+              className="bg-emerald-600 text-white hover:bg-emerald-500"
+              disabled={!canConfirm}
+              onClick={handleConfirm}
+            >
+              {submitting ? <><Spinner size="sm" /> Registrando...</> : 'Confirmar resgate'}
+            </Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   )
