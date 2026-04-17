@@ -343,6 +343,9 @@ export async function fetchClientNamesByIxcIds(
 export interface RedemptionRow {
   id: string
   ixc_cliente_id?: string
+  tipo_destinatario?: 'cliente' | 'contato'
+  destinatario_nome?: string | null
+  destinatario_telefone?: string | null
   brinde_nome: string
   pontos_utilizados: number
   status_resgate: string
@@ -390,7 +393,7 @@ export async function fetchLegacyRedemptions(options?: {
 
     return (resgates ?? []).map((r: any) => ({
       ...r,
-      cliente_nome: nameMap.get(String(r.ixc_cliente_id)) || null,
+      cliente_nome: r.destinatario_nome || nameMap.get(String(r.ixc_cliente_id)) || null,
     })) as RedemptionRow[]
   }
 }

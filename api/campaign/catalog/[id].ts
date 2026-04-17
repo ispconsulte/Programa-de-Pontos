@@ -29,7 +29,7 @@ export default async function handler(request: any, response: any) {
       return sendJson(response, 400, { error: 'Brinde inválido' })
     }
 
-    if (request.method === 'PATCH') {
+    if (request.method === 'PATCH' || request.method === 'PUT') {
       const body = catalogRewardSchema.parse(getBody(request))
 
       const updateResult = await supabaseAdmin

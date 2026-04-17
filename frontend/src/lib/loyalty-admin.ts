@@ -34,7 +34,10 @@ export interface ManualPointsInput {
 }
 
 export interface RewardRedemptionInput {
-  client: CampaignClientRow
+  isActiveCustomer: boolean
+  client?: CampaignClientRow | null
+  leadName?: string
+  leadPhone?: string
   reward: RewardCatalogRow
   responsible: string
   notes?: string
@@ -47,7 +50,7 @@ export interface RewardRedemptionResult {
     pontos_utilizados: number
     status_resgate: string
   }
-  remainingPoints: number
+  remainingPoints: number | null
   remainingStock: number | null
 }
 
@@ -87,7 +90,7 @@ export async function createRewardCatalogItem(input: RewardCatalogInput): Promis
 
 export async function updateRewardCatalogItem(id: string, input: RewardCatalogInput): Promise<RewardCatalogRow> {
   return backendRequest<RewardCatalogRow>(`/campaign/catalog/${id}`, {
-    method: 'PATCH',
+    method: 'PUT',
     body: JSON.stringify({
       name: input.name.trim(),
       description: input.description?.trim() || null,
@@ -121,7 +124,10 @@ export async function registerRewardRedemption(input: RewardRedemptionInput): Pr
   return backendRequest<RewardRedemptionResult>('/campaign/legacy-redemptions', {
     method: 'POST',
     body: JSON.stringify({
-      clientId: input.client.id,
+      isActiveCustomer: input.isActiveCustomer,
+      clientId: input.isActiveCustomer ? input.client?.id ?? null : null,
+      leadName: input.isActiveCustomer ? null : input.leadName?.trim() || null,
+      leadPhone: input.isActiveCustomer ? null : input.leadPhone?.trim() || null,
       rewardId: input.reward.id,
       responsible: input.responsible.trim(),
       notes: input.notes?.trim() || null,

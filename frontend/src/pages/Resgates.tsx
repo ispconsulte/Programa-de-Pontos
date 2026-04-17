@@ -21,7 +21,8 @@ const STATUS_TABS: { value: RedemptionStatus | 'all'; label: string }[] = [
 
 interface RedemptionRow {
   id: string
-  ixc_cliente_id: string
+  ixc_cliente_id?: string
+  tipo_destinatario?: 'cliente' | 'contato'
   brinde_nome: string
   pontos_utilizados: number
   status_resgate: string
@@ -66,11 +67,12 @@ export default function ResgatesPage() {
           rawResgates.map((r: any) => ({
             id: r.id,
             ixc_cliente_id: r.ixc_cliente_id,
+            tipo_destinatario: r.tipo_destinatario,
             brinde_nome: r.brinde_nome,
             pontos_utilizados: r.pontos_utilizados,
             status_resgate: r.status_resgate,
             created_at: r.created_at,
-            cliente_nome: r.cliente_nome || `Cliente #${r.ixc_cliente_id}`,
+            cliente_nome: r.cliente_nome || r.destinatario_nome || (r.ixc_cliente_id ? `Cliente #${r.ixc_cliente_id}` : 'Contato'),
           }))
         )
       } catch {
@@ -84,6 +86,10 @@ export default function ResgatesPage() {
   }, [reloadKey])
 
   const filtered = tab === 'all' ? rows : rows.filter((r) => r.status_resgate === tab)
+  const openRedemption = (row: RedemptionRow) => {
+    if (!row.ixc_cliente_id) return
+    navigate(`/cliente-em-dia/${row.ixc_cliente_id}`, { state: { from: '/resgates' } })
+  }
 
   return (
     <ProtectedRoute>
@@ -158,8 +164,11 @@ export default function ResgatesPage() {
                 {filtered.map((row) => (
                   <div
                     key={row.id}
-                    className="px-4 py-3 cursor-pointer transition-colors hover:bg-muted active:bg-muted/70"
-                    onClick={() => navigate(`/cliente-em-dia/${row.ixc_cliente_id}`, { state: { from: '/resgates' } })}
+                    className={cn(
+                      'px-4 py-3 transition-colors',
+                      row.ixc_cliente_id ? 'cursor-pointer hover:bg-muted active:bg-muted/70' : '',
+                    )}
+                    onClick={() => openRedemption(row)}
                   >
                     <div className="flex items-start justify-between">
                       <div className="min-w-0 flex-1">
@@ -200,8 +209,8 @@ export default function ResgatesPage() {
                     {filtered.map((row) => (
                       <tr
                         key={row.id}
-                        className="transition-colors hover:bg-muted cursor-pointer"
-                        onClick={() => navigate(`/cliente-em-dia/${row.ixc_cliente_id}`, { state: { from: '/resgates' } })}
+                        className={cn('transition-colors', row.ixc_cliente_id ? 'cursor-pointer hover:bg-muted' : '')}
+                        onClick={() => openRedemption(row)}
                       >
                         <td className="px-5 py-3 font-medium text-foreground">{row.cliente_nome}</td>
                         <td className="px-3 py-3 text-foreground">{row.brinde_nome}</td>

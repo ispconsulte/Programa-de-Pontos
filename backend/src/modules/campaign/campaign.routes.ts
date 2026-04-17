@@ -23,6 +23,16 @@ import { authenticate, loadTenantCredentialsForRequest, requireAdmin } from '../
 import { resolveRequestedIxcConnectionId } from '../../middleware/auth.js'
 
 type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue }
+interface LegacyRedemptionRpcRow {
+  redemption: {
+    id: string
+    brinde_nome: string
+    pontos_utilizados: number
+    status_resgate: string
+  }
+  remaining_points: number | null
+  remaining_stock: number | null
+}
 
 const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
   z.union([
@@ -119,16 +129,62 @@ const manualPointsSchema = z.object({
 })
 
 const legacyRedemptionSchema = z.object({
-  clientId: z.string().uuid(),
+  isActiveCustomer: z.boolean().optional().default(true),
+  clientId: z.string().uuid().optional(),
+  leadName: z.string().trim().min(1).max(160).optional(),
+  leadPhone: z.string().trim().min(8).max(40).optional(),
   rewardId: z.string().uuid(),
   responsible: z.string().trim().min(1).max(120),
   notes: z.string().trim().max(400).optional().nullable(),
+}).superRefine((value, ctx) => {
+  if (value.isActiveCustomer) {
+    if (!value.clientId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['clientId'],
+        message: 'Cliente é obrigatório',
+      })
+    }
+    return
+  }
+
+  if (!value.leadName?.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['leadName'],
+      message: 'Nome é obrigatório para não cliente',
+    })
+  }
+  if (!value.leadPhone?.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['leadPhone'],
+      message: 'Telefone é obrigatório para não cliente',
+    })
+  }
 })
 
 const legacyRedemptionsQuerySchema = z.object({
   customerId: z.string().optional(),
   limit: z.coerce.number().int().positive().max(200).default(100),
 })
+
+function getLegacyRedemptionErrorStatus(message: string): number {
+  if (message === 'Cliente não encontrado' || message === 'Brinde não encontrado') {
+    return 404
+  }
+
+  if (
+    message === 'O cliente está inativo para resgates'
+    || message === 'O cliente não possui pontos suficientes'
+    || message === 'O brinde está inativo'
+    || message === 'O brinde está sem estoque'
+  ) {
+    return 409
+  }
+
+  return 500
+}
 
 export async function campaignRoutes(app: FastifyInstance) {
   app.addHook('onRequest', authenticate)
@@ -485,13 +541,7 @@ export async function campaignRoutes(app: FastifyInstance) {
     return reply.send(listResult.data ?? [])
   })
 
-  app.patch('/catalog/:id', {
-    schema: {
-      tags: ['Campaign'],
-      summary: 'Atualizar item no catálogo legado de brindes',
-      security: [{ bearerAuth: [] }],
-    },
-  }, async (request, reply) => {
+  const updateCatalogHandler = async (request: any, reply: any) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params)
     const body = catalogRewardSchema.parse(request.body)
 
@@ -514,7 +564,23 @@ export async function campaignRoutes(app: FastifyInstance) {
     }
 
     return reply.send(updateResult.data)
-  })
+  }
+
+  app.patch('/catalog/:id', {
+    schema: {
+      tags: ['Campaign'],
+      summary: 'Atualizar item no catálogo legado de brindes',
+      security: [{ bearerAuth: [] }],
+    },
+  }, updateCatalogHandler)
+
+  app.put('/catalog/:id', {
+    schema: {
+      tags: ['Campaign'],
+      summary: 'Substituir/atualizar item no catálogo legado de brindes',
+      security: [{ bearerAuth: [] }],
+    },
+  }, updateCatalogHandler)
 
   app.delete('/catalog/:id', {
     schema: {
@@ -603,107 +669,30 @@ export async function campaignRoutes(app: FastifyInstance) {
     },
   }, async (request, reply) => {
     const body = legacyRedemptionSchema.parse(request.body)
-
-    const [clientResult, rewardResult] = await Promise.all([
-      supabaseAdmin
-        .from('pontuacao_campanha_clientes')
-        .select('id, tenant_id, ixc_cliente_id, nome_cliente, pontos_acumulados, pontos_disponiveis, pontos_resgatados')
-        .eq('tenant_id', request.tenantId)
-        .eq('id', body.clientId)
-        .single(),
-      supabaseAdmin
-        .from('pontuacao_catalogo_brindes')
-        .select('id, nome, pontos_necessarios, estoque, ativo')
-        .eq('id', body.rewardId)
-        .single(),
-    ])
-
-    if (clientResult.error || !clientResult.data) {
-      throw new AppError(404, clientResult.error?.message ?? 'Cliente não encontrado')
-    }
-    if (rewardResult.error || !rewardResult.data) {
-      throw new AppError(404, rewardResult.error?.message ?? 'Brinde não encontrado')
-    }
-
-    const reward = rewardResult.data
-    const client = clientResult.data
-    const availablePoints = Number(client.pontos_disponiveis ?? 0)
-    const spentPoints = Number(reward.pontos_necessarios ?? 0)
-    const currentStock = reward.estoque == null ? null : Number(reward.estoque)
-
-    if (!reward.ativo) {
-      throw new AppError(409, 'O brinde está inativo')
-    }
-    if (availablePoints < spentPoints) {
-      throw new AppError(409, 'O cliente não possui pontos suficientes')
-    }
-    if (currentStock != null && currentStock <= 0) {
-      throw new AppError(409, 'O brinde está sem estoque')
-    }
-
-    const deliveredAt = new Date().toISOString()
-    const redemptionInsert = await supabaseAdmin
-      .from('pontuacao_resgates')
-      .insert({
-        ixc_cliente_id: client.ixc_cliente_id,
-        tenant_id: request.tenantId,
-        brinde_id: reward.id,
-        brinde_nome: reward.nome,
-        pontos_utilizados: spentPoints,
-        status_resgate: 'entregue',
-        data_entrega: deliveredAt,
-        responsavel_entrega: body.responsible,
-        observacoes: body.notes?.trim() || null,
-        confirmacao_cliente: true,
+    const rpcResult = await supabaseAdmin
+      .rpc('register_legacy_redemption', {
+        p_tenant_id: request.tenantId,
+        p_client_id: body.isActiveCustomer ? body.clientId ?? null : null,
+        p_reward_id: body.rewardId,
+        p_responsible: body.responsible.trim(),
+        p_notes: body.notes?.trim() || null,
+        p_is_active_customer: body.isActiveCustomer ?? true,
+        p_lead_name: body.isActiveCustomer ? null : body.leadName?.trim() || null,
+        p_lead_phone: body.isActiveCustomer ? null : body.leadPhone?.trim() || null,
       })
-      .select('*')
       .single()
 
-    if (redemptionInsert.error || !redemptionInsert.data) {
-      throw new AppError(500, redemptionInsert.error?.message ?? 'Não foi possível registrar o resgate')
+    if (rpcResult.error || !rpcResult.data) {
+      const message = rpcResult.error?.message ?? 'Não foi possível registrar o resgate'
+      throw new AppError(getLegacyRedemptionErrorStatus(message), message)
     }
 
-    const clientUpdate = await supabaseAdmin
-      .from('pontuacao_campanha_clientes')
-      .update({
-        pontos_resgatados: Number(client.pontos_resgatados ?? 0) + spentPoints,
-        ultimo_resgate: deliveredAt,
-        ultima_sincronizacao_em: deliveredAt,
-      })
-      .eq('tenant_id', request.tenantId)
-      .eq('id', body.clientId)
-
-    if (clientUpdate.error) {
-      throw new AppError(500, clientUpdate.error.message)
-    }
-
-    if (currentStock != null) {
-      const rewardUpdate = await supabaseAdmin
-        .from('pontuacao_catalogo_brindes')
-        .update({
-          estoque: Math.max(0, currentStock - 1),
-        })
-        .eq('id', reward.id)
-
-      if (rewardUpdate.error) {
-        throw new AppError(500, rewardUpdate.error.message)
-      }
-    }
-
-    await supabaseAdmin
-      .from('pontuacao_historico')
-      .insert({
-        ixc_cliente_id: client.ixc_cliente_id,
-        tipo_evento: 'resgate',
-        pontos: -spentPoints,
-        descricao: `Resgate do brinde ${reward.nome}`,
-        criado_por: body.responsible,
-      })
+    const redemptionResult = rpcResult.data as LegacyRedemptionRpcRow
 
     return reply.status(201).send({
-      redemption: redemptionInsert.data,
-      remainingPoints: Math.max(0, Number(client.pontos_acumulados ?? 0) - (Number(client.pontos_resgatados ?? 0) + spentPoints)),
-      remainingStock: currentStock == null ? null : Math.max(0, currentStock - 1),
+      redemption: redemptionResult.redemption,
+      remainingPoints: redemptionResult.remaining_points == null ? null : Number(redemptionResult.remaining_points),
+      remainingStock: redemptionResult.remaining_stock == null ? null : Number(redemptionResult.remaining_stock),
     })
   })
 
@@ -764,7 +753,10 @@ export async function campaignRoutes(app: FastifyInstance) {
     return reply.send({
       data: rows.map((row) => ({
         ...row,
-        cliente_nome: customerNameMap.get(String(row.ixc_cliente_id)) || null,
+        cliente_nome:
+          String((row as Record<string, unknown>).destinatario_nome ?? '').trim()
+          || customerNameMap.get(String(row.ixc_cliente_id))
+          || null,
       })),
     })
   })
