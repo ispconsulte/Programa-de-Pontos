@@ -29,6 +29,8 @@ keys/
 supabase/.temp/
 cleanup-backups/
 AGENTS.md
+.lovable/
+FINAL_REPORT.md
 
 # Editor directories and files
 .vscode/*

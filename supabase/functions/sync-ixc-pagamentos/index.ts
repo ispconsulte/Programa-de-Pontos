@@ -437,7 +437,7 @@ async function fetchIxcList<T>(
 
   if (!response.ok) {
     const body = await response.text().catch(() => '')
-    throw new Error(`IXC list failed for ${endpoint}: ${response.status} | user=${connection.ixc_user} | token_preview=${token.substring(0,6)}...${token.substring(token.length-4)} | token_len=${token.length} | url=${url} | response=${body.substring(0,200)}`)
+    throw new Error(`IXC list failed for ${endpoint}: ${response.status} | user=${connection.ixc_user} | url=${url} | response=${body.substring(0,200)}`)
   }
 
   const json = await response.json()
@@ -840,8 +840,7 @@ Deno.serve(async (request) => {
     const connection = await loadIxcConnection(supabase, user.tenant_id, body.ixcConnectionId)
     const ixcToken = await decryptIxcToken(connection.ixc_token_enc, connection.ixc_token_iv)
     const scoringRules = await loadCampaignScoringRules(supabase, user.tenant_id)
-    console.log(`[DEBUG] IXC user: ${connection.ixc_user}, token preview: ${ixcToken.substring(0, 8)}...${ixcToken.substring(ixcToken.length - 4)}, token length: ${ixcToken.length}, base_url: ${connection.ixc_base_url}`)
-    console.log(`[DEBUG] Auth header: Basic ${btoa(`${connection.ixc_user}:${ixcToken}`).substring(0, 20)}...`)
+    console.log(`[DEBUG] IXC connection loaded for user ${connection.ixc_user} at ${connection.ixc_base_url}`)
 
     const { data: syncLog, error: syncLogError } = await supabase
       .from('pontuacao_sync_log')
