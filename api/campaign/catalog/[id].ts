@@ -12,13 +12,13 @@ const catalogRewardSchema = z.object({
   imageUrl: z.string().trim().optional().nullable(),
   active: z.boolean().optional(),
   reason: z.string().trim().max(240).optional().nullable(),
-  expectedUpdatedAt: z.string().datetime().optional().nullable(),
+  expectedUpdatedAt: z.string().datetime({ offset: true }).optional().nullable(),
   idempotencyKey: z.string().trim().min(1).max(128).optional(),
 })
 
 const deleteSchema = z.object({
   reason: z.string().trim().max(240).optional().nullable(),
-  expectedUpdatedAt: z.string().datetime().optional().nullable(),
+  expectedUpdatedAt: z.string().datetime({ offset: true }).optional().nullable(),
   idempotencyKey: z.string().trim().min(1).max(128).optional(),
 })
 

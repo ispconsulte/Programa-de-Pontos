@@ -13,13 +13,13 @@ const updateSchema = z.object({
   responsible: z.string().trim().min(1).max(120).optional(),
   notes: z.string().trim().max(400).nullable().optional(),
   reason: z.string().trim().max(240).optional().nullable(),
-  expectedUpdatedAt: z.string().datetime().optional().nullable(),
+  expectedUpdatedAt: z.string().datetime({ offset: true }).optional().nullable(),
   idempotencyKey: z.string().trim().min(1).max(128).optional(),
 })
 
 const deleteSchema = z.object({
   reason: z.string().trim().max(240).optional().nullable(),
-  expectedUpdatedAt: z.string().datetime().optional().nullable(),
+  expectedUpdatedAt: z.string().datetime({ offset: true }).optional().nullable(),
   idempotencyKey: z.string().trim().min(1).max(128).optional(),
 })
 
@@ -143,10 +143,13 @@ export default async function handler(request: any, response: any) {
 
     if (request.method === 'PATCH' || request.method === 'PUT') {
       const body = updateSchema.parse(getBody(request))
-      const current = await loadRedemption(auth.tenantId, id)
+      let current = await loadRedemption(auth.tenantId, id)
+      if (current.error && isLegacyMutationCompatibilityError(current.error.message)) {
+        current = await loadCompatibilityRedemption(auth.tenantId, id)
+      }
 
       if (current.error || !current.data) {
-        return sendJson(response, 404, { error: current.error?.message ?? 'Resgate não encontrado' })
+        return sendJson(response, 404, { error: 'Resgate não encontrado' })
       }
 
       const currentRow = current.data
