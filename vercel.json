@@ -50,6 +50,10 @@
       "destination": "/api/campaign/legacy-redemptions"
     },
     {
+      "source": "/campaign/legacy-redemptions/(.*)",
+      "destination": "/api/campaign/legacy-redemptions/[id]?id=$1"
+    },
+    {
       "source": "/campaign/manual-points",
       "destination": "/api/campaign/manual-points"
     },
@@ -59,7 +63,7 @@
     },
     {
       "source": "/campaign/catalog/(.*)",
-      "destination": "/api/campaign/catalog/$1"
+      "destination": "/api/campaign/catalog/[id]?id=$1"
     },
     {
       "source": "/(.*)",
