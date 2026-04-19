@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto'
 import { z } from 'zod'
 import { authenticateRequest, assertAdmin } from '../../_lib/auth'
-import { methodNotAllowed, sendException, sendJson, sendInternalError } from '../../_lib/http'
+import { methodNotAllowed, sendException, sendJson, sendInternalError, sendNoContent } from '../../_lib/http'
 import { supabaseAdmin } from '../../_lib/supabase'
 
 const paramsSchema = z.object({
@@ -40,6 +40,15 @@ async function loadRedemption(tenantId: string, id: string) {
     .maybeSingle()
 }
 
+async function loadCompatibilityRedemption(tenantId: string, id: string) {
+  return supabaseAdmin
+    .from('pontuacao_resgates')
+    .select('id, tenant_id, ixc_cliente_id, brinde_id, brinde_nome, pontos_utilizados, status_resgate, data_entrega, responsavel_entrega, observacoes, confirmacao_cliente, created_at, updated_at')
+    .eq('tenant_id', tenantId)
+    .eq('id', id)
+    .maybeSingle()
+}
+
 function resolveIdempotencyKey(value: string | undefined, scope: string): string {
   const trimmed = value?.trim()
   if (trimmed) {
@@ -51,6 +60,54 @@ function resolveIdempotencyKey(value: string | undefined, scope: string): string
   }
 
   return `${scope}:${randomBytes(16).toString('hex')}`
+}
+
+function isLegacyMutationCompatibilityError(message: string | undefined): boolean {
+  const normalized = String(message ?? '').toLowerCase()
+  return normalized.includes('contato_id')
+    || normalized.includes('quantity')
+    || normalized.includes('deleted_at')
+    || normalized.includes('mutate_legacy_redemption')
+}
+
+async function revertCompatibilityDeliveredEffects(tenantId: string, redemption: any) {
+  if (String(redemption.ixc_cliente_id ?? '').startsWith('lead:')) {
+    return
+  }
+
+  if (redemption.ixc_cliente_id) {
+    const clientResult = await supabaseAdmin
+      .from('pontuacao_campanha_clientes')
+      .select('id, pontos_resgatados')
+      .eq('tenant_id', tenantId)
+      .eq('ixc_cliente_id', redemption.ixc_cliente_id)
+      .maybeSingle()
+
+    if (clientResult.data) {
+      await supabaseAdmin
+        .from('pontuacao_campanha_clientes')
+        .update({
+          pontos_resgatados: Math.max(0, Number(clientResult.data.pontos_resgatados ?? 0) - Number(redemption.pontos_utilizados ?? 0)),
+          ultima_sincronizacao_em: new Date().toISOString(),
+        })
+        .eq('id', clientResult.data.id)
+    }
+  }
+
+  if (redemption.brinde_id) {
+    const rewardResult = await supabaseAdmin
+      .from('pontuacao_catalogo_brindes')
+      .select('id, estoque')
+      .eq('id', redemption.brinde_id)
+      .maybeSingle()
+
+    if (rewardResult.data && rewardResult.data.estoque != null) {
+      await supabaseAdmin
+        .from('pontuacao_catalogo_brindes')
+        .update({ estoque: Number(rewardResult.data.estoque) + 1 })
+        .eq('id', rewardResult.data.id)
+    }
+  }
 }
 
 function mapMutationErrorStatus(message: string): number {
@@ -116,8 +173,50 @@ export default async function handler(request: any, response: any) {
 
       if (updateResult.error || !updateResult.data) {
         const message = updateResult.error?.message ?? 'Não foi possível atualizar o resgate'
-        const status = mapMutationErrorStatus(message)
-        return status === 500 ? sendInternalError(response) : sendJson(response, status, { error: message })
+        if (!isLegacyMutationCompatibilityError(message)) {
+          const status = mapMutationErrorStatus(message)
+          return status === 500 ? sendInternalError(response) : sendJson(response, status, { error: message })
+        }
+
+        if (action === 'cancel' && currentRow.status_resgate === 'entregue') {
+          await revertCompatibilityDeliveredEffects(auth.tenantId, currentRow)
+        }
+
+        const compatibilityPayload: Record<string, unknown> = {
+          responsavel_entrega: body.responsible?.trim() ?? currentRow.responsavel_entrega ?? null,
+          observacoes: body.notes === undefined ? currentRow.observacoes ?? null : body.notes?.trim() || null,
+        }
+
+        if (action === 'cancel') {
+          compatibilityPayload.status_resgate = 'cancelado'
+          compatibilityPayload.data_entrega = null
+        } else if (action === 'confirm') {
+          compatibilityPayload.status_resgate = 'entregue'
+          compatibilityPayload.data_entrega = new Date().toISOString().slice(0, 10)
+          compatibilityPayload.confirmacao_cliente = true
+        } else if (body.status) {
+          compatibilityPayload.status_resgate = body.status
+        }
+
+        const compatibilityUpdate = await supabaseAdmin
+          .from('pontuacao_resgates')
+          .update(compatibilityPayload)
+          .eq('tenant_id', auth.tenantId)
+          .eq('id', id)
+          .select('id, tenant_id, ixc_cliente_id, brinde_id, brinde_nome, pontos_utilizados, status_resgate, data_entrega, responsavel_entrega, observacoes, confirmacao_cliente, created_at, updated_at')
+          .maybeSingle()
+
+        if (compatibilityUpdate.error || !compatibilityUpdate.data) {
+          return sendInternalError(response)
+        }
+
+        return sendJson(response, 200, {
+          ...compatibilityUpdate.data,
+          quantity: 1,
+          tipo_destinatario: String(compatibilityUpdate.data.ixc_cliente_id ?? '').startsWith('lead:') ? 'contato' : 'cliente',
+          destinatario_nome: null,
+          destinatario_telefone: null,
+        })
       }
 
       return sendJson(response, 200, updateResult.data)
@@ -140,11 +239,36 @@ export default async function handler(request: any, response: any) {
         .single()
 
       if (deleteResult.error) {
-        const status = mapMutationErrorStatus(deleteResult.error.message)
-        return status === 500 ? sendInternalError(response) : sendJson(response, status, { error: deleteResult.error.message })
+        if (!isLegacyMutationCompatibilityError(deleteResult.error.message)) {
+          const status = mapMutationErrorStatus(deleteResult.error.message)
+          return status === 500 ? sendInternalError(response) : sendJson(response, status, { error: deleteResult.error.message })
+        }
+
+        const current = await loadCompatibilityRedemption(auth.tenantId, id)
+        if (current.error || !current.data) {
+          return sendJson(response, 404, { error: current.error?.message ?? 'Resgate não encontrado' })
+        }
+
+        if (String(current.data.status_resgate) === 'entregue') {
+          await revertCompatibilityDeliveredEffects(auth.tenantId, current.data)
+        }
+
+        const compatibilityDelete = await supabaseAdmin
+          .from('pontuacao_resgates')
+          .delete()
+          .eq('tenant_id', auth.tenantId)
+          .eq('id', id)
+          .select('id')
+          .maybeSingle()
+
+        if (compatibilityDelete.error || !compatibilityDelete.data) {
+          return sendInternalError(response)
+        }
+
+        return sendNoContent(response)
       }
 
-      return sendJson(response, 204, undefined)
+      return sendNoContent(response)
     }
 
     return methodNotAllowed(response)

@@ -36,6 +36,13 @@ function resolveIdempotencyKey(value: string | undefined, scope: string): string
   return `${scope}:${randomBytes(16).toString('hex')}`
 }
 
+function isCatalogCompatibilityError(message: string | undefined): boolean {
+  const normalized = String(message ?? '').toLowerCase()
+  return normalized.includes('tenant_id')
+    || normalized.includes('deleted_at')
+    || normalized.includes('catalog_item_secure_upsert')
+}
+
 export default async function handler(request: any, response: any) {
   try {
     const auth = await authenticateRequest(request)
@@ -55,7 +62,26 @@ export default async function handler(request: any, response: any) {
         : query.eq('ativo', true))
 
       if (listResult.error) {
-        return sendInternalError(response)
+        if (!isCatalogCompatibilityError(listResult.error.message)) {
+          return sendInternalError(response)
+        }
+
+        const compatibilityQuery = supabaseAdmin
+          .from('pontuacao_catalogo_brindes')
+          .select('id, nome, descricao, pontos_necessarios, estoque, imagem_url, ativo, created_at, updated_at')
+          .order('ativo', { ascending: false })
+          .order('pontos_necessarios', { ascending: true })
+          .order('nome', { ascending: true })
+
+        const compatibilityResult = await (auth.userRole && ['admin', 'owner', 'manager'].includes(auth.userRole.toLowerCase())
+          ? compatibilityQuery
+          : compatibilityQuery.eq('ativo', true))
+
+        if (compatibilityResult.error) {
+          return sendInternalError(response)
+        }
+
+        return sendJson(response, 200, compatibilityResult.data ?? [])
       }
 
       return sendJson(response, 200, listResult.data ?? [])
@@ -87,8 +113,29 @@ export default async function handler(request: any, response: any) {
 
     if (rpcResult.error || !rpcResult.data) {
       const message = rpcResult.error?.message ?? 'Não foi possível criar o brinde'
-      const status = message === 'Forbidden' ? 403 : message === 'Idempotency key é obrigatória' ? 400 : 500
-      return status === 500 ? sendInternalError(response) : sendJson(response, status, { error: message })
+      if (!isCatalogCompatibilityError(message)) {
+        const status = message === 'Forbidden' ? 403 : message === 'Idempotency key é obrigatória' ? 400 : 500
+        return status === 500 ? sendInternalError(response) : sendJson(response, status, { error: message })
+      }
+
+      const compatibilityResult = await supabaseAdmin
+        .from('pontuacao_catalogo_brindes')
+        .insert({
+          nome: body.name.trim(),
+          descricao: body.description?.trim() || null,
+          pontos_necessarios: body.requiredPoints,
+          estoque: body.stock ?? null,
+          imagem_url: body.imageUrl?.trim() || null,
+          ativo: body.active ?? true,
+        })
+        .select('id, nome, descricao, pontos_necessarios, estoque, imagem_url, ativo, created_at, updated_at')
+        .single()
+
+      if (compatibilityResult.error || !compatibilityResult.data) {
+        return sendInternalError(response)
+      }
+
+      return sendJson(response, 201, compatibilityResult.data)
     }
 
     return sendJson(response, 201, rpcResult.data)

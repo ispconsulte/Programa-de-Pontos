@@ -32,6 +32,12 @@ function resolveIdempotencyKey(value: string | undefined, scope: string): string
   return `${scope}:${randomBytes(16).toString('hex')}`
 }
 
+function isManualPointsCompatibilityError(message: string | undefined): boolean {
+  const normalized = String(message ?? '').toLowerCase()
+  return normalized.includes('apply_manual_points_adjustment')
+    || normalized.includes('pontuacao_ajustes_manuais')
+}
+
 export default async function handler(request: any, response: any) {
   try {
     if (request.method !== 'POST') {
@@ -88,8 +94,47 @@ export default async function handler(request: any, response: any) {
 
     if (rpcResult.error || !rpcResult.data) {
       const message = rpcResult.error?.message ?? 'Não foi possível registrar o ajuste manual'
-      const status = message === 'Cliente não encontrado' ? 404 : message === 'Forbidden' ? 403 : message.includes('excede o saldo') ? 409 : 500
-      return status === 500 ? sendInternalError(response) : sendJson(response, status, { error: message })
+      if (!isManualPointsCompatibilityError(message)) {
+        const status = message === 'Cliente não encontrado' ? 404 : message === 'Forbidden' ? 403 : message.includes('excede o saldo') ? 409 : 500
+        return status === 500 ? sendInternalError(response) : sendJson(response, status, { error: message })
+      }
+
+      const updateResult = await supabaseAdmin
+        .from('pontuacao_campanha_clientes')
+        .update({
+          pontos_acumulados: nextAccumulated,
+          ultima_sincronizacao_em: new Date().toISOString(),
+        })
+        .eq('tenant_id', auth.tenantId)
+        .eq('id', body.clientId)
+        .select('id')
+        .maybeSingle()
+
+      if (updateResult.error || !updateResult.data) {
+        return sendInternalError(response)
+      }
+
+      const actorName = String(actorResult.data.email ?? 'usuario')
+      const historyInsert = await supabaseAdmin
+        .from('pontuacao_historico')
+        .insert({
+          tenant_id: auth.tenantId,
+          ixc_cliente_id: clientResult.data.ixc_cliente_id,
+          tipo_evento: 'ajuste_manual',
+          pontos: delta,
+          descricao: body.reason,
+          criado_por: actorName,
+        })
+
+      if (historyInsert.error) {
+        return sendInternalError(response)
+      }
+
+      return sendJson(response, 201, {
+        clientId: body.clientId,
+        availablePoints: Math.max(0, nextAccumulated - nextRedeemed),
+        accumulatedPoints: nextAccumulated,
+      })
     }
 
     return sendJson(response, 201, {

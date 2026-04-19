@@ -42,6 +42,14 @@ function resolveIdempotencyKey(value: string | undefined, scope: string): string
   return `${scope}:${randomBytes(16).toString('hex')}`
 }
 
+function isCatalogCompatibilityError(message: string | undefined): boolean {
+  const normalized = String(message ?? '').toLowerCase()
+  return normalized.includes('deleted_at')
+    || normalized.includes('catalog_item_secure_upsert')
+    || normalized.includes('catalog_item_secure_soft_delete')
+    || normalized.includes('tenant_id')
+}
+
 export default async function handler(request: any, response: any) {
   try {
     const auth = await authenticateRequest(request)
@@ -74,8 +82,30 @@ export default async function handler(request: any, response: any) {
 
       if (updateResult.error || !updateResult.data) {
         const message = updateResult.error?.message ?? 'Não foi possível atualizar o brinde'
-        const status = message === 'Brinde não encontrado' ? 404 : message === 'Forbidden' ? 403 : message.includes('desatualizado') ? 409 : 500
-        return status === 500 ? sendInternalError(response) : sendJson(response, status, { error: message })
+        if (!isCatalogCompatibilityError(message)) {
+          const status = message === 'Brinde não encontrado' ? 404 : message === 'Forbidden' ? 403 : message.includes('desatualizado') ? 409 : 500
+          return status === 500 ? sendInternalError(response) : sendJson(response, status, { error: message })
+        }
+
+        const compatibilityResult = await supabaseAdmin
+          .from('pontuacao_catalogo_brindes')
+          .update({
+            nome: body.name.trim(),
+            descricao: body.description?.trim() || null,
+            pontos_necessarios: body.requiredPoints,
+            estoque: body.stock ?? null,
+            imagem_url: body.imageUrl?.trim() || null,
+            ativo: body.active ?? true,
+          })
+          .eq('id', id)
+          .select('id, nome, descricao, pontos_necessarios, estoque, imagem_url, ativo, created_at, updated_at')
+          .maybeSingle()
+
+        if (compatibilityResult.error || !compatibilityResult.data) {
+          return sendJson(response, 404, { error: 'Brinde não encontrado' })
+        }
+
+        return sendJson(response, 200, compatibilityResult.data)
       }
 
       return sendJson(response, 200, updateResult.data)
@@ -96,8 +126,23 @@ export default async function handler(request: any, response: any) {
 
       if (deleteResult.error) {
         const message = deleteResult.error.message
-        const status = message === 'Brinde não encontrado' ? 404 : message === 'Forbidden' ? 403 : message.includes('desatualizado') ? 409 : 500
-        return status === 500 ? sendInternalError(response) : sendJson(response, status, { error: message })
+        if (!isCatalogCompatibilityError(message)) {
+          const status = message === 'Brinde não encontrado' ? 404 : message === 'Forbidden' ? 403 : message.includes('desatualizado') ? 409 : 500
+          return status === 500 ? sendInternalError(response) : sendJson(response, status, { error: message })
+        }
+
+        const compatibilityDelete = await supabaseAdmin
+          .from('pontuacao_catalogo_brindes')
+          .delete()
+          .eq('id', id)
+          .select('id')
+          .maybeSingle()
+
+        if (compatibilityDelete.error || !compatibilityDelete.data) {
+          return sendJson(response, 404, { error: 'Brinde não encontrado' })
+        }
+
+        return sendNoContent(response)
       }
 
       return sendNoContent(response)

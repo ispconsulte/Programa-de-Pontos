@@ -394,10 +394,9 @@ export async function fetchLegacyRedemptions(options?: {
 
     let redemptionsQuery = supabase
       .from('pontuacao_resgates' as any)
-      .select('id, ixc_cliente_id, contato_id, brinde_id, brinde_nome, pontos_utilizados, quantity, status_resgate, data_entrega, responsavel_entrega, observacoes, tipo_destinatario, destinatario_nome, destinatario_telefone, created_at, updated_at')
+      .select('id, ixc_cliente_id, brinde_id, brinde_nome, pontos_utilizados, status_resgate, data_entrega, responsavel_entrega, observacoes, created_at, updated_at')
       .order('created_at', { ascending: false })
       .eq('tenant_id', tenantId)
-      .is('deleted_at', null)
       .limit(options?.limit ?? 100)
 
     if (options?.customerId) {
@@ -424,6 +423,10 @@ export async function fetchLegacyRedemptions(options?: {
 
     return (resgates ?? []).map((r: any) => ({
       ...r,
+      quantity: 1,
+      tipo_destinatario: String(r.ixc_cliente_id ?? '').startsWith('lead:') ? 'contato' : 'cliente',
+      destinatario_nome: r.destinatario_nome || null,
+      destinatario_telefone: r.destinatario_telefone || null,
       cliente_nome: r.destinatario_nome || nameMap.get(String(r.ixc_cliente_id)) || null,
     })) as RedemptionRow[]
   }
