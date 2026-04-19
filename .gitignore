@@ -27,6 +27,8 @@ tmp-*.err
 tmp-*.txt
 keys/
 supabase/.temp/
+cleanup-backups/
+AGENTS.md
 
 # Editor directories and files
 .vscode/*
