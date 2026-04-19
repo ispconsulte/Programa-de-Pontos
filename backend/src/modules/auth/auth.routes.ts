@@ -123,6 +123,12 @@ async function getSupabaseUserFromAuthorizationHeader(authorizationHeader?: stri
 
 export async function authRoutes(app: FastifyInstance) {
   app.post('/register', {
+    config: {
+      rateLimit: {
+        max: 5,
+        timeWindow: '1 minute',
+      },
+    },
     schema: {
       tags: ['Auth'],
       summary: 'Bootstrap do usuário Supabase no banco da aplicação',
@@ -158,6 +164,17 @@ export async function authRoutes(app: FastifyInstance) {
   })
 
   app.post('/login', {
+    config: {
+      rateLimit: {
+        max: 5,
+        timeWindow: '1 minute',
+        keyGenerator(request) {
+          const body = (request.body ?? {}) as { email?: string }
+          const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
+          return email ? `ratelimit:auth:login:${request.ip}:${email}` : `ratelimit:auth:login:${request.ip}`
+        },
+      },
+    },
     schema: {
       tags: ['Auth'],
       summary: 'Autenticar e obter tokens JWT',
@@ -193,6 +210,12 @@ export async function authRoutes(app: FastifyInstance) {
   })
 
   app.post('/refresh', {
+    config: {
+      rateLimit: {
+        max: 10,
+        timeWindow: '1 minute',
+      },
+    },
     schema: {
       tags: ['Auth'],
       summary: 'Rotacionar refresh token',

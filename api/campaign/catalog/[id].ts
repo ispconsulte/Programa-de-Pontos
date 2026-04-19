@@ -1,6 +1,7 @@
+import { randomBytes } from 'node:crypto'
 import { z } from 'zod'
 import { authenticateRequest, assertAdmin } from '../../_lib/auth'
-import { methodNotAllowed, sendJson, sendNoContent } from '../../_lib/http'
+import { methodNotAllowed, sendException, sendJson, sendNoContent, sendInternalError } from '../../_lib/http'
 import { supabaseAdmin } from '../../_lib/supabase'
 
 const catalogRewardSchema = z.object({
@@ -10,6 +11,15 @@ const catalogRewardSchema = z.object({
   stock: z.coerce.number().int().min(0).optional().nullable(),
   imageUrl: z.string().trim().optional().nullable(),
   active: z.boolean().optional(),
+  reason: z.string().trim().max(240).optional().nullable(),
+  expectedUpdatedAt: z.string().datetime().optional().nullable(),
+  idempotencyKey: z.string().trim().min(1).max(128).optional(),
+})
+
+const deleteSchema = z.object({
+  reason: z.string().trim().max(240).optional().nullable(),
+  expectedUpdatedAt: z.string().datetime().optional().nullable(),
+  idempotencyKey: z.string().trim().min(1).max(128).optional(),
 })
 
 function getBody(request: any): unknown {
@@ -17,6 +27,19 @@ function getBody(request: any): unknown {
     return JSON.parse(request.body)
   }
   return request.body ?? {}
+}
+
+function resolveIdempotencyKey(value: string | undefined, scope: string): string {
+  const trimmed = value?.trim()
+  if (trimmed) {
+    return trimmed
+  }
+
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return `${scope}:${crypto.randomUUID()}`
+  }
+
+  return `${scope}:${randomBytes(16).toString('hex')}`
 }
 
 export default async function handler(request: any, response: any) {
@@ -33,34 +56,48 @@ export default async function handler(request: any, response: any) {
       const body = catalogRewardSchema.parse(getBody(request))
 
       const updateResult = await supabaseAdmin
-        .from('pontuacao_catalogo_brindes')
-        .update({
-          nome: body.name,
-          descricao: body.description?.trim() || null,
-          pontos_necessarios: body.requiredPoints,
-          estoque: body.stock ?? null,
-          imagem_url: body.imageUrl?.trim() || null,
-          ativo: body.active ?? true,
+        .rpc('catalog_item_secure_upsert', {
+          p_tenant_id: auth.tenantId,
+          p_actor_user_id: auth.userId,
+          p_id: id,
+          p_name: body.name.trim(),
+          p_description: body.description?.trim() || null,
+          p_required_points: body.requiredPoints,
+          p_stock: body.stock ?? null,
+          p_image_url: body.imageUrl?.trim() || null,
+          p_active: body.active ?? true,
+          p_expected_updated_at: body.expectedUpdatedAt ?? null,
+          p_reason: body.reason?.trim() || 'Atualização do catálogo administrativo',
+          p_idempotency_key: resolveIdempotencyKey(body.idempotencyKey, `catalog-update:${id}`),
         })
-        .eq('id', id)
-        .select('*')
         .single()
 
       if (updateResult.error || !updateResult.data) {
-        return sendJson(response, 500, { error: updateResult.error?.message ?? 'Não foi possível atualizar o brinde' })
+        const message = updateResult.error?.message ?? 'Não foi possível atualizar o brinde'
+        const status = message === 'Brinde não encontrado' ? 404 : message === 'Forbidden' ? 403 : message.includes('desatualizado') ? 409 : 500
+        return status === 500 ? sendInternalError(response) : sendJson(response, status, { error: message })
       }
 
       return sendJson(response, 200, updateResult.data)
     }
 
     if (request.method === 'DELETE') {
+      const body = deleteSchema.parse(getBody(request))
       const deleteResult = await supabaseAdmin
-        .from('pontuacao_catalogo_brindes')
-        .delete()
-        .eq('id', id)
+        .rpc('catalog_item_secure_soft_delete', {
+          p_tenant_id: auth.tenantId,
+          p_actor_user_id: auth.userId,
+          p_id: id,
+          p_expected_updated_at: body.expectedUpdatedAt ?? null,
+          p_reason: body.reason?.trim() || 'Exclusão solicitada pela interface administrativa',
+          p_idempotency_key: resolveIdempotencyKey(body.idempotencyKey, `catalog-delete:${id}`),
+        })
+        .single()
 
       if (deleteResult.error) {
-        return sendJson(response, 500, { error: deleteResult.error.message })
+        const message = deleteResult.error.message
+        const status = message === 'Brinde não encontrado' ? 404 : message === 'Forbidden' ? 403 : message.includes('desatualizado') ? 409 : 500
+        return status === 500 ? sendInternalError(response) : sendJson(response, status, { error: message })
       }
 
       return sendNoContent(response)
@@ -72,8 +109,6 @@ export default async function handler(request: any, response: any) {
       return sendJson(response, 400, { error: 'Validation error' })
     }
 
-    const message = error instanceof Error ? error.message : 'Internal Server Error'
-    const status = message === 'Unauthorized' ? 401 : message === 'Forbidden' ? 403 : 500
-    return sendJson(response, status, { error: message })
+    return sendException(response, error)
   }
 }

@@ -24,7 +24,7 @@ export async function authenticateRequest(request: any): Promise<AuthContext> {
 
   const dbUser = await supabaseAdmin
     .from('users')
-    .select('id, tenant_id, role, is_active')
+    .select('id, tenant_id, role, is_active, session_revoked_at')
     .eq('id', authUser.data.user.id)
     .maybeSingle()
 
@@ -36,10 +36,32 @@ export async function authenticateRequest(request: any): Promise<AuthContext> {
     throw new Error('Forbidden')
   }
 
+  const tokenIssuedAt = decodeJwtIssuedAt(token)
+  if (dbUser.data.session_revoked_at && tokenIssuedAt) {
+    const revokedAtMs = Date.parse(dbUser.data.session_revoked_at)
+    if (!Number.isNaN(revokedAtMs) && revokedAtMs >= tokenIssuedAt * 1000) {
+      throw new Error('Unauthorized')
+    }
+  }
+
   return {
     userId: dbUser.data.id,
     tenantId: dbUser.data.tenant_id,
     userRole: dbUser.data.role,
+  }
+}
+
+function decodeJwtIssuedAt(token: string): number | null {
+  try {
+    const [, payload] = token.split('.')
+    if (!payload) return null
+
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/')
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=')
+    const parsed = JSON.parse(Buffer.from(padded, 'base64').toString('utf8')) as { iat?: number }
+    return typeof parsed.iat === 'number' ? parsed.iat : null
+  } catch {
+    return null
   }
 }
 

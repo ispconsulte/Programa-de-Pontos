@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const mockUpdateSingle = vi.fn()
-const mockDeleteEq = vi.fn()
+const mockRpcSingle = vi.fn()
 const mockResponse = () => {
   const response = {
     statusCode: 200,
@@ -35,17 +34,8 @@ vi.mock('../../api/_lib/auth', () => ({
 vi.mock('../../api/_lib/supabase', () => {
   return {
     supabaseAdmin: {
-      from: vi.fn(() => ({
-        update: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            select: vi.fn(() => ({
-              single: mockUpdateSingle,
-            })),
-          })),
-        })),
-        delete: vi.fn(() => ({
-          eq: mockDeleteEq,
-        })),
+      rpc: vi.fn(() => ({
+        single: mockRpcSingle,
       })),
     },
     isAdminRole: (role: string | null | undefined) => ['admin', 'owner', 'manager'].includes(String(role ?? '').toLowerCase()),
@@ -55,7 +45,7 @@ vi.mock('../../api/_lib/supabase', () => {
 describe('catalog item API handler', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockUpdateSingle.mockResolvedValue({
+    mockRpcSingle.mockResolvedValue({
       error: null,
       data: {
         id: 'gift-1',
@@ -63,7 +53,6 @@ describe('catalog item API handler', () => {
         imagem_url: 'data:image/png;base64,abc123',
       },
     })
-    mockDeleteEq.mockResolvedValue({ error: null })
   })
 
   it('accepts PUT updates and preserves image payloads', async () => {
@@ -113,7 +102,7 @@ describe('catalog item API handler', () => {
       },
     }
 
-    mockUpdateSingle.mockResolvedValueOnce({
+    mockRpcSingle.mockResolvedValueOnce({
       error: null,
       data: {
         id: 'gift-2',
@@ -130,6 +119,7 @@ describe('catalog item API handler', () => {
   it('deletes catalog items successfully', async () => {
     const { default: handler } = await import('../../api/campaign/catalog/[id].ts')
     const response = mockResponse()
+    mockRpcSingle.mockResolvedValueOnce({ error: null, data: null })
 
     const request = {
       method: 'DELETE',

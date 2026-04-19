@@ -1,3 +1,4 @@
+import type { PoolClient } from 'pg'
 import { pool } from '../db/pool.js'
 import { AppError } from './app-error.js'
 import type { ClienteContratoItem, ClienteItem, FnAreceberItem } from './ixc-proxy.js'
@@ -755,6 +756,63 @@ export async function recordRewardRedemption(input: RecordRewardRedemptionInput)
   return existing.rows[0]
 }
 
+async function getCampaignLedgerSummaryForClient(
+  client: PoolClient,
+  tenantId: string,
+  options: {
+    customerProfileId?: string
+    customerId?: string
+  }
+): Promise<CampaignLedgerSummary> {
+  const filterField = options.customerProfileId ? 'customer_profile_id' : 'customer_id'
+  const filterValue = options.customerProfileId ?? options.customerId ?? null
+
+  if (!filterValue) {
+    return {
+      earnedPoints: 0,
+      spentPoints: 0,
+      balance: 0,
+      eventsCount: 0,
+      redemptionsCount: 0,
+    }
+  }
+
+  const eventsResult = await client.query(
+    `
+      SELECT
+        COALESCE(SUM(points), 0)::int AS earned_points,
+        COUNT(*)::int AS events_count
+      FROM campaign_events
+      WHERE tenant_id = $1 AND ${filterField} = $2
+    `,
+    [tenantId, filterValue]
+  )
+
+  const redemptionsResult = await client.query(
+    `
+      SELECT
+        COALESCE(SUM(points_spent), 0)::int AS spent_points,
+        COUNT(*)::int AS redemptions_count
+      FROM reward_redemptions
+      WHERE tenant_id = $1 AND ${filterField} = $2
+    `,
+    [tenantId, filterValue]
+  )
+
+  const earnedPoints = eventsResult.rows[0]?.earned_points ?? 0
+  const spentPoints = redemptionsResult.rows[0]?.spent_points ?? 0
+  const eventsCount = eventsResult.rows[0]?.events_count ?? 0
+  const redemptionsCount = redemptionsResult.rows[0]?.redemptions_count ?? 0
+
+  return {
+    earnedPoints,
+    spentPoints,
+    balance: earnedPoints - spentPoints,
+    eventsCount,
+    redemptionsCount,
+  }
+}
+
 export async function getCampaignRewardByCode(tenantId: string, rewardCode: string): Promise<CampaignReward | null> {
   const { rows } = await pool.query(
     `
@@ -1160,30 +1218,110 @@ export async function redeemCampaignReward(
     referenceDate?: string | Date
   }
 ) {
-  const reward = await getCampaignRewardByCode(input.tenantId, input.rewardCode)
-  if (!reward) {
-    throw new AppError(404, 'Reward not found')
+  const client = await pool.connect()
+
+  let redemption: any
+  let reward: CampaignReward
+
+  try {
+    await client.query('BEGIN')
+
+    const ledgerLockTarget = input.customerProfileId ?? input.customerId
+    await client.query(
+      'SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))',
+      [input.tenantId, ledgerLockTarget]
+    )
+
+    const rewardResult = await client.query(
+      `
+        SELECT
+          id,
+          tenant_id,
+          reward_code,
+          name,
+          points_required,
+          active,
+          metadata
+        FROM campaign_rewards
+        WHERE tenant_id = $1 AND reward_code = $2 AND active = true
+        LIMIT 1
+      `,
+      [input.tenantId, input.rewardCode]
+    )
+
+    reward = rewardResult.rows[0] as CampaignReward
+    if (!reward) {
+      throw new AppError(404, 'Reward not found')
+    }
+
+    const ledgerBefore = await getCampaignLedgerSummaryForClient(client, input.tenantId, {
+      customerId: input.customerProfileId ? undefined : input.customerId,
+      customerProfileId: input.customerProfileId ?? undefined,
+    })
+
+    const pointsSpent = reward.points_required
+
+    if (ledgerBefore.balance < pointsSpent) {
+      throw new AppError(409, 'Insufficient points for redemption')
+    }
+
+    const payload = input.payload ?? {}
+    const description = input.description ?? describeRewardRedemption(reward.name, pointsSpent)
+
+    const insert = await client.query(
+      `
+        INSERT INTO reward_redemptions (
+          tenant_id,
+          ixc_connection_id,
+          customer_id,
+          customer_profile_id,
+          reward_code,
+          points_spent,
+          status,
+          idempotency_key,
+          payload,
+          created_by,
+          description
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10, $11)
+        ON CONFLICT (tenant_id, idempotency_key) DO NOTHING
+        RETURNING *
+      `,
+      [
+        input.tenantId,
+        input.ixcConnectionId ?? null,
+        input.customerId,
+        input.customerProfileId ?? null,
+        input.rewardCode,
+        pointsSpent,
+        input.status ?? 'requested',
+        input.idempotencyKey,
+        JSON.stringify(payload),
+        input.createdBy ?? null,
+        description,
+      ]
+    )
+
+    redemption = insert.rows[0] ?? (
+      await client.query(
+        `
+          SELECT *
+          FROM reward_redemptions
+          WHERE tenant_id = $1 AND idempotency_key = $2
+          LIMIT 1
+        `,
+        [input.tenantId, input.idempotencyKey]
+      )
+    ).rows[0]
+
+    await client.query('COMMIT')
+  } catch (error) {
+    await client.query('ROLLBACK')
+    throw error
+  } finally {
+    client.release()
   }
 
-  const summaryBefore = await getCustomerCampaignSummary(input.tenantId, {
-    customerId: input.customerId,
-    customerProfileId: input.customerProfileId ?? null,
-    isActiveCustomer: input.isActiveCustomer ?? true,
-    referenceDate: input.referenceDate,
-  })
-
-  const pointsSpent = reward.points_required
-
-  if (summaryBefore.availablePoints < pointsSpent) {
-    throw new AppError(409, 'Insufficient points for redemption')
-  }
-
-  const redemption = await recordRewardRedemption({
-    ...input,
-    pointsSpent,
-    status: input.status ?? 'requested',
-    description: input.description ?? describeRewardRedemption(reward.name, pointsSpent),
-  })
   const summaryAfter = await getCustomerCampaignSummary(input.tenantId, {
     customerId: input.customerId,
     customerProfileId: input.customerProfileId ?? null,
@@ -1196,7 +1334,7 @@ export async function redeemCampaignReward(
     summary: summaryAfter,
     observationEntry: buildRedemptionObservationEntry({
       rewardCode: reward.reward_code,
-      pointsSpent,
+      pointsSpent: Number(redemption?.points_spent ?? reward.points_required),
       createdAt: redemption?.created_at,
       balanceAfter: summaryAfter.availablePoints,
     }),

@@ -1,6 +1,7 @@
+import { randomBytes } from 'node:crypto'
 import { z } from 'zod'
 import { authenticateRequest } from '../_lib/auth'
-import { methodNotAllowed, sendJson } from '../_lib/http'
+import { methodNotAllowed, sendException, sendJson, sendInternalError } from '../_lib/http'
 import { supabaseAdmin } from '../_lib/supabase'
 
 interface LegacyRedemptionRpcRow {
@@ -20,8 +21,10 @@ const legacyRedemptionSchema = z.object({
   leadName: z.string().trim().min(1).max(160).optional(),
   leadPhone: z.string().trim().min(8).max(40).optional(),
   rewardId: z.string().uuid(),
+  quantity: z.coerce.number().int().positive().max(100).optional().default(1),
   responsible: z.string().trim().min(1).max(120),
   notes: z.string().trim().max(400).optional().nullable(),
+  idempotencyKey: z.string().trim().min(1).max(128).optional(),
 }).superRefine((value, ctx) => {
   if (value.isActiveCustomer) {
     if (!value.clientId) {
@@ -55,11 +58,16 @@ function getLegacyRedemptionErrorStatus(message: string): number {
     return 404
   }
 
+  if (message === 'Forbidden') {
+    return 403
+  }
+
   if (
     message === 'O cliente está inativo para resgates'
     || message === 'O cliente não possui pontos suficientes'
     || message === 'O brinde está inativo'
     || message === 'O brinde está sem estoque'
+    || message.includes('desatualizado')
   ) {
     return 409
   }
@@ -72,6 +80,19 @@ function getBody(request: any): unknown {
     return JSON.parse(request.body)
   }
   return request.body ?? {}
+}
+
+function resolveIdempotencyKey(value: string | undefined, scope: string): string {
+  const trimmed = value?.trim()
+  if (trimmed) {
+    return trimmed
+  }
+
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return `${scope}:${crypto.randomUUID()}`
+  }
+
+  return `${scope}:${randomBytes(16).toString('hex')}`
 }
 
 export default async function handler(request: any, response: any) {
@@ -88,35 +109,17 @@ export default async function handler(request: any, response: any) {
         ? `${request.query.dateTo.trim()}T23:59:59.999Z`
         : undefined
 
-      let tenantCustomersQuery = supabaseAdmin
-        .from('pontuacao_campanha_clientes')
-        .select('ixc_cliente_id, nome_cliente')
-        .eq('tenant_id', auth.tenantId)
-        .limit(10000)
-
-      if (customerId) {
-        tenantCustomersQuery = tenantCustomersQuery.eq('ixc_cliente_id', customerId)
-      }
-
-      const tenantCustomers = await tenantCustomersQuery
-
-      if (tenantCustomers.error) {
-        return sendJson(response, 500, { error: tenantCustomers.error.message })
-      }
-
-      const customerRows = tenantCustomers.data ?? []
-      const customerIds = Array.from(new Set(customerRows.map((row) => String(row.ixc_cliente_id ?? '')).filter(Boolean)))
-
-      if (customerIds.length === 0) {
-        return sendJson(response, 200, { data: [], meta: { total: 0 } })
-      }
-
       let query = supabaseAdmin
         .from('pontuacao_resgates')
-        .select('*', { count: 'exact' })
+        .select('id, tenant_id, ixc_cliente_id, contato_id, brinde_id, brinde_nome, pontos_utilizados, quantity, status_resgate, data_entrega, responsavel_entrega, observacoes, confirmacao_cliente, tipo_destinatario, destinatario_nome, destinatario_telefone, created_at, updated_at', { count: 'exact' })
+        .eq('tenant_id', auth.tenantId)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false })
-        .in('ixc_cliente_id', customerIds)
         .limit(limit)
+
+      if (customerId) {
+        query = query.eq('ixc_cliente_id', customerId)
+      }
 
       if (dateFrom) {
         query = query.gte('created_at', dateFrom)
@@ -128,18 +131,36 @@ export default async function handler(request: any, response: any) {
 
       const resgates = await query
       if (resgates.error) {
-        return sendJson(response, 500, { error: resgates.error.message })
+        return sendInternalError(response)
       }
 
       const rows = resgates.data ?? []
-      const customerNameMap = new Map(
-        customerRows.map((row) => [String(row.ixc_cliente_id), String(row.nome_cliente ?? '').trim()]),
-      )
+      const customerIds = Array.from(new Set(rows.map((row) => String(row.ixc_cliente_id ?? '')).filter(Boolean)))
+      let customerNameMap = new Map<string, string>()
+
+      if (customerIds.length > 0) {
+        const tenantCustomers = await supabaseAdmin
+          .from('pontuacao_campanha_clientes')
+          .select('ixc_cliente_id, nome_cliente')
+          .eq('tenant_id', auth.tenantId)
+          .in('ixc_cliente_id', customerIds)
+
+        if (tenantCustomers.error) {
+          return sendInternalError(response)
+        }
+
+        customerNameMap = new Map(
+          (tenantCustomers.data ?? []).map((row) => [String(row.ixc_cliente_id), String(row.nome_cliente ?? '').trim()]),
+        )
+      }
 
       return sendJson(response, 200, {
         data: rows.map((row) => ({
           ...row,
-          cliente_nome: customerNameMap.get(String(row.ixc_cliente_id)) || null,
+          cliente_nome:
+            String((row as Record<string, unknown>).destinatario_nome ?? '').trim()
+            || customerNameMap.get(String(row.ixc_cliente_id))
+            || null,
         })),
         meta: {
           total: Number(resgates.count ?? rows.length),
@@ -159,12 +180,16 @@ export default async function handler(request: any, response: any) {
           p_is_active_customer: body.isActiveCustomer ?? true,
           p_lead_name: body.isActiveCustomer ? null : body.leadName?.trim() || null,
           p_lead_phone: body.isActiveCustomer ? null : body.leadPhone?.trim() || null,
+          p_actor_user_id: auth.userId,
+          p_quantity: body.quantity,
+          p_idempotency_key: resolveIdempotencyKey(body.idempotencyKey, `rescue-create:${body.rewardId}`),
         })
         .single()
 
       if (rpcResult.error || !rpcResult.data) {
         const message = rpcResult.error?.message ?? 'Não foi possível registrar o resgate'
-        return sendJson(response, getLegacyRedemptionErrorStatus(message), { error: message })
+        const status = getLegacyRedemptionErrorStatus(message)
+        return status === 500 ? sendInternalError(response) : sendJson(response, status, { error: message })
       }
 
       const redemptionResult = rpcResult.data as LegacyRedemptionRpcRow
@@ -179,11 +204,9 @@ export default async function handler(request: any, response: any) {
     return methodNotAllowed(response)
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return sendJson(response, 400, { error: 'Validation error' })
+      return sendJson(response, 400, { error: error.issues[0]?.message ?? 'Validation error' })
     }
 
-    const message = error instanceof Error ? error.message : 'Internal Server Error'
-    const status = message === 'Unauthorized' ? 401 : message === 'Forbidden' ? 403 : 500
-    return sendJson(response, status, { error: message })
+    return sendException(response, error)
   }
 }

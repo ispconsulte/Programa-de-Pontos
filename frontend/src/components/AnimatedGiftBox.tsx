@@ -4,8 +4,30 @@ import { useEffect, useState, useMemo } from 'react'
 export default function AnimatedGiftBox({ size = 96, className = '' }: { size?: number; className?: string }) {
   const [phase, setPhase] = useState<'idle' | 'shake' | 'open'>('idle')
   const [cycle, setCycle] = useState(0)
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
 
   useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return
+
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const updatePreference = () => setPrefersReducedMotion(mediaQuery.matches)
+    updatePreference()
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', updatePreference)
+      return () => mediaQuery.removeEventListener('change', updatePreference)
+    }
+
+    mediaQuery.addListener(updatePreference)
+    return () => mediaQuery.removeListener(updatePreference)
+  }, [])
+
+  useEffect(() => {
+    if (prefersReducedMotion) {
+      setPhase('idle')
+      return
+    }
+
     let timers: ReturnType<typeof setTimeout>[] = []
 
     const trigger = () => {
@@ -27,10 +49,10 @@ export default function AnimatedGiftBox({ size = 96, className = '' }: { size?: 
     const interval = setInterval(trigger, 7000)
 
     return () => { timers.forEach(clearTimeout); clearInterval(interval) }
-  }, [])
+  }, [prefersReducedMotion])
 
-  const isOpen = phase === 'open'
-  const isShaking = phase === 'shake'
+  const isOpen = !prefersReducedMotion && phase === 'open'
+  const isShaking = !prefersReducedMotion && phase === 'shake'
 
   const confetti = useMemo(() =>
     Array.from({ length: 32 }, (_, i) => {

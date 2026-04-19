@@ -261,6 +261,7 @@ export async function ixcList<T>(
       method: 'POST',
       headers: buildIxcRequestHeaders(creds, token, 'listar'),
       body,
+      redirect: 'manual',
       signal: controller.signal,
     })
     clearTimeout(timeout)
@@ -315,6 +316,7 @@ export async function ixcGet<T>(
   const response = await fetch(url, {
     method: 'GET',
     headers: buildIxcRequestHeaders(creds, token, 'listar'),
+    redirect: 'manual',
     signal: controller.signal,
   })
   clearTimeout(timeout)
@@ -380,6 +382,7 @@ export async function ixcWrite<T = unknown>(
       method,
       headers: buildIxcRequestHeaders(creds, token, 'editar'),
       body,
+      redirect: 'manual',
       signal: controller.signal,
     })
     clearTimeout(timeout)

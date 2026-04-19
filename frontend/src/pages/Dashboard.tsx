@@ -56,6 +56,16 @@ import {
   KpiCard, RankBadge, PointCard, InfoField, RedemptionStatusBadge,
 } from '@/components/dashboard/DashboardHelpers'
 
+const DASHBOARD_CACHE_TTL_MS = 60_000
+
+interface DashboardCacheEntry {
+  expiresAt: number
+  metrics: { totalPoints: number; redemptionsCount: number; availablePoints: number }
+  ranking: RankingClientRow[]
+}
+
+let dashboardCache: DashboardCacheEntry | null = null
+
 /* ── Autocomplete hook ────────────────────────────────────────────────── */
 
 function useAutocomplete() {
@@ -91,10 +101,11 @@ function useAutocomplete() {
 /* ── Main page ────────────────────────────────────────────────────────── */
 
 export default function DashboardPage() {
-  const [loading, setLoading] = useState(true)
+  const freshDashboardCache = dashboardCache && dashboardCache.expiresAt > Date.now() ? dashboardCache : null
+  const [loading, setLoading] = useState(!freshDashboardCache)
   const [error, setError] = useState('')
-  const [metrics, setMetrics] = useState({ totalPoints: 0, redemptionsCount: 0, availablePoints: 0 })
-  const [ranking, setRanking] = useState<RankingClientRow[]>([])
+  const [metrics, setMetrics] = useState(freshDashboardCache?.metrics ?? { totalPoints: 0, redemptionsCount: 0, availablePoints: 0 })
+  const [ranking, setRanking] = useState<RankingClientRow[]>(freshDashboardCache?.ranking ?? [])
   const [showCalmModal, setShowCalmModal] = useState(false)
   const [rankingOpen, setRankingOpen] = useState(true)
   const clickCountRef = useRef(0)
@@ -110,8 +121,19 @@ export default function DashboardPage() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [userName, setUserName] = useState('')
 
-  const fetchData = useCallback(async () => {
-    setLoading(true)
+  const fetchData = useCallback(async (force = false) => {
+    const cached = dashboardCache && dashboardCache.expiresAt > Date.now() ? dashboardCache : null
+    if (!force && cached) {
+      setMetrics(cached.metrics)
+      setRanking(cached.ranking)
+      setError('')
+      setLoading(false)
+      return
+    }
+
+    if (!ranking.length) {
+      setLoading(true)
+    }
     setError('')
     try {
       const tenantId = await getCurrentTenantId()
@@ -122,10 +144,15 @@ export default function DashboardPage() {
       ])
       setMetrics(metricData)
       setRanking(rankingData)
+      dashboardCache = {
+        expiresAt: Date.now() + DASHBOARD_CACHE_TTL_MS,
+        metrics: metricData,
+        ranking: rankingData,
+      }
     } catch (err) {
       setError(friendlyError(err))
     } finally { setLoading(false) }
-  }, [period.from, period.to])
+  }, [period.from, period.to, ranking.length])
 
   const [throttledFetch, refreshBusy] = useThrottledAction(fetchData)
 
@@ -134,7 +161,7 @@ export default function DashboardPage() {
     if (clickTimerRef.current) clearTimeout(clickTimerRef.current)
     clickTimerRef.current = setTimeout(() => { clickCountRef.current = 0 }, 4000)
     if (clickCountRef.current >= 3) { setShowCalmModal(true); clickCountRef.current = 0; return }
-    void throttledFetch()
+    void throttledFetch(true)
   }
 
   const selectClient = useCallback(async (client: CampaignClientRow) => {

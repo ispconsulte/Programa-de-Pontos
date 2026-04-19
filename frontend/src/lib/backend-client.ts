@@ -40,7 +40,13 @@ function friendlyErrorMessage(raw: string, status?: number): string {
     return 'O recurso solicitado não foi encontrado.'
   }
   if (status === 409) {
-    return 'A integração IXC ainda não foi configurada. Acesse Administração > Empresa para configurar.'
+    if (lower.includes('ixc') && (lower.includes('config') || lower.includes('integra'))) {
+      return 'A integração IXC ainda não foi configurada. Acesse Administração > Empresa para configurar.'
+    }
+
+    if (raw.length < 200) {
+      return raw
+    }
   }
   if (status && status >= 500) {
     return 'Ocorreu um erro interno no servidor. Tente novamente em alguns instantes.'

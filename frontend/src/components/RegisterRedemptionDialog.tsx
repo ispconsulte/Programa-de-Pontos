@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { AlertTriangle, CheckCircle2, Gift, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -86,6 +86,8 @@ export default function RegisterRedemptionDialog({
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
   const [success, setSuccess] = useState<RewardRedemptionResult | null>(null)
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const selectedGift = useMemo(
     () => gifts.find((gift) => gift.id === selectedGiftId) ?? null,
@@ -221,18 +223,25 @@ export default function RegisterRedemptionDialog({
   const handleSearchChange = useCallback((value: string) => {
     setCustomerQuery(value)
     setSelectedClient(null)
-    const timer = setTimeout(() => {
+    if (searchTimerRef.current) {
+      clearTimeout(searchTimerRef.current)
+    }
+    searchTimerRef.current = setTimeout(() => {
       void searchCustomers(value)
     }, 250)
-
-    return () => clearTimeout(timer)
   }, [searchCustomers])
 
   const requestClose = () => {
-    if (isDirty && !window.confirm(LEAVE_WARNING_MESSAGE)) {
+    if (isDirty) {
+      setShowLeaveConfirm(true)
       return
     }
 
+    setOpen(false)
+  }
+
+  const confirmClose = () => {
+    setShowLeaveConfirm(false)
     setOpen(false)
   }
 
@@ -256,6 +265,7 @@ export default function RegisterRedemptionDialog({
           estoque: selectedGift.stock,
           imagem_url: null,
         } as RewardCatalogRow,
+        quantity: normalizedQuantity,
         responsible,
         notes,
       })
@@ -273,20 +283,21 @@ export default function RegisterRedemptionDialog({
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(nextOpen) => {
-        if (nextOpen) {
-          setOpen(true)
-          return
-        }
+    <>
+      <Dialog
+        open={open}
+        onOpenChange={(nextOpen) => {
+          if (nextOpen) {
+            setOpen(true)
+            return
+          }
 
-        requestClose()
-      }}
-    >
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-lg gap-0 border-border bg-card p-0">
-        <DialogHeader className="px-6 pb-4 pt-6">
+          requestClose()
+        }}
+      >
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
+        <DialogContent className="max-w-lg gap-0 border-border bg-card p-0">
+          <DialogHeader className="px-6 pb-4 pt-6">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 ring-1 ring-emerald-500/20">
               <Gift className="h-5 w-5 text-emerald-400" />
@@ -300,8 +311,8 @@ export default function RegisterRedemptionDialog({
           </div>
         </DialogHeader>
 
-        {success ? (
-          <div className="flex flex-col items-center justify-center px-6 py-12">
+          {success ? (
+            <div className="flex flex-col items-center justify-center px-6 py-12">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10">
               <CheckCircle2 className="h-8 w-8 text-emerald-400" />
             </div>
@@ -310,8 +321,8 @@ export default function RegisterRedemptionDialog({
               <span className="font-semibold text-foreground">{success.redemption.brinde_nome}</span> registrado com sucesso.
             </p>
           </div>
-        ) : (
-          <div className="space-y-4 px-6 pb-2 pt-2">
+          ) : (
+            <div className="space-y-4 px-6 pb-2 pt-2">
             <div className="rounded-lg border border-border bg-muted/30 p-3">
               <div className="flex items-center gap-3">
                 <input
@@ -519,23 +530,43 @@ export default function RegisterRedemptionDialog({
               </div>
             )}
           </div>
-        )}
+          )}
 
-        {!success && (
-          <DialogFooter className="border-t border-border px-6 py-4">
-            <Button variant="outline" onClick={requestClose} disabled={submitting}>
-              Cancelar
+          {!success && (
+            <DialogFooter className="border-t border-border px-6 py-4">
+              <Button variant="outline" onClick={requestClose} disabled={submitting}>
+                Cancelar
+              </Button>
+              <Button
+                className="bg-emerald-600 text-white hover:bg-emerald-500"
+                disabled={!canConfirm}
+                onClick={handleConfirm}
+              >
+                {submitting ? <><Spinner size="sm" /> Registrando...</> : 'Confirmar resgate'}
+              </Button>
+            </DialogFooter>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showLeaveConfirm} onOpenChange={setShowLeaveConfirm}>
+        <DialogContent className="max-w-sm border-border bg-card">
+          <DialogHeader>
+            <DialogTitle>Sair sem salvar?</DialogTitle>
+            <DialogDescription>
+              {LEAVE_WARNING_MESSAGE}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowLeaveConfirm(false)}>
+              Continuar editando
             </Button>
-            <Button
-              className="bg-emerald-600 text-white hover:bg-emerald-500"
-              disabled={!canConfirm}
-              onClick={handleConfirm}
-            >
-              {submitting ? <><Spinner size="sm" /> Registrando...</> : 'Confirmar resgate'}
+            <Button variant="destructive" onClick={confirmClose}>
+              Sair sem salvar
             </Button>
           </DialogFooter>
-        )}
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

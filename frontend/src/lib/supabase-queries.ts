@@ -206,6 +206,8 @@ export async function searchCampaignClients(opts: {
   query: string
 }): Promise<CampaignClientRow[]> {
   const { tenantId, searchType, query } = opts
+  const trimmed = query.trim()
+  const normalizedDocument = trimmed.replace(/\D/g, '')
 
   let q = (supabase as any)
     .from('pontuacao_campanha_clientes')
@@ -214,11 +216,19 @@ export async function searchCampaignClients(opts: {
     .limit(50)
 
   if (searchType === 'name') {
-    q = q.ilike('nome_cliente', `%${query}%`)
+    q = q.ilike('nome_cliente', `%${trimmed}%`)
   } else if (searchType === 'cpfCnpj') {
-    q = q.ilike('documento', `%${query.replace(/\D/g, '')}%`)
+    const { data, error } = await q
+    if (error) throw new Error(error.message)
+    return Array.from(
+      new Map(
+        ((data ?? []) as CampaignClientRow[])
+          .filter((row) => String(row.documento ?? '').replace(/\D/g, '').includes(normalizedDocument))
+          .map((row) => [row.id, row]),
+      ).values(),
+    ).slice(0, 50)
   } else {
-    q = q.eq('ixc_cliente_id', query)
+    q = q.eq('ixc_cliente_id', trimmed)
   }
 
   const { data, error } = await q
@@ -235,23 +245,34 @@ export async function autocompleteCampaignClients(opts: {
   const trimmed = query.trim()
   if (!trimmed || trimmed.length < 2) return []
 
-  const isNumeric = /^\d+$/.test(trimmed.replace(/[.\-\/]/g, ''))
+  const normalizedDocument = trimmed.replace(/\D/g, '')
+  const isNumeric = /^\d+$/.test(normalizedDocument)
 
   let q = (supabase as any)
     .from('pontuacao_campanha_clientes')
     .select('*')
     .eq('tenant_id', tenantId)
-    .limit(10)
+    .limit(isNumeric ? 50 : 10)
 
   if (isNumeric) {
-    q = q.ilike('documento', `%${trimmed.replace(/\D/g, '')}%`)
+    const { data, error } = await q
+    if (error) throw new Error(error.message)
+    return Array.from(
+      new Map(
+        ((data ?? []) as CampaignClientRow[])
+          .filter((row) => String(row.documento ?? '').replace(/\D/g, '').includes(normalizedDocument))
+          .map((row) => [row.id, row]),
+      ).values(),
+    ).slice(0, 10)
   } else {
     q = q.ilike('nome_cliente', `%${trimmed}%`)
   }
 
   const { data, error } = await q
   if (error) throw new Error(error.message)
-  return (data ?? []) as CampaignClientRow[]
+  return Array.from(
+    new Map(((data ?? []) as CampaignClientRow[]).map((row) => [row.id, row])).values(),
+  )
 }
 
 export async function fetchCampaignClientById(
@@ -348,9 +369,11 @@ export interface RedemptionRow {
   destinatario_telefone?: string | null
   brinde_nome: string
   pontos_utilizados: number
+  quantity?: number
   status_resgate: string
   data_entrega: string | null
   created_at: string
+  updated_at?: string
   observacoes: string | null
 }
 
@@ -369,27 +392,35 @@ export async function fetchLegacyRedemptions(options?: {
     const tenantId = await getCurrentTenantId()
     if (!tenantId) return []
 
-    let custQuery = supabase
-      .from('pontuacao_campanha_clientes' as any)
-      .select('ixc_cliente_id, nome_cliente')
+    let redemptionsQuery = supabase
+      .from('pontuacao_resgates' as any)
+      .select('id, ixc_cliente_id, contato_id, brinde_id, brinde_nome, pontos_utilizados, quantity, status_resgate, data_entrega, responsavel_entrega, observacoes, tipo_destinatario, destinatario_nome, destinatario_telefone, created_at, updated_at')
+      .order('created_at', { ascending: false })
       .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
+      .limit(options?.limit ?? 100)
 
     if (options?.customerId) {
-      custQuery = custQuery.eq('ixc_cliente_id', options.customerId)
+      redemptionsQuery = redemptionsQuery.eq('ixc_cliente_id', options.customerId)
     }
 
-    const { data: customers } = await custQuery.limit(10000) as { data: any[] | null }
-    if (!customers || customers.length === 0) return []
+    const { data: resgates } = await redemptionsQuery as { data: any[] | null }
+    if (!resgates || resgates.length === 0) return []
 
-    const customerIds = customers.map((c: any) => String(c.ixc_cliente_id)).filter(Boolean)
-    const nameMap = new Map(customers.map((c: any) => [String(c.ixc_cliente_id), String(c.nome_cliente ?? '')]))
+    const customerIds = Array.from(new Set(
+      resgates.map((r: any) => String(r.ixc_cliente_id ?? '')).filter(Boolean),
+    ))
+    let nameMap = new Map<string, string>()
 
-    const { data: resgates } = await supabase
-      .from('pontuacao_resgates' as any)
-      .select('*')
-      .in('ixc_cliente_id', customerIds)
-      .order('created_at', { ascending: false })
-      .limit(options?.limit ?? 100) as { data: any[] | null }
+    if (customerIds.length > 0) {
+      const { data: customers } = await supabase
+        .from('pontuacao_campanha_clientes' as any)
+        .select('ixc_cliente_id, nome_cliente')
+        .eq('tenant_id', tenantId)
+        .in('ixc_cliente_id', customerIds) as { data: any[] | null }
+
+      nameMap = new Map((customers ?? []).map((c: any) => [String(c.ixc_cliente_id), String(c.nome_cliente ?? '')]))
+    }
 
     return (resgates ?? []).map((r: any) => ({
       ...r,

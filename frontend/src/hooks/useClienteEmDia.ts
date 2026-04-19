@@ -5,6 +5,7 @@ import { fetchRewardCatalogItems } from '@/lib/loyalty-admin'
 import { fetchLegacyRedemptions } from '@/lib/supabase-queries'
 
 type ClienteEmDiaCampaignStatus = 'ativo' | 'inativo' | 'bloqueado'
+const CLIENTE_EM_DIA_CACHE_TTL_MS = 60_000
 
 export interface ClienteEmDiaOverviewItem {
   id: string
@@ -35,6 +36,19 @@ export interface ClienteEmDiaHistoricoItem {
   referenciaExterna: string | null
   createdAt: string
   payload: Record<string, unknown>
+}
+
+export interface ClienteEmDiaManualAdjustmentItem {
+  id: string
+  customerName: string
+  customerDocument: string | null
+  adjustmentType: 'credit' | 'debit'
+  points: number
+  reason: string
+  actorName: string
+  previousBalance: number
+  newBalance: number
+  createdAt: string
 }
 
 export interface ClienteEmDiaRewardItem {
@@ -97,6 +111,7 @@ export interface ClienteEmDiaCustomerDetail {
   customer: ClienteEmDiaOverviewItem | null
   historico: ClienteEmDiaHistoricoItem[]
   resgates: ClienteEmDiaRedemptionItem[]
+  manualAdjustments: ClienteEmDiaManualAdjustmentItem[]
 }
 
 export interface UseClienteEmDiaResult {
@@ -114,6 +129,11 @@ interface UseClienteEmDiaOptions {
   customerId?: string
   rewardsOnly?: boolean
   redemptionsCustomerId?: string
+}
+
+interface UseClienteEmDiaCacheEntry {
+  expiresAt: number
+  data: Omit<UseClienteEmDiaResult, 'reload'>
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -147,17 +167,42 @@ function normalizeOverviewItem(row: Record<string, unknown>): ClienteEmDiaOvervi
 }
 
 function normalizeHistoricoItem(row: Record<string, unknown>): ClienteEmDiaHistoricoItem {
+  const points = Number(row.pontos ?? 0)
+  const payload = asRecord(row.payload)
   return {
     id: String(row.id),
     campanhaClienteId: String(row.ixc_cliente_id ?? ''),
-    tipoMovimentacao: String(row.tipo_evento ?? 'credito') as ClienteEmDiaHistoricoItem['tipoMovimentacao'],
+    tipoMovimentacao: String(
+      row.tipo_evento === 'ajuste_manual'
+        ? 'ajuste'
+        : row.tipo_evento ?? 'credito',
+    ) as ClienteEmDiaHistoricoItem['tipoMovimentacao'],
     origem: String(row.criado_por ?? 'sistema'),
     descricao: String(row.descricao ?? row.tipo_evento ?? ''),
-    pontosMovimentados: Number(row.pontos ?? 0),
-    saldoApos: null,
+    pontosMovimentados: points,
+    saldoApos: typeof payload.newBalance === 'number'
+      ? Number(payload.newBalance)
+      : typeof payload.new_balance === 'number'
+        ? Number(payload.new_balance)
+        : null,
     referenciaExterna: typeof row.ixc_fatura_id === 'string' ? row.ixc_fatura_id : null,
     createdAt: String(row.created_at ?? ''),
-    payload: {},
+    payload,
+  }
+}
+
+function normalizeManualAdjustmentItem(row: Record<string, unknown>): ClienteEmDiaManualAdjustmentItem {
+  return {
+    id: String(row.id),
+    customerName: String(row.customer_name_snapshot ?? 'Cliente'),
+    customerDocument: typeof row.customer_document_snapshot === 'string' ? row.customer_document_snapshot : null,
+    adjustmentType: String(row.adjustment_type ?? 'credit') as ClienteEmDiaManualAdjustmentItem['adjustmentType'],
+    points: Number(row.points ?? 0),
+    reason: String(row.reason ?? ''),
+    actorName: String(row.actor_name_snapshot ?? 'Usuário'),
+    previousBalance: Number(row.previous_balance ?? 0),
+    newBalance: Number(row.new_balance ?? 0),
+    createdAt: String(row.created_at ?? ''),
   }
 }
 
@@ -205,35 +250,87 @@ function normalizeRedemptionItem(row: Record<string, unknown>): ClienteEmDiaRede
   }
 }
 
+const clienteEmDiaCache = new Map<string, UseClienteEmDiaCacheEntry>()
+
+function getClienteEmDiaCacheKey(options: UseClienteEmDiaOptions): string {
+  return JSON.stringify({
+    customerId: options.customerId ?? null,
+    rewardsOnly: Boolean(options.rewardsOnly),
+    redemptionsCustomerId: options.redemptionsCustomerId ?? null,
+  })
+}
+
 export function useClienteEmDia(options: UseClienteEmDiaOptions = {}): UseClienteEmDiaResult {
   const db = supabase as unknown as {
     from: (table: string) => any
   }
-  const [loading, setLoading] = useState(true)
+  const cacheKey = getClienteEmDiaCacheKey(options)
+  const cachedEntry = clienteEmDiaCache.get(cacheKey)
+  const freshCache = cachedEntry && cachedEntry.expiresAt > Date.now() ? cachedEntry.data : null
+  const [loading, setLoading] = useState(!freshCache)
   const [error, setError] = useState<string | null>(null)
-  const [overview, setOverview] = useState<ClienteEmDiaOverviewItem[]>([])
-  const [customerDetail, setCustomerDetail] = useState<ClienteEmDiaCustomerDetail | null>(null)
-  const [rewards, setRewards] = useState<ClienteEmDiaRewardItem[]>([])
-  const [redemptions, setRedemptions] = useState<ClienteEmDiaRedemptionItem[]>([])
-  const [settings, setSettings] = useState<ClienteEmDiaMinimalSettings | null>(null)
+  const [overview, setOverview] = useState<ClienteEmDiaOverviewItem[]>(freshCache?.overview ?? [])
+  const [customerDetail, setCustomerDetail] = useState<ClienteEmDiaCustomerDetail | null>(freshCache?.customerDetail ?? null)
+  const [rewards, setRewards] = useState<ClienteEmDiaRewardItem[]>(freshCache?.rewards ?? [])
+  const [redemptions, setRedemptions] = useState<ClienteEmDiaRedemptionItem[]>(freshCache?.redemptions ?? [])
+  const [settings, setSettings] = useState<ClienteEmDiaMinimalSettings | null>(freshCache?.settings ?? null)
 
   useEffect(() => {
-    void load()
-  }, [options.customerId, options.redemptionsCustomerId, options.rewardsOnly])
+    const currentCache = clienteEmDiaCache.get(cacheKey)
+    if (currentCache && currentCache.expiresAt > Date.now()) {
+      setError(null)
+      setOverview(currentCache.data.overview)
+      setCustomerDetail(currentCache.data.customerDetail)
+      setRewards(currentCache.data.rewards)
+      setRedemptions(currentCache.data.redemptions)
+      setSettings(currentCache.data.settings)
+      setLoading(false)
+      return
+    }
 
-  async function load() {
-    setLoading(true)
+    void load()
+  }, [cacheKey, options.customerId, options.redemptionsCustomerId, options.rewardsOnly])
+
+  async function load(force = false) {
+    const currentCache = clienteEmDiaCache.get(cacheKey)
+    if (!force && currentCache && currentCache.expiresAt > Date.now()) {
+      setError(null)
+      setOverview(currentCache.data.overview)
+      setCustomerDetail(currentCache.data.customerDetail)
+      setRewards(currentCache.data.rewards)
+      setRedemptions(currentCache.data.redemptions)
+      setSettings(currentCache.data.settings)
+      setLoading(false)
+      return
+    }
+
+    if (!overview.length && !rewards.length && !redemptions.length && !customerDetail && !settings) {
+      setLoading(true)
+    }
     setError(null)
 
     try {
       if (options.rewardsOnly) {
         const rewardsData = await fetchRewardCatalogItems()
+        const nextRewards = (rewardsData ?? []).map((row: unknown) => normalizeRewardItem(row as Record<string, unknown>))
 
-        setRewards((rewardsData ?? []).map((row: unknown) => normalizeRewardItem(row as Record<string, unknown>)))
+        setRewards(nextRewards)
         setOverview([])
         setRedemptions([])
         setCustomerDetail(null)
         setSettings(null)
+        clienteEmDiaCache.set(cacheKey, {
+          expiresAt: Date.now() + CLIENTE_EM_DIA_CACHE_TTL_MS,
+          data: {
+            loading: false,
+            error: null,
+            overview: [],
+            customerDetail: null,
+            rewards: nextRewards,
+            redemptions: [],
+            settings: null,
+          },
+        })
         return
       }
 
@@ -277,11 +374,7 @@ export function useClienteEmDia(options: UseClienteEmDiaOptions = {}): UseClient
       const overviewItems = (overviewResult.data ?? []).map((row: unknown) => normalizeOverviewItem(row as Record<string, unknown>))
       const rewardItems = (rewardsResult ?? []).map((row: unknown) => normalizeRewardItem(row as Record<string, unknown>))
       const redemptionItems = (redemptionsResult ?? []).map((row: unknown) => normalizeRedemptionItem(row as Record<string, unknown>))
-
-      setOverview(overviewItems)
-      setRewards(rewardItems)
-      setRedemptions(redemptionItems)
-      setSettings({
+      const nextSettings: ClienteEmDiaMinimalSettings = {
         activeIxcConnection: settingsResult?.ixc_configured
           ? {
               id: String(settingsResult?.ixc_connection_id ?? ''),
@@ -305,10 +398,27 @@ export function useClienteEmDia(options: UseClienteEmDiaOptions = {}): UseClient
             }
           : null,
         latestRules: [],
-      })
+      }
+
+      setOverview(overviewItems)
+      setRewards(rewardItems)
+      setRedemptions(redemptionItems)
+      setSettings(nextSettings)
 
       if (!options.customerId) {
         setCustomerDetail(null)
+        clienteEmDiaCache.set(cacheKey, {
+          expiresAt: Date.now() + CLIENTE_EM_DIA_CACHE_TTL_MS,
+          data: {
+            loading: false,
+            error: null,
+            overview: overviewItems,
+            customerDetail: null,
+            rewards: rewardItems,
+            redemptions: redemptionItems,
+            settings: nextSettings,
+          },
+        })
         return
       }
 
@@ -319,13 +429,19 @@ export function useClienteEmDia(options: UseClienteEmDiaOptions = {}): UseClient
           customer: null,
           historico: [],
           resgates: [],
+          manualAdjustments: [],
         })
         return
       }
 
-      const [historicoResult, customerRedemptionsResult] = await Promise.all([
+      const [historicoResult, manualAdjustmentsResult, customerRedemptionsResult] = await Promise.all([
         db
           .from('pontuacao_historico')
+          .select('*')
+          .eq('ixc_cliente_id', customer.ixcClienteId)
+          .order('created_at', { ascending: false }),
+        db
+          .from('pontuacao_ajustes_manuais')
           .select('*')
           .eq('ixc_cliente_id', customer.ixcClienteId)
           .order('created_at', { ascending: false }),
@@ -336,11 +452,32 @@ export function useClienteEmDia(options: UseClienteEmDiaOptions = {}): UseClient
       ])
 
       if (historicoResult.error) throw historicoResult.error
+      const manualAdjustmentsError = manualAdjustmentsResult.error
+      if (manualAdjustmentsError && !String(manualAdjustmentsError.message ?? '').includes('pontuacao_ajustes_manuais')) {
+        throw manualAdjustmentsError
+      }
 
-      setCustomerDetail({
+      const nextCustomerDetail = {
         customer,
         historico: (historicoResult.data ?? []).map((row: unknown) => normalizeHistoricoItem(row as Record<string, unknown>)),
         resgates: (customerRedemptionsResult ?? []).map((row: unknown) => normalizeRedemptionItem(row as Record<string, unknown>)),
+        manualAdjustments: manualAdjustmentsError
+          ? []
+          : (manualAdjustmentsResult.data ?? []).map((row: unknown) => normalizeManualAdjustmentItem(row as Record<string, unknown>)),
+      }
+
+      setCustomerDetail(nextCustomerDetail)
+      clienteEmDiaCache.set(cacheKey, {
+        expiresAt: Date.now() + CLIENTE_EM_DIA_CACHE_TTL_MS,
+        data: {
+          loading: false,
+          error: null,
+          overview: overviewItems,
+          customerDetail: nextCustomerDetail,
+          rewards: rewardItems,
+          redemptions: redemptionItems,
+          settings: nextSettings,
+        },
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Não foi possível carregar os dados do Cliente em Dia.')
@@ -357,7 +494,7 @@ export function useClienteEmDia(options: UseClienteEmDiaOptions = {}): UseClient
     rewards,
     redemptions,
     settings,
-    reload: load,
+    reload: () => load(true),
   }
 }
 

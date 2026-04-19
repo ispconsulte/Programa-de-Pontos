@@ -33,6 +33,13 @@ import {
 import { Edit3, KeyRound, LogOut, Shield, Trash2, UserCog, UserPlus, Users } from 'lucide-react'
 import { friendlyError } from '@/lib/friendly-errors'
 
+const SETTINGS_USERS_CACHE_TTL_MS = 60_000
+let settingsUsersCache: {
+  expiresAt: number
+  currentUser: CurrentUserProfile | null
+  users: ManagedUser[]
+} | null = null
+
 type DialogMode = 'create' | 'edit'
 
 interface UserFormState {
@@ -146,13 +153,14 @@ function UserCard({
 }
 
 export default function SettingsUsersPage() {
-  const [loading, setLoading] = useState(true)
+  const freshSettingsUsersCache = settingsUsersCache && settingsUsersCache.expiresAt > Date.now() ? settingsUsersCache : null
+  const [loading, setLoading] = useState(!freshSettingsUsersCache)
   const [saving, setSaving] = useState(false)
   const [busyUserId, setBusyUserId] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-  const [currentUser, setCurrentUser] = useState<CurrentUserProfile | null>(null)
-  const [users, setUsers] = useState<ManagedUser[]>([])
+  const [currentUser, setCurrentUser] = useState<CurrentUserProfile | null>(freshSettingsUsersCache?.currentUser ?? null)
+  const [users, setUsers] = useState<ManagedUser[]>(freshSettingsUsersCache?.users ?? [])
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogMode, setDialogMode] = useState<DialogMode>('create')
   const [editingUser, setEditingUser] = useState<ManagedUser | null>(null)
@@ -167,8 +175,19 @@ export default function SettingsUsersPage() {
     return { admins, operators, active }
   }, [users])
 
-  async function loadData() {
-    setLoading(true)
+  async function loadData(force = false) {
+    const cached = settingsUsersCache && settingsUsersCache.expiresAt > Date.now() ? settingsUsersCache : null
+    if (!force && cached) {
+      setCurrentUser(cached.currentUser)
+      setUsers(cached.users)
+      setError('')
+      setLoading(false)
+      return
+    }
+
+    if (!users.length) {
+      setLoading(true)
+    }
     setError('')
 
     try {
@@ -179,6 +198,17 @@ export default function SettingsUsersPage() {
       if (isAdminUiRole(me.role)) {
         const managedUsers = await fetchManagedUsers()
         setUsers(managedUsers)
+        settingsUsersCache = {
+          expiresAt: Date.now() + SETTINGS_USERS_CACHE_TTL_MS,
+          currentUser: me,
+          users: managedUsers,
+        }
+      } else {
+        settingsUsersCache = {
+          expiresAt: Date.now() + SETTINGS_USERS_CACHE_TTL_MS,
+          currentUser: me,
+          users: [],
+        }
       }
     } catch (loadError) {
       console.error('[SettingsUsers] loadData error:', loadError)
@@ -274,7 +304,7 @@ export default function SettingsUsersPage() {
       }
 
       closeDialog()
-      await loadData()
+      await loadData(true)
     } catch (submitError) {
       setError(friendlyError(submitError))
     } finally {
@@ -290,7 +320,7 @@ export default function SettingsUsersPage() {
     try {
       await disconnectManagedUser(user.id)
       setSuccess(`Sessão revogada para ${user.email}.`)
-      await loadData()
+      await loadData(true)
     } catch (actionError) {
       setError(friendlyError(actionError))
     } finally {
@@ -308,7 +338,7 @@ export default function SettingsUsersPage() {
     try {
       await deleteManagedUser(user.id)
       setSuccess(`Usuário ${user.email} excluído com sucesso.`)
-      await loadData()
+      await loadData(true)
     } catch (actionError) {
       setError(friendlyError(actionError))
     } finally {

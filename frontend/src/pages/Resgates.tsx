@@ -30,6 +30,9 @@ interface RedemptionRow {
   cliente_nome?: string
 }
 
+const REDEMPTIONS_CACHE_TTL_MS = 60_000
+let redemptionsCache: { expiresAt: number; rows: RedemptionRow[] } | null = null
+
 function statusLabel(s: string) {
   if (s === 'pendente') return 'Pendente'
   if (s === 'em_preparo') return 'Em preparo'
@@ -50,40 +53,54 @@ export default function ResgatesPage() {
   const navigate = useNavigate()
   const [reloadKey, setReloadKey] = useState(0)
   const [tab, setTab] = useState<RedemptionStatus | 'all'>('all')
-  const [rows, setRows] = useState<RedemptionRow[]>([])
-  const [loading, setLoading] = useState(true)
+  const freshRedemptionsCache = redemptionsCache && redemptionsCache.expiresAt > Date.now() ? redemptionsCache : null
+  const [rows, setRows] = useState<RedemptionRow[]>(freshRedemptionsCache?.rows ?? [])
+  const [loading, setLoading] = useState(!freshRedemptionsCache)
 
   useEffect(() => {
     let mounted = true
-    const load = async () => {
-      setLoading(true)
+    const load = async (force = false) => {
+      const cached = redemptionsCache && redemptionsCache.expiresAt > Date.now() ? redemptionsCache : null
+      if (!force && cached) {
+        setRows(cached.rows)
+        setLoading(false)
+        return
+      }
+
+      if (!rows.length) {
+        setLoading(true)
+      }
       try {
         const tenantId = await getCurrentTenantId()
         if (!tenantId || !mounted) return
 
         const rawResgates = await fetchLegacyRedemptions({ limit: 100 })
 
-        setRows(
-          rawResgates.map((r: any) => ({
-            id: r.id,
-            ixc_cliente_id: r.ixc_cliente_id,
-            tipo_destinatario: r.tipo_destinatario,
-            brinde_nome: r.brinde_nome,
-            pontos_utilizados: r.pontos_utilizados,
-            status_resgate: r.status_resgate,
-            created_at: r.created_at,
-            cliente_nome: r.cliente_nome || r.destinatario_nome || (r.ixc_cliente_id ? `Cliente #${r.ixc_cliente_id}` : 'Contato'),
-          }))
-        )
+        const nextRows = rawResgates.map((r: any) => ({
+          id: r.id,
+          ixc_cliente_id: r.ixc_cliente_id,
+          tipo_destinatario: r.tipo_destinatario,
+          brinde_nome: r.brinde_nome,
+          pontos_utilizados: r.pontos_utilizados,
+          status_resgate: r.status_resgate,
+          created_at: r.created_at,
+          cliente_nome: r.cliente_nome || r.destinatario_nome || (r.ixc_cliente_id ? `Cliente #${r.ixc_cliente_id}` : 'Contato'),
+        }))
+
+        setRows(nextRows)
+        redemptionsCache = {
+          expiresAt: Date.now() + REDEMPTIONS_CACHE_TTL_MS,
+          rows: nextRows,
+        }
       } catch {
         setRows([])
       } finally {
         if (mounted) setLoading(false)
       }
     }
-    load()
+    void load(reloadKey > 0)
     return () => { mounted = false }
-  }, [reloadKey])
+  }, [reloadKey, rows.length])
 
   const filtered = tab === 'all' ? rows : rows.filter((r) => r.status_resgate === tab)
   const openRedemption = (row: RedemptionRow) => {

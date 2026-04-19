@@ -11,7 +11,24 @@ const tiers = [
 
 export default function LoginHero() {
   const [v, setV] = useState(false)
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
   useEffect(() => { const t = setTimeout(() => setV(true), 80); return () => clearTimeout(t) }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return
+
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const updatePreference = () => setPrefersReducedMotion(mediaQuery.matches)
+    updatePreference()
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', updatePreference)
+      return () => mediaQuery.removeEventListener('change', updatePreference)
+    }
+
+    mediaQuery.addListener(updatePreference)
+    return () => mediaQuery.removeListener(updatePreference)
+  }, [])
 
   const d = (ms: number) => ({ transitionDelay: `${ms}ms` })
 
@@ -22,9 +39,9 @@ export default function LoginHero() {
 
       {/* Accent orbs — softer */}
       <div className="absolute -left-[10%] -top-[6%] h-[420px] w-[420px] rounded-full opacity-35"
-        style={{ background: 'radial-gradient(circle, hsl(217 91% 60% / 0.12) 0%, transparent 65%)', animation: 'heroGlowDrift 20s ease-in-out infinite' }} />
+        style={{ background: 'radial-gradient(circle, hsl(217 91% 60% / 0.12) 0%, transparent 65%)', animation: prefersReducedMotion ? 'none' : 'heroGlowDrift 20s ease-in-out infinite' }} />
       <div className="absolute -bottom-[5%] -right-[8%] h-[340px] w-[340px] rounded-full opacity-20"
-        style={{ background: 'radial-gradient(circle, hsl(45 95% 55% / 0.08) 0%, transparent 60%)', animation: 'heroGlowDrift 24s ease-in-out 5s infinite reverse' }} />
+        style={{ background: 'radial-gradient(circle, hsl(45 95% 55% / 0.08) 0%, transparent 60%)', animation: prefersReducedMotion ? 'none' : 'heroGlowDrift 24s ease-in-out 5s infinite reverse' }} />
 
       {/* Grid — barely visible */}
       <div className="absolute inset-0 opacity-[0.012]"

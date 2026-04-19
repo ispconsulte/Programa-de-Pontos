@@ -13,6 +13,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Briefcase, Building2, Megaphone, Save, UserCog, Wifi, WifiOff } from 'lucide-react'
 import Spinner from '@/components/Spinner'
 
+const SETTINGS_CACHE_TTL_MS = 60_000
+let settingsCache: { expiresAt: number; settings: TenantSettings | null } | null = null
+
 /* ── Quick-link card ── */
 function AdminLinkCard({ to, icon: Icon, label, description }: { to: string; icon: React.ElementType; label: string; description: string }) {
   return (
@@ -32,8 +35,9 @@ function AdminLinkCard({ to, icon: Icon, label, description }: { to: string; ico
 }
 
 export default function SettingsPage() {
-  const [settings, setSettings] = useState<TenantSettings | null>(null)
-  const [loading, setLoading] = useState(true)
+  const freshSettingsCache = settingsCache && settingsCache.expiresAt > Date.now() ? settingsCache : null
+  const [settings, setSettings] = useState<TenantSettings | null>(freshSettingsCache?.settings ?? null)
+  const [loading, setLoading] = useState(!freshSettingsCache)
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
@@ -44,8 +48,21 @@ export default function SettingsPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      setLoading(true)
+    const fetchSettings = async (force = false) => {
+      const cached = settingsCache && settingsCache.expiresAt > Date.now() ? settingsCache : null
+      if (!force && cached) {
+        setSettings(cached.settings)
+        setTenantName(cached.settings?.name ?? '')
+        setIxcBaseUrl(cached.settings?.ixcConnection?.ixc_base_url ?? '')
+        setIxcUser(cached.settings?.ixcConnection?.ixc_user ?? '')
+        setError('')
+        setLoading(false)
+        return
+      }
+
+      if (!settings) {
+        setLoading(true)
+      }
       setError('')
       try {
         const tenantId = await getCurrentTenantId()
@@ -58,6 +75,10 @@ export default function SettingsPage() {
         setTenantName(data.name ?? '')
         setIxcBaseUrl(data.ixcConnection?.ixc_base_url ?? '')
         setIxcUser(data.ixcConnection?.ixc_user ?? '')
+        settingsCache = {
+          expiresAt: Date.now() + SETTINGS_CACHE_TTL_MS,
+          settings: data,
+        }
       } catch (err) {
         setError(friendlyError(err))
       } finally {
@@ -101,6 +122,10 @@ export default function SettingsPage() {
       setTenantName(refreshedSettings?.name ?? tenantName)
       setIxcBaseUrl(refreshedSettings?.ixcConnection?.ixc_base_url ?? ixcBaseUrl)
       setIxcUser(refreshedSettings?.ixcConnection?.ixc_user ?? ixcUser)
+      settingsCache = {
+        expiresAt: Date.now() + SETTINGS_CACHE_TTL_MS,
+        settings: refreshedSettings,
+      }
       setSuccess(true)
       setIxcToken('')
       setTimeout(() => setSuccess(false), 4000)

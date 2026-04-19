@@ -2,14 +2,10 @@ import 'dotenv/config'
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import helmet from '@fastify/helmet'
-import jwt from '@fastify/jwt'
 import rateLimit from '@fastify/rate-limit'
 import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
 import { Redis } from 'ioredis'
-import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'fs'
-import { dirname } from 'path'
-import { generateKeyPairSync } from 'crypto'
 import { authRoutes } from './modules/auth/auth.routes.js'
 import { receivablesRoutes } from './modules/receivables/receivables.routes.js'
 import { contractsRoutes } from './modules/contracts/contracts.routes.js'
@@ -19,42 +15,7 @@ import { campaignRoutes } from './modules/campaign/campaign.routes.js'
 import { usersRoutes } from './modules/users/users.routes.js'
 import { AppError } from './lib/app-error.js'
 
-function ensureKeys(): { privateKey: string; publicKey: string } {
-  const privPath = process.env.JWT_PRIVATE_KEY_PATH ?? './keys/private.pem'
-  const pubPath = process.env.JWT_PUBLIC_KEY_PATH ?? './keys/public.pem'
-
-  if (!existsSync(privPath) || !existsSync(pubPath)) {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('JWT key files must be provisioned in production')
-    }
-
-    mkdirSync(dirname(privPath), { recursive: true })
-    mkdirSync(dirname(pubPath), { recursive: true })
-
-    const { privateKey, publicKey } = generateKeyPairSync('rsa', {
-      modulusLength: 2048,
-      privateKeyEncoding: {
-        type: 'pkcs1',
-        format: 'pem',
-      },
-      publicKeyEncoding: {
-        type: 'spki',
-        format: 'pem',
-      },
-    })
-
-    writeFileSync(privPath, privateKey, 'utf8')
-    writeFileSync(pubPath, publicKey, 'utf8')
-  }
-
-  return {
-    privateKey: readFileSync(privPath, 'utf8'),
-    publicKey: readFileSync(pubPath, 'utf8'),
-  }
-}
-
 export async function buildApp(redisClient?: Redis) {
-  const { privateKey, publicKey } = ensureKeys()
   const useRedisRateLimit = process.env.NODE_ENV === 'production'
   const isProduction = process.env.NODE_ENV === 'production'
 
@@ -147,14 +108,6 @@ export async function buildApp(redisClient?: Redis) {
     hsts: { maxAge: 31536000, includeSubDomains: true },
   })
 
-  await app.register(jwt, {
-    secret: {
-      private: privateKey,
-      public: publicKey,
-    },
-    sign: { algorithm: 'RS256' },
-  })
-
   const rateLimitOptions: Parameters<typeof rateLimit>[1] = {
     keyGenerator(request) {
       const tenantId = (request as unknown as { tenantId?: string }).tenantId
@@ -178,6 +131,16 @@ export async function buildApp(redisClient?: Redis) {
   await app.register(rateLimit, rateLimitOptions)
 
   app.decorate('redis', redis ?? null)
+
+  app.addHook('onRequest', (request, reply, done) => {
+    const contentType = request.headers['content-type']
+    if (typeof contentType === 'string' && contentType.includes('\t')) {
+      reply.status(400).send({ error: 'Invalid Content-Type header' })
+      return
+    }
+
+    done()
+  })
 
   app.setErrorHandler((error, _request, reply) => {
     const asAppErr = error as AppError

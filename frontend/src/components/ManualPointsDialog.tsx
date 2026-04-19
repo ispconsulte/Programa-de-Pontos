@@ -16,6 +16,13 @@ import { grantManualPoints } from '@/lib/loyalty-admin'
 import { fetchCurrentUserProfile } from '@/lib/user-management'
 import type { CampaignClientRow } from '@/lib/supabase-queries'
 import { Plus } from 'lucide-react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 export default function ManualPointsDialog({
   client,
@@ -28,7 +35,8 @@ export default function ManualPointsDialog({
 }) {
   const [open, setOpen] = useState(false)
   const [points, setPoints] = useState('5')
-  const [description, setDescription] = useState('Bonificação manual para validação operacional')
+  const [reason, setReason] = useState('')
+  const [adjustmentType, setAdjustmentType] = useState<'credit' | 'debit'>('credit')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -39,19 +47,30 @@ export default function ManualPointsDialog({
       setError('Informe uma quantidade válida de pontos.')
       return
     }
+    if (!reason.trim()) {
+      setError('Informe o motivo do ajuste manual.')
+      return
+    }
+    if (adjustmentType === 'debit' && parsedPoints > Number(client.pontos_disponiveis ?? 0)) {
+      setError('O débito manual não pode exceder o saldo disponível do cliente.')
+      return
+    }
 
     setSaving(true)
     setError('')
 
     try {
-      const profile = await fetchCurrentUserProfile()
+      await fetchCurrentUserProfile()
       await grantManualPoints({
         client,
         points: parsedPoints,
-        description: description.trim() || 'Bonificação manual',
-        actorName: profile.name || profile.email,
+        reason: reason.trim(),
+        adjustmentType,
       })
       await onCompleted?.()
+      setPoints('5')
+      setReason('')
+      setAdjustmentType('credit')
       setOpen(false)
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'Não foi possível adicionar os pontos.')
@@ -72,9 +91,9 @@ export default function ManualPointsDialog({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Injetar pontos no cliente</DialogTitle>
+          <DialogTitle>Ajustar pontos do cliente</DialogTitle>
           <DialogDescription>
-            Registre um crédito manual persistido para o cliente selecionado.
+            Registre um crédito ou débito manual com motivo obrigatório para o cliente selecionado.
           </DialogDescription>
         </DialogHeader>
 
@@ -84,6 +103,19 @@ export default function ManualPointsDialog({
           <div className="rounded-lg border border-border bg-muted/30 p-3 text-sm">
             <p className="font-medium text-foreground">{client?.nome_cliente ?? 'Cliente'}</p>
             <p className="text-muted-foreground">Saldo atual: {client?.pontos_disponiveis?.toLocaleString('pt-BR') ?? '--'} pts</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="manual-adjustment-type">Tipo de ajuste</Label>
+            <Select value={adjustmentType} onValueChange={(value: 'credit' | 'debit') => setAdjustmentType(value)}>
+              <SelectTrigger id="manual-adjustment-type">
+                <SelectValue placeholder="Selecione o tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="credit">Crédito manual</SelectItem>
+                <SelectItem value="debit">Débito manual</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
@@ -99,12 +131,12 @@ export default function ManualPointsDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="manual-description">Descrição</Label>
+            <Label htmlFor="manual-reason">Motivo</Label>
             <Input
-              id="manual-description"
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              placeholder="Motivo do crédito manual"
+              id="manual-reason"
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+              placeholder="Motivo obrigatório do ajuste manual"
             />
           </div>
         </div>
@@ -114,7 +146,7 @@ export default function ManualPointsDialog({
             Cancelar
           </Button>
           <Button type="button" onClick={() => void handleSubmit()} disabled={saving}>
-            {saving ? 'Salvando...' : 'Confirmar pontos'}
+            {saving ? 'Salvando...' : 'Confirmar ajuste'}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -143,6 +143,8 @@ function GiftCatalogDialog({
         stock: stockValue,
         imageUrl: form.imageUrl || null,
         active: form.active,
+        reason: isEditing ? 'Atualização do catálogo administrativo' : 'Criação do catálogo administrativo',
+        expectedUpdatedAt: reward?.updatedAt ?? null,
       }
 
       if (reward) {
@@ -363,7 +365,10 @@ export default function ClienteEmDiaBrindesPage() {
     if (!deleteTarget) return
     setDeleting(true)
     try {
-      await deleteRewardCatalogItem(deleteTarget.id)
+      await deleteRewardCatalogItem(deleteTarget.id, {
+        expectedUpdatedAt: deleteTarget.updatedAt,
+        reason: 'Exclusão solicitada pela interface administrativa',
+      })
       setFeedback({ type: 'success', message: `Brinde "${deleteTarget.nome}" excluído com sucesso.` })
       setDeleteTarget(null)
       await reload()

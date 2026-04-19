@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import logoPrincipal from '@/assets/logo-principal.png'
 
 /* ── Floating reward particles (enhanced) ── */
-function RewardParticles() {
+function RewardParticles({ prefersReducedMotion }: { prefersReducedMotion: boolean }) {
   const particles = useMemo(() =>
     Array.from({ length: 30 }, (_, i) => ({
       id: i,
@@ -42,7 +42,7 @@ function RewardParticles() {
             height: p.size,
             background: p.color,
             boxShadow: `0 0 ${p.size * 6}px ${p.color}`,
-            animation: `loginFloat ${p.duration}s ease-in-out ${p.delay}s infinite`,
+            animation: prefersReducedMotion ? 'none' : `loginFloat ${p.duration}s ease-in-out ${p.delay}s infinite`,
             '--drift-x': `${p.driftX}px`,
           } as React.CSSProperties}
         />
@@ -52,7 +52,7 @@ function RewardParticles() {
 }
 
 /* ── Animated aurora background ── */
-function AuroraBackground() {
+function AuroraBackground({ prefersReducedMotion }: { prefersReducedMotion: boolean }) {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
       {/* Aurora wave 1 */}
@@ -61,7 +61,7 @@ function AuroraBackground() {
         style={{
           background: 'linear-gradient(90deg, transparent 0%, hsl(217 91% 60%) 25%, hsl(45 90% 55%) 50%, hsl(160 60% 45%) 75%, transparent 100%)',
           filter: 'blur(80px)',
-          animation: 'auroraWave1 18s ease-in-out infinite',
+          animation: prefersReducedMotion ? 'none' : 'auroraWave1 18s ease-in-out infinite',
         }}
       />
       {/* Aurora wave 2 */}
@@ -70,7 +70,7 @@ function AuroraBackground() {
         style={{
           background: 'linear-gradient(90deg, transparent 0%, hsl(0 75% 55%) 20%, hsl(45 90% 55%) 50%, hsl(217 91% 60%) 80%, transparent 100%)',
           filter: 'blur(100px)',
-          animation: 'auroraWave2 22s ease-in-out 4s infinite',
+          animation: prefersReducedMotion ? 'none' : 'auroraWave2 22s ease-in-out 4s infinite',
         }}
       />
       {/* Coin shimmer lines */}
@@ -83,7 +83,7 @@ function AuroraBackground() {
             left: '-10%',
             width: '120%',
             background: `linear-gradient(90deg, transparent 0%, hsl(45 90% 55% / 0.4) ${30 + i * 10}%, transparent ${60 + i * 5}%)`,
-            animation: `shimmerLine ${8 + i * 3}s ease-in-out ${i * 2.5}s infinite`,
+            animation: prefersReducedMotion ? 'none' : `shimmerLine ${8 + i * 3}s ease-in-out ${i * 2.5}s infinite`,
           }}
         />
       ))}
@@ -101,11 +101,16 @@ const motivationalMessages = [
 ]
 
 
-function RotatingMessageCard({ mounted }: { mounted: boolean }) {
+function RotatingMessageCard({ mounted, prefersReducedMotion }: { mounted: boolean; prefersReducedMotion: boolean }) {
   const [index, setIndex] = useState(0)
   const [fade, setFade] = useState(true)
 
   useEffect(() => {
+    if (prefersReducedMotion) {
+      setFade(true)
+      return
+    }
+
     const interval = setInterval(() => {
       setFade(false)
       setTimeout(() => {
@@ -114,7 +119,7 @@ function RotatingMessageCard({ mounted }: { mounted: boolean }) {
       }, 400)
     }, 4000)
     return () => clearInterval(interval)
-  }, [])
+  }, [prefersReducedMotion])
 
   return (
     <div
@@ -146,9 +151,25 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [mounted, setMounted] = useState(false)
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
 
   useEffect(() => { setRegistered(searchParams.get('registered') === '1') }, [searchParams])
   useEffect(() => { const t = setTimeout(() => setMounted(true), 60); return () => clearTimeout(t) }, [])
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return
+
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const updatePreference = () => setPrefersReducedMotion(mediaQuery.matches)
+    updatePreference()
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', updatePreference)
+      return () => mediaQuery.removeEventListener('change', updatePreference)
+    }
+
+    mediaQuery.addListener(updatePreference)
+    return () => mediaQuery.removeListener(updatePreference)
+  }, [])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -180,11 +201,11 @@ export default function LoginPage() {
 
       {/* Ambient orbs */}
       <div className="pointer-events-none absolute -left-[10%] top-[5%] h-[500px] w-[500px] rounded-full opacity-25"
-        style={{ background: 'radial-gradient(circle, hsl(0 75% 50% / 0.08) 0%, transparent 60%)', animation: 'loginGlowDrift 20s ease-in-out infinite' }} />
+        style={{ background: 'radial-gradient(circle, hsl(0 75% 50% / 0.08) 0%, transparent 60%)', animation: prefersReducedMotion ? 'none' : 'loginGlowDrift 20s ease-in-out infinite' }} />
       <div className="pointer-events-none absolute -bottom-[10%] right-[5%] h-[450px] w-[450px] rounded-full opacity-20"
-        style={{ background: 'radial-gradient(circle, hsl(45 90% 55% / 0.06) 0%, transparent 55%)', animation: 'loginGlowDrift 26s ease-in-out 3s infinite reverse' }} />
+        style={{ background: 'radial-gradient(circle, hsl(45 90% 55% / 0.06) 0%, transparent 55%)', animation: prefersReducedMotion ? 'none' : 'loginGlowDrift 26s ease-in-out 3s infinite reverse' }} />
       <div className="pointer-events-none absolute left-[40%] top-[15%] h-[350px] w-[350px] rounded-full opacity-15"
-        style={{ background: 'radial-gradient(circle, hsl(217 91% 60% / 0.05) 0%, transparent 50%)', animation: 'loginGlowDrift 18s ease-in-out 6s infinite' }} />
+        style={{ background: 'radial-gradient(circle, hsl(217 91% 60% / 0.05) 0%, transparent 50%)', animation: prefersReducedMotion ? 'none' : 'loginGlowDrift 18s ease-in-out 6s infinite' }} />
 
       {/* Grid overlay */}
       <div className="pointer-events-none absolute inset-0 opacity-[0.015]"
@@ -192,8 +213,8 @@ export default function LoginPage() {
 
       {/* Top accent */}
       <div className="pointer-events-none absolute left-0 right-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/15 to-transparent" />
-      <AuroraBackground />
-      <RewardParticles />
+      <AuroraBackground prefersReducedMotion={prefersReducedMotion} />
+      <RewardParticles prefersReducedMotion={prefersReducedMotion} />
 
       {/* ── Main layout: 40/60 split ── */}
       <div className="relative z-10 flex min-h-[100dvh] w-full flex-col items-center justify-center px-4 py-6 sm:px-5 sm:py-8 md:flex-row md:items-center md:justify-center md:gap-0 md:px-0 md:py-0">
@@ -222,7 +243,7 @@ export default function LoginPage() {
               <div className="absolute inset-[-25%] rounded-full blur-3xl"
                 style={{
                   background: 'radial-gradient(circle, hsl(0 80% 50% / 0.12) 0%, hsl(45 90% 55% / 0.06) 40%, transparent 70%)',
-                  animation: 'loginHeroGlow 4s ease-in-out infinite',
+                  animation: prefersReducedMotion ? 'none' : 'loginHeroGlow 4s ease-in-out infinite',
                 }} />
               <div className="absolute -bottom-3 left-[20%] right-[20%] h-6 rounded-[50%] opacity-25 blur-xl"
                 style={{ background: 'radial-gradient(ellipse, hsl(0 0% 0% / 0.5), transparent 70%)' }} />
@@ -232,14 +253,14 @@ export default function LoginPage() {
                 className="relative w-[280px] object-contain lg:w-[340px] xl:w-[380px]"
                 style={{
                   filter: 'drop-shadow(0 16px 32px hsl(0 0% 0% / 0.35)) drop-shadow(0 0 20px hsl(0 75% 50% / 0.1))',
-                  animation: mounted ? 'loginHero3DFloat 6s ease-in-out infinite' : 'none',
+                  animation: mounted && !prefersReducedMotion ? 'loginHero3DFloat 6s ease-in-out infinite' : 'none',
                   transformStyle: 'preserve-3d',
                 }}
               />
             </div>
           </div>
 
-          <RotatingMessageCard mounted={mounted} />
+          <RotatingMessageCard mounted={mounted} prefersReducedMotion={prefersReducedMotion} />
         </div>
 
         {/* ── RIGHT: Login Form (60%) ── */}
@@ -256,7 +277,7 @@ export default function LoginPage() {
               <div className="absolute inset-[-25%] rounded-full blur-3xl"
                 style={{
                   background: 'radial-gradient(circle, hsl(0 80% 50% / 0.12) 0%, hsl(45 90% 55% / 0.06) 40%, transparent 70%)',
-                  animation: 'loginHeroGlow 4s ease-in-out infinite',
+                  animation: prefersReducedMotion ? 'none' : 'loginHeroGlow 4s ease-in-out infinite',
                 }} />
               <img
                 src={logoPrincipal}
@@ -264,7 +285,7 @@ export default function LoginPage() {
                 className="relative mx-auto w-[136px] object-contain sm:w-[160px]"
                 style={{
                   filter: 'drop-shadow(0 12px 24px hsl(0 0% 0% / 0.3))',
-                  animation: mounted ? 'loginHero3DFloat 6s ease-in-out infinite' : 'none',
+                  animation: mounted && !prefersReducedMotion ? 'loginHero3DFloat 6s ease-in-out infinite' : 'none',
                   transformStyle: 'preserve-3d',
                 }}
               />
@@ -371,7 +392,7 @@ export default function LoginPage() {
           </div>
 
           <div className="mt-6 w-full md:hidden">
-            <RotatingMessageCard mounted={mounted} />
+            <RotatingMessageCard mounted={mounted} prefersReducedMotion={prefersReducedMotion} />
           </div>
         </div>
       </div>

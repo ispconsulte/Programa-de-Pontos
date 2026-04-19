@@ -11,6 +11,7 @@ const publicSupabaseAnonKey =
   process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
   process.env.SUPABASE_ANON_KEY ||
   ''
+const devServerHost = process.env.VITE_DEV_HOST?.trim() || '0.0.0.0'
 
 function versionManifestPlugin() {
   const versionPayload = JSON.stringify({ version: appVersion }, null, 2)
@@ -39,11 +40,11 @@ export default defineConfig(({ mode }) => ({
   root: frontendRoot,
   envDir: path.resolve(frontendRoot, '..'),
   server: {
-    host: '0.0.0.0',
+    host: devServerHost,
     port: 8080,
   },
   preview: {
-    host: '0.0.0.0',
+    host: devServerHost,
     port: 8080,
   },
   plugins: [react(), versionManifestPlugin()],

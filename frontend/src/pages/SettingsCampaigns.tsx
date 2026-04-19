@@ -21,6 +21,9 @@ import {
 import { ArrowLeft, Megaphone, Plus, Save, Trash2, Zap } from 'lucide-react'
 import { friendlyError } from '@/lib/friendly-errors'
 
+const SETTINGS_CAMPAIGNS_CACHE_TTL_MS = 60_000
+const settingsCampaignsCache = new Map<string, { expiresAt: number; campaigns: CampaignRuleSettings[] }>()
+
 /* ── Points tier visual ── */
 function PointsTier({ tier, label, value }: { tier: number; label: string; value: number }) {
   const colors = [
@@ -51,29 +54,35 @@ export default function SettingsCampaignsPage() {
   const [settings, setSettings] = useState<CampaignRuleSettings | null>(null)
   const [campaigns, setCampaigns] = useState<CampaignRuleSettings[]>([])
 
-  const loadCampaigns = async (currentTenantId: string) => {
-    const loadedCampaigns = await fetchCampaignRuleSettingsList(currentTenantId)
-    setCampaigns(loadedCampaigns)
-
-    if (loadedCampaigns.length === 0) {
-      setSettings(createDefaultCampaignRuleSettings())
-      return
-    }
-
-    const activeCampaign = loadedCampaigns.find((campaign) => campaign.active) ?? loadedCampaigns[0]
-    setSettings(activeCampaign)
-  }
-
   useEffect(() => {
-    const load = async () => {
-      setLoading(true)
+    const load = async (force = false) => {
+      if (tenantId && !force) {
+        const cached = settingsCampaignsCache.get(tenantId)
+        if (cached && cached.expiresAt > Date.now()) {
+          setCampaigns(cached.campaigns)
+          setSettings(cached.campaigns.find((campaign) => campaign.active) ?? cached.campaigns[0] ?? createDefaultCampaignRuleSettings())
+          setError('')
+          setLoading(false)
+          return
+        }
+      }
+
+      if (!campaigns.length) {
+        setLoading(true)
+      }
       setError('')
       try {
         const currentTenantId = await getCurrentTenantId()
         if (!currentTenantId) { setError('Usuário sem tenant associado.'); return }
 
         setTenantId(currentTenantId)
-        await loadCampaigns(currentTenantId)
+        const loadedCampaigns = await fetchCampaignRuleSettingsList(currentTenantId)
+        settingsCampaignsCache.set(currentTenantId, {
+          expiresAt: Date.now() + SETTINGS_CAMPAIGNS_CACHE_TTL_MS,
+          campaigns: loadedCampaigns,
+        })
+        setCampaigns(loadedCampaigns)
+        setSettings(loadedCampaigns.find((campaign) => campaign.active) ?? loadedCampaigns[0] ?? createDefaultCampaignRuleSettings())
       } catch (err) {
         setError(friendlyError(err))
       } finally {
@@ -81,7 +90,7 @@ export default function SettingsCampaignsPage() {
       }
     }
     void load()
-  }, [])
+  }, [campaigns.length, tenantId])
 
   const updateField = <K extends keyof CampaignRuleSettings>(key: K, value: CampaignRuleSettings[K]) => {
     setSettings((prev) => (prev ? { ...prev, [key]: value } : prev))
@@ -126,6 +135,10 @@ export default function SettingsCampaignsPage() {
     try {
       await saveCampaignRuleSettings(tenantId, settings)
       const refreshedCampaigns = await fetchCampaignRuleSettingsList(tenantId)
+      settingsCampaignsCache.set(tenantId, {
+        expiresAt: Date.now() + SETTINGS_CAMPAIGNS_CACHE_TTL_MS,
+        campaigns: refreshedCampaigns,
+      })
       setCampaigns(refreshedCampaigns)
       const refreshed = refreshedCampaigns.find((campaign) => campaign.active)
         ?? refreshedCampaigns.find((campaign) => campaign.campaignName === (settings.campaignName.trim() || 'Campanha padrão'))
@@ -153,6 +166,10 @@ export default function SettingsCampaignsPage() {
     try {
       await deleteCampaignRuleSettings(tenantId, settings.campaignId)
       const refreshedCampaigns = await fetchCampaignRuleSettingsList(tenantId)
+      settingsCampaignsCache.set(tenantId, {
+        expiresAt: Date.now() + SETTINGS_CAMPAIGNS_CACHE_TTL_MS,
+        campaigns: refreshedCampaigns,
+      })
       setCampaigns(refreshedCampaigns)
       setSettings(refreshedCampaigns.find((campaign) => campaign.active) ?? refreshedCampaigns[0] ?? createDefaultCampaignRuleSettings())
       showTemporarySuccess('Campanha excluída com sucesso.')

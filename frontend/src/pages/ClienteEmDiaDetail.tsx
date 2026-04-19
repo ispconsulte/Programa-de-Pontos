@@ -291,6 +291,53 @@ export default function ClienteEmDiaDetailPage() {
             </CardContent>
           </Card>
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Histórico de ajustes manuais</CardTitle>
+            <CardDescription>
+              Créditos e débitos manuais com motivo, operador e saldo antes/depois.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <EmptyState title="Carregando ajustes" description="Buscando rastreabilidade dos ajustes manuais." />
+            ) : error ? (
+              <EmptyState title="Falha ao carregar dados" description={error} />
+            ) : !customerDetail || customerDetail.manualAdjustments.length === 0 ? (
+              <EmptyState title="Nenhum ajuste manual registrado" description="Quando houver crédito ou débito manual, ele aparecerá aqui." />
+            ) : (
+              <div className="space-y-3">
+                {customerDetail.manualAdjustments.map((item) => {
+                  const isDebit = item.adjustmentType === 'debit'
+                  return (
+                    <div key={item.id} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-foreground">{item.reason}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {isDebit ? 'Débito manual' : 'Crédito manual'} · {item.actorName}
+                          </p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Saldo: {item.previousBalance} pts → {item.newBalance} pts
+                          </p>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <p className={`text-sm font-semibold ${isDebit ? 'text-rose-400' : 'text-emerald-400'}`}>
+                            {isDebit ? '-' : '+'}{item.points} pts
+                          </p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {new Date(item.createdAt).toLocaleString('pt-BR')}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
         </div>
       </Layout>
     </ProtectedRoute>

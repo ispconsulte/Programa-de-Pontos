@@ -1,5 +1,5 @@
 import { authenticateRequest, assertAdmin } from './_lib/auth'
-import { sendJson, methodNotAllowed } from './_lib/http'
+import { sendException, sendJson, methodNotAllowed, sendInternalError } from './_lib/http'
 import { supabaseAdmin } from './_lib/supabase'
 
 export default async function handler(request: any, response: any) {
@@ -39,8 +39,6 @@ export default async function handler(request: any, response: any) {
       ixc_connections_count: activeConnection.data ? 1 : 0,
     })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Internal Server Error'
-    const status = message === 'Unauthorized' ? 401 : message === 'Forbidden' ? 403 : 500
-    return sendJson(response, status, { error: message })
+    return sendException(response, error)
   }
 }

@@ -6,15 +6,18 @@ const COOLDOWN_MS = 2000
  * Wraps an async action with loading state + cooldown to prevent spam clicks.
  * Returns `[wrappedFn, busy]` where `busy` is true while running or cooling down.
  */
-export function useThrottledAction(action: () => Promise<void>, cooldownMs = COOLDOWN_MS) {
+export function useThrottledAction<TArgs extends unknown[]>(
+  action: (...args: TArgs) => Promise<void>,
+  cooldownMs = COOLDOWN_MS,
+) {
   const [busy, setBusy] = useState(false)
   const cooldownRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const run = useCallback(async () => {
+  const run = useCallback(async (...args: TArgs) => {
     if (busy) return
     setBusy(true)
     try {
-      await action()
+      await action(...args)
     } finally {
       cooldownRef.current = setTimeout(() => {
         setBusy(false)

@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify'
+import crypto from 'node:crypto'
 import { z } from 'zod'
 import {
   getCampaignSummaryFromCustomer,
@@ -120,12 +121,17 @@ const catalogRewardSchema = z.object({
   stock: z.coerce.number().int().min(0).optional().nullable(),
   imageUrl: z.string().trim().optional().nullable(),
   active: z.boolean().optional(),
+  reason: z.string().trim().max(240).optional().nullable(),
+  expectedUpdatedAt: z.string().datetime().optional().nullable(),
+  idempotencyKey: z.string().trim().min(1).max(128).optional(),
 })
 
 const manualPointsSchema = z.object({
   clientId: z.string().uuid(),
   points: z.coerce.number().int().positive(),
-  description: z.string().trim().min(1).max(240),
+  reason: z.string().trim().min(1).max(240),
+  adjustmentType: z.enum(['credit', 'debit']),
+  idempotencyKey: z.string().trim().min(1).max(128).optional(),
 })
 
 const legacyRedemptionSchema = z.object({
@@ -134,8 +140,10 @@ const legacyRedemptionSchema = z.object({
   leadName: z.string().trim().min(1).max(160).optional(),
   leadPhone: z.string().trim().min(8).max(40).optional(),
   rewardId: z.string().uuid(),
+  quantity: z.coerce.number().int().positive().max(100).optional().default(1),
   responsible: z.string().trim().min(1).max(120),
   notes: z.string().trim().max(400).optional().nullable(),
+  idempotencyKey: z.string().trim().min(1).max(128).optional(),
 }).superRefine((value, ctx) => {
   if (value.isActiveCustomer) {
     if (!value.clientId) {
@@ -174,16 +182,59 @@ function getLegacyRedemptionErrorStatus(message: string): number {
     return 404
   }
 
+  if (message === 'Forbidden') {
+    return 403
+  }
+
   if (
     message === 'O cliente está inativo para resgates'
     || message === 'O cliente não possui pontos suficientes'
     || message === 'O brinde está inativo'
     || message === 'O brinde está sem estoque'
+    || message.includes('desatualizado')
   ) {
     return 409
   }
 
   return 500
+}
+
+function getMutationErrorStatus(message: string): number {
+  if (message === 'Resgate não encontrado' || message === 'Brinde não encontrado' || message === 'Cliente não encontrado') {
+    return 404
+  }
+
+  if (message === 'Forbidden') {
+    return 403
+  }
+
+  if (
+    message === 'Motivo é obrigatório'
+    || message === 'Ação de resgate inválida'
+    || message === 'Idempotency key é obrigatória'
+  ) {
+    return 400
+  }
+
+  if (
+    message === 'Transição de status inválida'
+    || message === 'O cliente não possui pontos suficientes'
+    || message === 'O brinde está sem estoque'
+    || message.includes('desatualizado')
+  ) {
+    return 409
+  }
+
+  return 500
+}
+
+function resolveIdempotencyKey(value: string | undefined, scope: string): string {
+  const trimmed = value?.trim()
+  if (trimmed) {
+    return trimmed
+  }
+
+  return `${scope}:${crypto.randomUUID()}`
 }
 
 export async function campaignRoutes(app: FastifyInstance) {
@@ -192,8 +243,14 @@ export async function campaignRoutes(app: FastifyInstance) {
     const requestPath = String(request.url ?? '').split('?')[0]
     const method = request.method.toUpperCase()
     const allowsOperatorAccess =
-      requestPath.endsWith('/legacy-redemptions') &&
-      (method === 'GET' || method === 'POST')
+      (
+        requestPath.endsWith('/legacy-redemptions') &&
+        (method === 'GET' || method === 'POST')
+      )
+      || (
+        requestPath.endsWith('/catalog') &&
+        method === 'GET'
+      )
 
     if (allowsOperatorAccess) {
       return
@@ -493,24 +550,34 @@ export async function campaignRoutes(app: FastifyInstance) {
       summary: 'Criar item no catálogo legado de brindes',
       security: [{ bearerAuth: [] }],
     },
+    config: {
+      rateLimit: {
+        max: 10,
+        timeWindow: '1 minute',
+      },
+    },
   }, async (request, reply) => {
     const body = catalogRewardSchema.parse(request.body)
 
     const insertResult = await supabaseAdmin
-      .from('pontuacao_catalogo_brindes')
-      .insert({
-        nome: body.name,
-        descricao: body.description?.trim() || null,
-        pontos_necessarios: body.requiredPoints,
-        estoque: body.stock ?? null,
-        imagem_url: body.imageUrl?.trim() || null,
-        ativo: body.active ?? true,
+      .rpc('catalog_item_secure_upsert', {
+        p_tenant_id: request.tenantId,
+        p_actor_user_id: request.userId,
+        p_id: null,
+        p_name: body.name.trim(),
+        p_description: body.description?.trim() || null,
+        p_required_points: body.requiredPoints,
+        p_stock: body.stock ?? null,
+        p_image_url: body.imageUrl?.trim() || null,
+        p_active: body.active ?? true,
+        p_expected_updated_at: body.expectedUpdatedAt ?? null,
+        p_reason: body.reason?.trim() || 'Criação do catálogo administrativo',
+        p_idempotency_key: resolveIdempotencyKey(body.idempotencyKey, 'catalog-create'),
       })
-      .select('*')
       .single()
 
     if (insertResult.error || !insertResult.data) {
-      throw new AppError(500, insertResult.error?.message ?? 'Não foi possível criar o brinde')
+      throw new AppError(getMutationErrorStatus(insertResult.error?.message ?? ''), insertResult.error?.message ?? 'Não foi possível criar o brinde')
     }
 
     return reply.status(201).send(insertResult.data)
@@ -525,7 +592,9 @@ export async function campaignRoutes(app: FastifyInstance) {
   }, async (request, reply) => {
     const query = supabaseAdmin
       .from('pontuacao_catalogo_brindes')
-      .select('*')
+      .select('id, nome, descricao, pontos_necessarios, estoque, imagem_url, ativo, created_at, updated_at')
+      .eq('tenant_id', request.tenantId)
+      .is('deleted_at', null)
       .order('ativo', { ascending: false })
       .order('pontos_necessarios', { ascending: true })
       .order('nome', { ascending: true })
@@ -546,21 +615,24 @@ export async function campaignRoutes(app: FastifyInstance) {
     const body = catalogRewardSchema.parse(request.body)
 
     const updateResult = await supabaseAdmin
-      .from('pontuacao_catalogo_brindes')
-      .update({
-        nome: body.name,
-        descricao: body.description?.trim() || null,
-        pontos_necessarios: body.requiredPoints,
-        estoque: body.stock ?? null,
-        imagem_url: body.imageUrl?.trim() || null,
-        ativo: body.active ?? true,
+      .rpc('catalog_item_secure_upsert', {
+        p_tenant_id: request.tenantId,
+        p_actor_user_id: request.userId,
+        p_id: id,
+        p_name: body.name.trim(),
+        p_description: body.description?.trim() || null,
+        p_required_points: body.requiredPoints,
+        p_stock: body.stock ?? null,
+        p_image_url: body.imageUrl?.trim() || null,
+        p_active: body.active ?? true,
+        p_expected_updated_at: body.expectedUpdatedAt ?? null,
+        p_reason: body.reason?.trim() || 'Atualização do catálogo administrativo',
+        p_idempotency_key: resolveIdempotencyKey(body.idempotencyKey, `catalog-update:${id}`),
       })
-      .eq('id', id)
-      .select('*')
       .single()
 
     if (updateResult.error || !updateResult.data) {
-      throw new AppError(500, updateResult.error?.message ?? 'Não foi possível atualizar o brinde')
+      throw new AppError(getMutationErrorStatus(updateResult.error?.message ?? ''), updateResult.error?.message ?? 'Não foi possível atualizar o brinde')
     }
 
     return reply.send(updateResult.data)
@@ -572,6 +644,12 @@ export async function campaignRoutes(app: FastifyInstance) {
       summary: 'Atualizar item no catálogo legado de brindes',
       security: [{ bearerAuth: [] }],
     },
+    config: {
+      rateLimit: {
+        max: 12,
+        timeWindow: '1 minute',
+      },
+    },
   }, updateCatalogHandler)
 
   app.put('/catalog/:id', {
@@ -579,6 +657,12 @@ export async function campaignRoutes(app: FastifyInstance) {
       tags: ['Campaign'],
       summary: 'Substituir/atualizar item no catálogo legado de brindes',
       security: [{ bearerAuth: [] }],
+    },
+    config: {
+      rateLimit: {
+        max: 12,
+        timeWindow: '1 minute',
+      },
     },
   }, updateCatalogHandler)
 
@@ -588,16 +672,32 @@ export async function campaignRoutes(app: FastifyInstance) {
       summary: 'Excluir item no catálogo legado de brindes',
       security: [{ bearerAuth: [] }],
     },
+    config: {
+      rateLimit: {
+        max: 8,
+        timeWindow: '1 minute',
+      },
+    },
   }, async (request, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params)
-
+    const body = z.object({
+      reason: z.string().trim().max(240).optional().nullable(),
+      expectedUpdatedAt: z.string().datetime().optional().nullable(),
+      idempotencyKey: z.string().trim().min(1).max(128).optional(),
+    }).parse(request.body ?? {})
     const deleteResult = await supabaseAdmin
-      .from('pontuacao_catalogo_brindes')
-      .delete()
-      .eq('id', id)
+      .rpc('catalog_item_secure_soft_delete', {
+        p_tenant_id: request.tenantId,
+        p_actor_user_id: request.userId,
+        p_id: id,
+        p_expected_updated_at: body.expectedUpdatedAt ?? null,
+        p_reason: body.reason?.trim() || 'Exclusão solicitada pela interface administrativa',
+        p_idempotency_key: resolveIdempotencyKey(body.idempotencyKey, `catalog-delete:${id}`),
+      })
+      .single()
 
     if (deleteResult.error) {
-      throw new AppError(500, deleteResult.error.message)
+      throw new AppError(getMutationErrorStatus(deleteResult.error.message), deleteResult.error.message)
     }
 
     return reply.status(204).send()
@@ -609,12 +709,28 @@ export async function campaignRoutes(app: FastifyInstance) {
       summary: 'Adicionar pontos manualmente a um cliente da campanha',
       security: [{ bearerAuth: [] }],
     },
+    config: {
+      rateLimit: {
+        max: 8,
+        timeWindow: '1 minute',
+      },
+    },
   }, async (request, reply) => {
     const body = manualPointsSchema.parse(request.body)
 
+    const actorResult = await supabaseAdmin
+      .from('users')
+      .select('id, email')
+      .eq('id', request.userId)
+      .maybeSingle()
+
+    if (actorResult.error || !actorResult.data) {
+      throw new AppError(404, actorResult.error?.message ?? 'Usuário autenticado não encontrado')
+    }
+
     const clientResult = await supabaseAdmin
       .from('pontuacao_campanha_clientes')
-      .select('id, tenant_id, ixc_cliente_id, pontos_acumulados, pontos_resgatados')
+      .select('id, tenant_id, ixc_cliente_id, nome_cliente, documento, pontos_acumulados, pontos_resgatados, pontos_disponiveis')
       .eq('tenant_id', request.tenantId)
       .eq('id', body.clientId)
       .single()
@@ -623,41 +739,39 @@ export async function campaignRoutes(app: FastifyInstance) {
       throw new AppError(404, clientResult.error?.message ?? 'Cliente não encontrado')
     }
 
-    const nextAccumulated = Number(clientResult.data.pontos_acumulados ?? 0) + body.points
+    const currentAccumulated = Number(clientResult.data.pontos_acumulados ?? 0)
     const nextRedeemed = Number(clientResult.data.pontos_resgatados ?? 0)
-    const timestamp = new Date().toISOString()
+    const currentAvailable = Number(clientResult.data.pontos_disponiveis ?? Math.max(0, currentAccumulated - nextRedeemed))
+    const delta = body.adjustmentType === 'debit' ? -body.points : body.points
+    const nextAccumulated = currentAccumulated + delta
 
-    const updateResult = await supabaseAdmin
-      .from('pontuacao_campanha_clientes')
-      .update({
-        pontos_acumulados: nextAccumulated,
-        ultima_sincronizacao_em: timestamp,
-      })
-      .eq('tenant_id', request.tenantId)
-      .eq('id', body.clientId)
-
-    if (updateResult.error) {
-      throw new AppError(500, updateResult.error.message)
+    if (nextAccumulated < nextRedeemed || currentAvailable + delta < 0) {
+      throw new AppError(409, 'O débito manual excede o saldo disponível do cliente')
     }
 
-    const historyResult = await supabaseAdmin
-      .from('pontuacao_historico')
-      .insert({
-        ixc_cliente_id: clientResult.data.ixc_cliente_id,
-        tipo_evento: 'ajuste_manual',
-        pontos: body.points,
-        descricao: body.description,
-        criado_por: request.userId,
+    const rpcResult = await supabaseAdmin
+      .rpc('apply_manual_points_adjustment', {
+        p_tenant_id: request.tenantId,
+        p_client_id: body.clientId,
+        p_actor_user_id: request.userId,
+        p_actor_name: String(actorResult.data.email ?? 'usuario'),
+      p_adjustment_type: body.adjustmentType,
+      p_points: body.points,
+      p_reason: body.reason,
+      p_customer_name_snapshot: String(clientResult.data.nome_cliente ?? 'Cliente'),
+      p_customer_document_snapshot: clientResult.data.documento ? String(clientResult.data.documento) : null,
+      p_idempotency_key: resolveIdempotencyKey(body.idempotencyKey, `manual-points:${body.clientId}`),
       })
+      .single()
 
-    if (historyResult.error) {
-      throw new AppError(500, historyResult.error.message)
+    if (rpcResult.error || !rpcResult.data) {
+      throw new AppError(getMutationErrorStatus(rpcResult.error?.message ?? ''), rpcResult.error?.message ?? 'Não foi possível registrar o ajuste manual')
     }
 
     return reply.status(201).send({
       clientId: body.clientId,
-      availablePoints: Math.max(0, nextAccumulated - nextRedeemed),
-      accumulatedPoints: nextAccumulated,
+      availablePoints: Number((rpcResult.data as any).new_balance ?? Math.max(0, nextAccumulated - nextRedeemed)),
+      accumulatedPoints: Number((rpcResult.data as any).accumulated_points ?? nextAccumulated),
     })
   })
 
@@ -666,6 +780,12 @@ export async function campaignRoutes(app: FastifyInstance) {
       tags: ['Campaign'],
       summary: 'Registrar resgate no fluxo legado de pontos',
       security: [{ bearerAuth: [] }],
+    },
+    config: {
+      rateLimit: {
+        max: 12,
+        timeWindow: '1 minute',
+      },
     },
   }, async (request, reply) => {
     const body = legacyRedemptionSchema.parse(request.body)
@@ -679,6 +799,9 @@ export async function campaignRoutes(app: FastifyInstance) {
         p_is_active_customer: body.isActiveCustomer ?? true,
         p_lead_name: body.isActiveCustomer ? null : body.leadName?.trim() || null,
         p_lead_phone: body.isActiveCustomer ? null : body.leadPhone?.trim() || null,
+        p_actor_user_id: request.userId,
+        p_quantity: body.quantity,
+        p_idempotency_key: resolveIdempotencyKey(body.idempotencyKey, `rescue-create:${body.rewardId}`),
       })
       .single()
 
@@ -707,7 +830,9 @@ export async function campaignRoutes(app: FastifyInstance) {
 
     let selectQuery = supabaseAdmin
       .from('pontuacao_resgates')
-      .select('*')
+      .select('id, tenant_id, ixc_cliente_id, contato_id, brinde_id, brinde_nome, pontos_utilizados, quantity, status_resgate, data_entrega, responsavel_entrega, observacoes, confirmacao_cliente, tipo_destinatario, destinatario_nome, destinatario_telefone, created_at, updated_at')
+      .eq('tenant_id', request.tenantId)
+      .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .limit(query.limit)
 
@@ -759,5 +884,113 @@ export async function campaignRoutes(app: FastifyInstance) {
           || null,
       })),
     })
+  })
+
+  app.patch('/legacy-redemptions/:id', {
+    schema: {
+      tags: ['Campaign'],
+      summary: 'Atualizar status/observações de um resgate legado',
+      security: [{ bearerAuth: [] }],
+    },
+    config: {
+      rateLimit: {
+        max: 12,
+        timeWindow: '1 minute',
+      },
+    },
+  }, async (request, reply) => {
+    await requireAdmin(request, reply)
+
+    const { id } = z.object({ id: z.string().uuid() }).parse(request.params)
+    const body = z.object({
+      status: z.enum(['pendente', 'entregue', 'cancelado']).optional(),
+      responsible: z.string().trim().min(1).max(120).optional(),
+      notes: z.string().trim().max(400).nullable().optional(),
+      reason: z.string().trim().max(240).optional().nullable(),
+      expectedUpdatedAt: z.string().datetime().optional().nullable(),
+      idempotencyKey: z.string().trim().min(1).max(128).optional(),
+    }).parse(request.body)
+
+    const current = await supabaseAdmin
+      .from('pontuacao_resgates')
+      .select('id, tenant_id, ixc_cliente_id, contato_id, brinde_id, brinde_nome, pontos_utilizados, quantity, status_resgate, data_entrega, responsavel_entrega, observacoes, confirmacao_cliente, tipo_destinatario, destinatario_nome, destinatario_telefone, created_at, updated_at')
+      .eq('tenant_id', request.tenantId)
+      .is('deleted_at', null)
+      .eq('id', id)
+      .maybeSingle()
+
+    if (current.error || !current.data) {
+      throw new AppError(404, current.error?.message ?? 'Resgate não encontrado')
+    }
+
+    const currentRow = current.data as any
+    const nextStatus = body.status ?? currentRow.status_resgate
+    const action = nextStatus === 'cancelado'
+      ? 'cancel'
+      : nextStatus === 'entregue' && currentRow.status_resgate !== 'entregue'
+        ? 'confirm'
+        : 'edit'
+
+    const updateResult = await supabaseAdmin
+      .rpc('mutate_legacy_redemption', {
+        p_tenant_id: request.tenantId,
+        p_redemption_id: id,
+        p_actor_user_id: request.userId,
+        p_action: action,
+        p_responsible: body.responsible?.trim() ?? null,
+        p_notes: body.notes === undefined ? null : body.notes?.trim() || null,
+        p_reason: body.reason?.trim() || (action === 'cancel' ? 'Cancelamento solicitado pela interface administrativa' : 'Atualização administrativa do resgate'),
+        p_expected_updated_at: body.expectedUpdatedAt ?? null,
+        p_idempotency_key: resolveIdempotencyKey(body.idempotencyKey, `rescue-${action}:${id}`),
+      })
+      .single()
+
+    if (updateResult.error || !updateResult.data) {
+      throw new AppError(getMutationErrorStatus(updateResult.error?.message ?? ''), updateResult.error?.message ?? 'Não foi possível atualizar o resgate')
+    }
+
+    return reply.send(updateResult.data)
+  })
+
+  app.delete('/legacy-redemptions/:id', {
+    schema: {
+      tags: ['Campaign'],
+      summary: 'Excluir um resgate legado',
+      security: [{ bearerAuth: [] }],
+    },
+    config: {
+      rateLimit: {
+        max: 8,
+        timeWindow: '1 minute',
+      },
+    },
+  }, async (request, reply) => {
+    await requireAdmin(request, reply)
+
+    const { id } = z.object({ id: z.string().uuid() }).parse(request.params)
+    const body = z.object({
+      reason: z.string().trim().max(240).optional().nullable(),
+      expectedUpdatedAt: z.string().datetime().optional().nullable(),
+      idempotencyKey: z.string().trim().min(1).max(128).optional(),
+    }).parse(request.body ?? {})
+    const deleteResult = await supabaseAdmin
+      .rpc('mutate_legacy_redemption', {
+        p_tenant_id: request.tenantId,
+        p_redemption_id: id,
+        p_actor_user_id: request.userId,
+        p_action: 'delete',
+        p_responsible: null,
+        p_notes: null,
+        p_reason: body.reason?.trim() || 'Exclusão solicitada pela interface administrativa',
+        p_expected_updated_at: body.expectedUpdatedAt ?? null,
+        p_idempotency_key: resolveIdempotencyKey(body.idempotencyKey, `rescue-delete:${id}`),
+      })
+      .single()
+
+    if (deleteResult.error) {
+      throw new AppError(getMutationErrorStatus(deleteResult.error.message), deleteResult.error.message)
+    }
+
+    return reply.status(204).send()
   })
 }

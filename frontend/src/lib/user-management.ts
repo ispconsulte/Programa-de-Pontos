@@ -44,6 +44,18 @@ export function isAdminUiRole(role: string | null | undefined): boolean {
   return ['admin', 'owner', 'manager'].includes(String(role ?? '').toLowerCase())
 }
 
+function isAuthStateError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message.toLowerCase() : String(error ?? '').toLowerCase()
+  return (
+    message.includes('unauthorized') ||
+    message.includes('forbidden') ||
+    message.includes('session') ||
+    message.includes('user disabled') ||
+    message.includes('login novamente') ||
+    message.includes('sessão')
+  )
+}
+
 function isCurrentUserProfile(value: unknown): value is CurrentUserProfile {
   if (!value || typeof value !== 'object') return false
 
@@ -157,6 +169,10 @@ export async function fetchCurrentUserProfile(options?: { force?: boolean }): Pr
         return profile
       })
       .catch(async (backendErr) => {
+        if (isAuthStateError(backendErr)) {
+          throw backendErr
+        }
+
         const profile = await fetchCurrentUserProfileFromSupabase()
         currentUserProfileCache = profile
         return profile

@@ -1,5 +1,5 @@
 import { authenticateRequest, assertAdmin } from '../_lib/auth'
-import { methodNotAllowed, sendJson } from '../_lib/http'
+import { methodNotAllowed, sendException, sendJson, sendInternalError } from '../_lib/http'
 import { normalizeDisplayName, supabaseAdmin } from '../_lib/supabase'
 
 async function listAllAuthUsers() {
@@ -45,7 +45,7 @@ export default async function handler(request: any, response: any) {
     const authUsers = await listAllAuthUsers()
 
     if (tenantUsers.error || authUsers.error) {
-      return sendJson(response, 500, { error: tenantUsers.error?.message ?? authUsers.error?.message ?? 'Falha ao listar usuários' })
+      return sendInternalError(response)
     }
 
     const authUsersById = new Map((authUsers.data.users ?? []).map((user) => [user.id, user]))
@@ -68,8 +68,6 @@ export default async function handler(request: any, response: any) {
       }),
     })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Internal Server Error'
-    const status = message === 'Unauthorized' ? 401 : message === 'Forbidden' ? 403 : 500
-    return sendJson(response, status, { error: message })
+    return sendException(response, error)
   }
 }

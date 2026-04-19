@@ -23,6 +23,6 @@ export async function writeAuditLog(entry: AuditLogEntry): Promise<void> {
 
   if (error) {
     // Audit failure should never crash core flows
-    console.error('Failed to write audit log:', error.message)
+    console.error('Failed to write audit log')
   }
 }

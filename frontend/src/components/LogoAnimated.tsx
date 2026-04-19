@@ -8,11 +8,28 @@ interface LogoAnimatedProps {
 
 export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnimatedProps) {
   const [loaded, setLoaded] = useState(false)
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
   const compact = size < 180
 
   useEffect(() => {
     const t = setTimeout(() => setLoaded(true), 120)
     return () => clearTimeout(t)
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return
+
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const updatePreference = () => setPrefersReducedMotion(mediaQuery.matches)
+    updatePreference()
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', updatePreference)
+      return () => mediaQuery.removeEventListener('change', updatePreference)
+    }
+
+    mediaQuery.addListener(updatePreference)
+    return () => mediaQuery.removeListener(updatePreference)
   }, [])
 
   const arcRadius = size * 0.45
@@ -33,7 +50,7 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
           background: 'radial-gradient(circle, hsl(var(--primary) / 0.12) 0%, hsl(var(--primary) / 0.03) 50%, transparent 75%)',
           opacity: loaded ? 1 : 0,
           transform: loaded ? 'scale(1)' : 'scale(0.7)',
-          animation: loaded ? 'rewardCorePulse 4s ease-in-out infinite' : 'none',
+          animation: loaded && !prefersReducedMotion ? 'rewardCorePulse 4s ease-in-out infinite' : 'none',
         }}
       />
 
@@ -73,7 +90,7 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
             strokeDasharray={`${outerR * 0.8} ${outerR * 0.4}`}
             style={{
               transformOrigin: 'center',
-              animation: loaded ? 'rewardOrbit 40s linear infinite' : 'none',
+              animation: loaded && !prefersReducedMotion ? 'rewardOrbit 40s linear infinite' : 'none',
             }}
           />
 
@@ -88,7 +105,7 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
             strokeDasharray="4 12"
             style={{
               transformOrigin: 'center',
-              animation: loaded ? 'rewardOrbitCounter 50s linear infinite' : 'none',
+              animation: loaded && !prefersReducedMotion ? 'rewardOrbitCounter 50s linear infinite' : 'none',
             }}
           />
 
@@ -114,9 +131,9 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
             strokeDasharray={arcCircumference}
             strokeDashoffset={loaded ? arcCircumference * 0.28 : arcCircumference}
             style={{
-              transition: 'stroke-dashoffset 2s cubic-bezier(0.16, 1, 0.3, 1) 0.5s',
               transformOrigin: 'center',
               transform: 'rotate(-90deg)',
+              transition: prefersReducedMotion ? 'none' : 'stroke-dashoffset 2s cubic-bezier(0.16, 1, 0.3, 1) 0.5s',
             }}
           />
         </svg>
@@ -136,7 +153,7 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
             transform: `rotate(${angle}deg)`,
             background: `linear-gradient(to bottom, hsl(var(--primary) / ${0.12 - i * 0.01}), transparent)`,
             opacity: loaded ? 1 : 0,
-            animation: loaded ? `rewardSparkle ${3 + i * 0.5}s ease-in-out ${i * 0.4}s infinite` : 'none',
+            animation: loaded && !prefersReducedMotion ? `rewardSparkle ${3 + i * 0.5}s ease-in-out ${i * 0.4}s infinite` : 'none',
           }}
         />
       ))}
@@ -163,7 +180,7 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
                   : 'hsl(160 70% 48%)',
               opacity: loaded ? 0.5 : 0,
               boxShadow: '0 0 6px currentColor',
-              animation: loaded
+              animation: loaded && !prefersReducedMotion
                 ? `rewardSparkle ${2.5 + i * 0.35}s ease-in-out ${i * 0.25}s infinite`
                 : 'none',
             }}
@@ -178,7 +195,7 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
           inset: compact ? size * 0.28 : size * 0.24,
           background: 'radial-gradient(circle, hsl(var(--primary) / 0.1) 0%, transparent 70%)',
           opacity: loaded ? 1 : 0,
-          animation: loaded ? 'rewardCorePulse 3.5s ease-in-out 0.5s infinite' : 'none',
+          animation: loaded && !prefersReducedMotion ? 'rewardCorePulse 3.5s ease-in-out 0.5s infinite' : 'none',
         }}
       />
 
@@ -190,7 +207,7 @@ export default function LogoAnimated({ src, alt = 'Logo', size = 320 }: LogoAnim
           height: compact ? size * 0.52 : size * 0.55,
           opacity: loaded ? 1 : 0,
           transform: loaded ? 'scale(1) translateY(0)' : 'scale(0.8) translateY(12px)',
-          animation: loaded ? 'rewardCoreFloat 5s ease-in-out infinite' : 'none',
+          animation: loaded && !prefersReducedMotion ? 'rewardCoreFloat 5s ease-in-out infinite' : 'none',
         }}
       >
         <img

@@ -118,6 +118,19 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'points_asc', label: 'Menor pontuação' },
 ]
 
+const RECEIVABLES_CACHE_TTL_MS = 60_000
+
+interface ReceivablesCacheEntry {
+  expiresAt: number
+  receivables: Receivable[]
+  total: number
+  totalPages: number
+  clientNameMap: Map<string, string>
+  summary: ReceivablesSummary
+}
+
+const receivablesCache = new Map<string, ReceivablesCacheEntry>()
+
 function toComparableDate(value?: string | null) {
   if (!value || value === '0000-00-00' || value === '0000-00-00 00:00:00') return 0
   const date = new Date(value.includes('T') ? value : `${value}T00:00:00`)
@@ -172,8 +185,28 @@ export default function ReceivablesPage() {
     totalPoints: 0,
   })
 
-  const fetchReceivablesData = useCallback(async () => {
-    setLoading(true)
+  const fetchReceivablesData = useCallback(async (force = false) => {
+    const cacheKey = JSON.stringify({
+      page,
+      limit,
+      appliedFilters,
+      search: search.trim(),
+    })
+    const cached = receivablesCache.get(cacheKey)
+    if (!force && cached && cached.expiresAt > Date.now()) {
+      setReceivables(cached.receivables)
+      setTotal(cached.total)
+      setTotalPages(cached.totalPages)
+      setClientNameMap(cached.clientNameMap)
+      setSummary(cached.summary)
+      setError('')
+      setLoading(false)
+      return
+    }
+
+    if (!receivables.length) {
+      setLoading(true)
+    }
     setError('')
     try {
       const tenantId = await getCurrentTenantId()
@@ -211,13 +244,30 @@ export default function ReceivablesPage() {
       setClientNameMap(nameMap)
       setSummary(summaryResult)
 
-      setReceivables(result.data.map(r => toShape(r, nameMap)))
+      const nextReceivables = result.data.map(r => toShape(r, nameMap))
+      setReceivables(nextReceivables)
       if (isSearchMode) {
         setTotal(result.data.length)
         setTotalPages(Math.max(1, Math.ceil(result.data.length / limit)))
+        receivablesCache.set(cacheKey, {
+          expiresAt: Date.now() + RECEIVABLES_CACHE_TTL_MS,
+          receivables: nextReceivables,
+          total: result.data.length,
+          totalPages: Math.max(1, Math.ceil(result.data.length / limit)),
+          clientNameMap: nameMap,
+          summary: summaryResult,
+        })
       } else {
         setTotal(result.total)
         setTotalPages(result.totalPages)
+        receivablesCache.set(cacheKey, {
+          expiresAt: Date.now() + RECEIVABLES_CACHE_TTL_MS,
+          receivables: nextReceivables,
+          total: result.total,
+          totalPages: result.totalPages,
+          clientNameMap: nameMap,
+          summary: summaryResult,
+        })
       }
     } catch (err) {
       setError(friendlyError(err))
@@ -225,7 +275,7 @@ export default function ReceivablesPage() {
     } finally {
       setLoading(false)
     }
-  }, [page, limit, appliedFilters, search])
+  }, [page, limit, appliedFilters, search, receivables.length])
 
   const [throttledFetch, refreshBusy] = useThrottledAction(fetchReceivablesData)
 
@@ -372,7 +422,7 @@ export default function ReceivablesPage() {
                     </Button>
                   </div>
                   <div>
-                    <Button variant="outline" size="icon" className="min-h-[2.75rem] min-w-[2.75rem]" disabled={refreshBusy} onClick={() => void throttledFetch()}>
+                    <Button variant="outline" size="icon" className="min-h-[2.75rem] min-w-[2.75rem]" disabled={refreshBusy} onClick={() => void throttledFetch(true)}>
                       <RefreshCw className={`h-3.5 w-3.5 transition-transform ${refreshBusy ? 'animate-spin' : ''}`} />
                     </Button>
                   </div>
@@ -391,7 +441,7 @@ export default function ReceivablesPage() {
                     <ShieldAlert className="h-4 w-4 flex-shrink-0 text-destructive" />
                     <p className="text-sm text-foreground">{error}</p>
                   </div>
-                  <Button variant="outline" size="sm" className="mt-3" onClick={() => void fetchReceivablesData()}>Tentar novamente</Button>
+                  <Button variant="outline" size="sm" className="mt-3" onClick={() => void fetchReceivablesData(true)}>Tentar novamente</Button>
                 </div>
               ) : receivables.length === 0 ? (
                 <div className="py-16 text-center">

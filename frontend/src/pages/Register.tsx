@@ -36,12 +36,10 @@ export default function RegisterPage() {
       const { data, error: signUpError } = await supabase.auth.signUp({ email, password })
       if (signUpError) {
         const msg = signUpError.message?.toLowerCase() ?? ''
-        if (msg.includes('already') || msg.includes('duplicate')) {
-          setError('Este e-mail já está cadastrado. Tente fazer login.')
-        } else if (msg.includes('password') && msg.includes('short')) {
+        if (msg.includes('password') && msg.includes('short')) {
           setError('A senha precisa ter no mínimo 8 caracteres.')
         } else {
-          setError('Não foi possível criar a conta. Tente novamente.')
+          setError('Não foi possível concluir o cadastro com os dados informados.')
         }
         return
       }
