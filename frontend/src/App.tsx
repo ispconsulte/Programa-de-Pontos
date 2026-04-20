@@ -22,6 +22,7 @@ import NotFound from './pages/NotFound'
 import AppErrorBoundary from './components/AppErrorBoundary'
 import NavigationEventBridge from './components/NavigationEventBridge'
 import VersionUpdateNotifier from './components/VersionUpdateNotifier'
+import { TooltipProvider } from './components/ui/tooltip'
 import { shouldUseHashRouter } from './lib/router'
 
 function App() {
