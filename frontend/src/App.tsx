@@ -30,41 +30,43 @@ function App() {
 
   return (
     <AppErrorBoundary>
-      <Router>
-        <NavigationEventBridge />
-        <VersionUpdateNotifier />
-        <Routes>
-          <Route path="/" element={<RootPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          
-          <Route path="/portal" element={<PortalAccessPage />} />
-          <Route path="/portal/meus-pontos" element={<PortalPointsPage />} />
-          <Route path="/operacao" element={<DashboardPage />} />
-          <Route path="/dashboard" element={<Navigate to="/operacao" replace />} />
-          <Route path="/clients" element={<Navigate to="/operacao" replace />} />
-          <Route path="/clients/:id" element={<ClientDetailPage />} />
-          <Route path="/catalogo" element={<ClienteEmDiaBrindesPage />} />
-          <Route path="/cliente-em-dia" element={<Navigate to="/operacao" replace />} />
-          <Route path="/cliente-em-dia/brindes" element={<Navigate to="/catalogo" replace />} />
-          <Route path="/cliente-em-dia/cadastrar" element={<ClienteEmDiaCadastrarPage />} />
-          <Route path="/cliente-em-dia/configuracoes" element={<Navigate to="/admin/campanhas" replace />} />
-          <Route path="/cliente-em-dia/resgates" element={<Navigate to="/resgates" replace />} />
-          <Route path="/cliente-em-dia/:ixc_cliente_id" element={<ClienteEmDiaDetailPage />} />
-          <Route path="/receivables" element={<ReceivablesPage />} />
-          <Route path="/receivables/:id" element={<ReceivableDetailPage />} />
-          <Route path="/resgates" element={<ResgatesPage />} />
-          <Route path="/admin/empresa" element={<SettingsPage />} />
-          <Route path="/admin/campanhas" element={<SettingsCampaignsPage />} />
-          <Route path="/admin/usuarios" element={<SettingsUsersPage />} />
-          <Route path="/settings" element={<Navigate to="/admin/empresa" replace />} />
-          <Route path="/settings/campaigns" element={<Navigate to="/admin/campanhas" replace />} />
-          <Route path="/settings/users" element={<Navigate to="/admin/usuarios" replace />} />
-          <Route path="/admin" element={<Navigate to="/admin/empresa" replace />} />
-          <Route path="/suporte" element={<SuportePage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Router>
+      <TooltipProvider delayDuration={150}>
+        <Router>
+          <NavigationEventBridge />
+          <VersionUpdateNotifier />
+          <Routes>
+            <Route path="/" element={<RootPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            
+            <Route path="/portal" element={<PortalAccessPage />} />
+            <Route path="/portal/meus-pontos" element={<PortalPointsPage />} />
+            <Route path="/operacao" element={<DashboardPage />} />
+            <Route path="/dashboard" element={<Navigate to="/operacao" replace />} />
+            <Route path="/clients" element={<Navigate to="/operacao" replace />} />
+            <Route path="/clients/:id" element={<ClientDetailPage />} />
+            <Route path="/catalogo" element={<ClienteEmDiaBrindesPage />} />
+            <Route path="/cliente-em-dia" element={<Navigate to="/operacao" replace />} />
+            <Route path="/cliente-em-dia/brindes" element={<Navigate to="/catalogo" replace />} />
+            <Route path="/cliente-em-dia/cadastrar" element={<ClienteEmDiaCadastrarPage />} />
+            <Route path="/cliente-em-dia/configuracoes" element={<Navigate to="/admin/campanhas" replace />} />
+            <Route path="/cliente-em-dia/resgates" element={<Navigate to="/resgates" replace />} />
+            <Route path="/cliente-em-dia/:ixc_cliente_id" element={<ClienteEmDiaDetailPage />} />
+            <Route path="/receivables" element={<ReceivablesPage />} />
+            <Route path="/receivables/:id" element={<ReceivableDetailPage />} />
+            <Route path="/resgates" element={<ResgatesPage />} />
+            <Route path="/admin/empresa" element={<SettingsPage />} />
+            <Route path="/admin/campanhas" element={<SettingsCampaignsPage />} />
+            <Route path="/admin/usuarios" element={<SettingsUsersPage />} />
+            <Route path="/settings" element={<Navigate to="/admin/empresa" replace />} />
+            <Route path="/settings/campaigns" element={<Navigate to="/admin/campanhas" replace />} />
+            <Route path="/settings/users" element={<Navigate to="/admin/usuarios" replace />} />
+            <Route path="/admin" element={<Navigate to="/admin/empresa" replace />} />
+            <Route path="/suporte" element={<SuportePage />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Router>
+      </TooltipProvider>
     </AppErrorBoundary>
   )
 }
