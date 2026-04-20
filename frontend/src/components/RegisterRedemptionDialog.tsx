@@ -28,6 +28,7 @@ import {
   type RewardRedemptionResult,
 } from '@/lib/loyalty-admin'
 import Spinner from '@/components/Spinner'
+import { createButtonGuard } from '@/utils/antiFlood'
 
 interface RegisterRedemptionDialogProps {
   trigger: ReactNode
@@ -88,6 +89,10 @@ export default function RegisterRedemptionDialog({
   const [success, setSuccess] = useState<RewardRedemptionResult | null>(null)
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const searchInFlightRef = useRef(false)
+  const mountedRef = useRef(true)
+  const loadGiftsGuardRef = useRef(createButtonGuard('redemption-load-gifts'))
+  const confirmGuardRef = useRef(createButtonGuard('redemption-confirm'))
 
   const selectedGift = useMemo(
     () => gifts.find((gift) => gift.id === selectedGiftId) ?? null,
@@ -138,10 +143,19 @@ export default function RegisterRedemptionDialog({
   const isDirty = JSON.stringify(currentFormState) !== JSON.stringify(initialFormState)
 
   useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current)
+    }
+  }, [])
+
+  useEffect(() => {
     if (!open) return
     let mounted = true
 
     const loadGifts = async () => {
+      if (!loadGiftsGuardRef.current.canExecute()) return
       setGiftsLoading(true)
       try {
         const data = await fetchRewardCatalogItems()
@@ -159,6 +173,7 @@ export default function RegisterRedemptionDialog({
         setGifts([])
       } finally {
         if (mounted) setGiftsLoading(false)
+        loadGiftsGuardRef.current.reset()
       }
     }
 
@@ -206,17 +221,21 @@ export default function RegisterRedemptionDialog({
       setSuggestions([])
       return
     }
+    if (searchInFlightRef.current) return
 
+    searchInFlightRef.current = true
     setSearchLoading(true)
     try {
       const tenantId = await getCurrentTenantId()
       if (!tenantId) return
       const results = await autocompleteCampaignClients({ tenantId, query: trimmed })
+      if (!mountedRef.current) return
       setSuggestions(results)
     } catch {
-      setSuggestions([])
+      if (mountedRef.current) setSuggestions([])
     } finally {
-      setSearchLoading(false)
+      searchInFlightRef.current = false
+      if (mountedRef.current) setSearchLoading(false)
     }
   }, [])
 
@@ -228,7 +247,7 @@ export default function RegisterRedemptionDialog({
     }
     searchTimerRef.current = setTimeout(() => {
       void searchCustomers(value)
-    }, 250)
+    }, 400)
   }, [searchCustomers])
 
   const requestClose = () => {
@@ -247,6 +266,7 @@ export default function RegisterRedemptionDialog({
 
   const handleConfirm = async () => {
     if (!canConfirm || !selectedGift) return
+    if (submitting || !confirmGuardRef.current.canExecute()) return
 
     setSubmitting(true)
     setSubmitError('')
@@ -279,6 +299,7 @@ export default function RegisterRedemptionDialog({
       setSubmitError(error instanceof Error ? error.message : 'Não foi possível registrar o resgate.')
     } finally {
       setSubmitting(false)
+      confirmGuardRef.current.reset()
     }
   }
 

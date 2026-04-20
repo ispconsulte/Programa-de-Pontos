@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import PageHeader from '@/components/PageHeader'
@@ -32,6 +32,7 @@ import {
 } from '@/lib/user-management'
 import { Edit3, KeyRound, LogOut, Shield, Trash2, UserCog, UserPlus, Users } from 'lucide-react'
 import { friendlyError } from '@/lib/friendly-errors'
+import { createButtonGuard } from '@/utils/antiFlood'
 
 const SETTINGS_USERS_CACHE_TTL_MS = 60_000
 let settingsUsersCache: {
@@ -135,8 +136,8 @@ function UserCard({
           Editar
         </Button>
         <Button variant="outline" size="sm" className="flex-1 text-xs" disabled={busy} onClick={onDisconnect}>
-          <LogOut className="h-3 w-3" />
-          Revogar
+          {busy ? <Spinner size="sm" /> : <LogOut className="h-3 w-3" />}
+          {busy ? 'Aguarde...' : 'Revogar'}
         </Button>
         <Button
           variant="outline"
@@ -145,7 +146,7 @@ function UserCard({
           disabled={busy || user.is_current_user}
           onClick={onDelete}
         >
-          <Trash2 className="h-3 w-3" />
+          {busy ? <Spinner size="sm" /> : <Trash2 className="h-3 w-3" />}
         </Button>
       </div>
     </div>
@@ -167,6 +168,8 @@ export default function SettingsUsersPage() {
   const [form, setForm] = useState<UserFormState>(initialFormState)
   const [showPassword, setShowPassword] = useState(false)
   const [copyFeedback, setCopyFeedback] = useState('')
+  const submitGuardRef = useRef(createButtonGuard('settings-users-submit'))
+  const actionGuardsRef = useRef(new Map<string, ReturnType<typeof createButtonGuard>>())
 
   const summary = useMemo(() => {
     const admins = users.filter((u) => isAdminUiRole(u.role)).length
@@ -278,6 +281,7 @@ export default function SettingsUsersPage() {
       setError('A nova senha precisa ter no mínimo 8 caracteres.')
       return
     }
+    if (saving || !submitGuardRef.current.canExecute()) return
 
     setSaving(true)
     setError('')
@@ -309,10 +313,16 @@ export default function SettingsUsersPage() {
       setError(friendlyError(submitError))
     } finally {
       setSaving(false)
+      submitGuardRef.current.reset()
     }
   }
 
   async function handleDisconnect(user: ManagedUser) {
+    const buttonId = `settings-users-disconnect:${user.id}`
+    const guard = actionGuardsRef.current.get(buttonId) ?? createButtonGuard(buttonId, { userId: currentUser?.id })
+    actionGuardsRef.current.set(buttonId, guard)
+    if (busyUserId || !guard.canExecute()) return
+
     setBusyUserId(user.id)
     setError('')
     setSuccess('')
@@ -325,11 +335,16 @@ export default function SettingsUsersPage() {
       setError(friendlyError(actionError))
     } finally {
       setBusyUserId(null)
+      guard.reset()
     }
   }
 
   async function handleDelete(user: ManagedUser) {
     if (!window.confirm(`Excluir o usuário ${user.email}? Esta ação não pode ser desfeita.`)) return
+    const buttonId = `settings-users-delete:${user.id}`
+    const guard = actionGuardsRef.current.get(buttonId) ?? createButtonGuard(buttonId, { userId: currentUser?.id })
+    actionGuardsRef.current.set(buttonId, guard)
+    if (busyUserId || !guard.canExecute()) return
 
     setBusyUserId(user.id)
     setError('')
@@ -343,6 +358,7 @@ export default function SettingsUsersPage() {
       setError(friendlyError(actionError))
     } finally {
       setBusyUserId(null)
+      guard.reset()
     }
   }
 
@@ -455,8 +471,8 @@ export default function SettingsUsersPage() {
                                         Editar
                                       </Button>
                                       <Button variant="outline" size="sm" disabled={rowBusy} onClick={() => void handleDisconnect(user)}>
-                                        <LogOut className="h-3 w-3" />
-                                        Revogar
+                                        {rowBusy ? <Spinner size="sm" /> : <LogOut className="h-3 w-3" />}
+                                        {rowBusy ? 'Aguarde...' : 'Revogar'}
                                       </Button>
                                       <Button
                                         variant="outline"
@@ -465,7 +481,7 @@ export default function SettingsUsersPage() {
                                         disabled={rowBusy || user.is_current_user}
                                         onClick={() => void handleDelete(user)}
                                       >
-                                        <Trash2 className="h-3 w-3" />
+                                        {rowBusy ? <Spinner size="sm" /> : <Trash2 className="h-3 w-3" />}
                                       </Button>
                                     </div>
                                   </td>

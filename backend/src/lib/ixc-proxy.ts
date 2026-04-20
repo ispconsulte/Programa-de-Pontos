@@ -2,6 +2,11 @@ import { decrypt } from './crypto.js'
 import { assertSafeUrl } from './ssrf-guard.js'
 import { writeAuditLog } from './audit.js'
 import { AppError } from './app-error.js'
+import {
+  recordCircuitBreakerFailure,
+  recordCircuitBreakerSuccess,
+  runWithCircuitBreaker,
+} from './circuit-breaker.js'
 
 export interface IxcListParams {
   qtype: string
@@ -257,13 +262,15 @@ export async function ixcList<T>(
   try {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 30_000)
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: buildIxcRequestHeaders(creds, token, 'listar'),
-      body,
-      redirect: 'manual',
-      signal: controller.signal,
-    })
+    const response = await runWithCircuitBreaker('IXCSoft', () =>
+      fetch(url, {
+        method: 'POST',
+        headers: buildIxcRequestHeaders(creds, token, 'listar'),
+        body,
+        redirect: 'manual',
+        signal: controller.signal,
+      })
+    )
     clearTimeout(timeout)
     httpStatus = response.status
 
@@ -277,8 +284,10 @@ export async function ixcList<T>(
     })
 
     if (!response.ok) {
+      recordCircuitBreakerFailure('IXCSoft')
       throw new AppError(502, 'IXC upstream error')
     }
+    recordCircuitBreakerSuccess('IXCSoft')
 
     const data = await parseIxcResponseBody<unknown>(response)
     return normalizeIxcListResponse<T>(data)
@@ -313,12 +322,14 @@ export async function ixcGet<T>(
   let httpStatus = 0
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 30_000)
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: buildIxcRequestHeaders(creds, token, 'listar'),
-    redirect: 'manual',
-    signal: controller.signal,
-  })
+  const response = await runWithCircuitBreaker('IXCSoft', () =>
+    fetch(url, {
+      method: 'GET',
+      headers: buildIxcRequestHeaders(creds, token, 'listar'),
+      redirect: 'manual',
+      signal: controller.signal,
+    })
+  )
   clearTimeout(timeout)
   httpStatus = response.status
 
@@ -332,8 +343,10 @@ export async function ixcGet<T>(
   })
 
   if (!response.ok) {
+    recordCircuitBreakerFailure('IXCSoft')
     throw new AppError(502, 'IXC upstream error')
   }
+  recordCircuitBreakerSuccess('IXCSoft')
 
   return parseIxcResponseBody<T>(response)
 }
@@ -378,13 +391,15 @@ export async function ixcWrite<T = unknown>(
   try {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 30_000)
-    const response = await fetch(url, {
-      method,
-      headers: buildIxcRequestHeaders(creds, token, 'editar'),
-      body,
-      redirect: 'manual',
-      signal: controller.signal,
-    })
+    const response = await runWithCircuitBreaker('IXCSoft', () =>
+      fetch(url, {
+        method,
+        headers: buildIxcRequestHeaders(creds, token, 'editar'),
+        body,
+        redirect: 'manual',
+        signal: controller.signal,
+      })
+    )
     clearTimeout(timeout)
     httpStatus = response.status
 
@@ -398,8 +413,10 @@ export async function ixcWrite<T = unknown>(
     })
 
     if (!response.ok) {
+      recordCircuitBreakerFailure('IXCSoft')
       throw new AppError(502, 'IXC upstream error')
     }
+    recordCircuitBreakerSuccess('IXCSoft')
 
     return parseIxcResponseBody<T>(response)
   } catch (err) {

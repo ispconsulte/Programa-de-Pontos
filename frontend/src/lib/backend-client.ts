@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase-client'
+import { watchdogFetch } from '@/utils/requestWatchdog'
 
 function resolveApiBaseUrl(): string {
   const explicit = import.meta.env.VITE_API_BASE_URL?.trim()
@@ -78,10 +79,10 @@ export async function backendRequest<T>(path: string, init: RequestInit = {}): P
 
   let response: Response
   try {
-    response = await fetch(buildUrl(path), {
+    response = await watchdogFetch(buildUrl(path), {
       ...init,
       headers,
-    })
+    }, path.includes('refresh') ? 'refresh' : init.method && init.method !== 'GET' ? 'submit' : 'load')
   } catch (networkError) {
     const rawMsg = networkError instanceof Error ? networkError.message : 'Failed to fetch'
     throw new Error(friendlyErrorMessage(rawMsg))

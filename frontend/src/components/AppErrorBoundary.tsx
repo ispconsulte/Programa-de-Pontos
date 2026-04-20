@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { RefreshCw } from 'lucide-react'
+import { createButtonGuard } from '@/utils/antiFlood'
 
 interface AppErrorBoundaryProps {
   children: ReactNode
@@ -7,15 +8,19 @@ interface AppErrorBoundaryProps {
 
 interface AppErrorBoundaryState {
   hasError: boolean
+  reloading: boolean
 }
 
 export default class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorBoundaryState> {
+  private reloadGuard = createButtonGuard('app-error-reload')
+
   state: AppErrorBoundaryState = {
     hasError: false,
+    reloading: false,
   }
 
   static getDerivedStateFromError(): AppErrorBoundaryState {
-    return { hasError: true }
+    return { hasError: true, reloading: false }
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
@@ -23,6 +28,8 @@ export default class AppErrorBoundary extends Component<AppErrorBoundaryProps, A
   }
 
   private handleReload = () => {
+    if (this.state.reloading || !this.reloadGuard.canExecute()) return
+    this.setState({ reloading: true })
     window.location.reload()
   }
 
@@ -45,10 +52,11 @@ export default class AppErrorBoundary extends Component<AppErrorBoundaryProps, A
           <button
             type="button"
             onClick={this.handleReload}
+            disabled={this.state.reloading}
             className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-all hover:brightness-110 active:scale-[0.98]"
           >
             <RefreshCw className="h-4 w-4" />
-            Recarregar página
+            {this.state.reloading ? 'Aguarde...' : 'Recarregar página'}
           </button>
         </div>
       </div>

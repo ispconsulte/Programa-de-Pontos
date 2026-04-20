@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react'
+import { useState, FormEvent, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Eye, EyeOff, AlertCircle, ArrowLeft, ArrowRight, Trophy } from 'lucide-react'
 import { supabase } from '@/lib/supabase-client'
@@ -6,6 +6,7 @@ import Spinner from '@/components/Spinner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { createButtonGuard } from '@/utils/antiFlood'
 
 export default function RegisterPage() {
   const navigate = useNavigate()
@@ -15,6 +16,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({})
+  const submitGuardRef = useRef(createButtonGuard('register-submit'))
 
   const validate = () => {
     const errors: { email?: string; password?: string } = {}
@@ -29,6 +31,7 @@ export default function RegisterPage() {
     e.preventDefault()
     setError('')
     if (!validate()) return
+    if (loading || !submitGuardRef.current.canExecute()) return
 
     setLoading(true)
     try {
@@ -63,6 +66,7 @@ export default function RegisterPage() {
       setError('Erro de conexão. Verifique sua internet e tente novamente.')
     } finally {
       setLoading(false)
+      submitGuardRef.current.reset()
     }
   }
 

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import Layout from '@/components/Layout'
 import PageHeader from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
@@ -15,6 +15,7 @@ import EmptyState from '@/components/EmptyState'
 import { useClienteEmDia } from '@/hooks/useClienteEmDia'
 import { supabase } from '@/lib/supabase-client'
 import { Clock3, RefreshCw, Settings, ShieldCheck, Wifi } from 'lucide-react'
+import { createButtonGuard } from '@/utils/antiFlood'
 
 const logStyles: Record<string, string> = {
   sucesso: 'border-emerald-500/20 bg-emerald-500/[0.06] text-emerald-200',
@@ -44,6 +45,7 @@ export default function ClienteEmDiaConfiguracoesPage() {
   const [syncing, setSyncing] = useState(false)
   const [syncCooldown, setSyncCooldown] = useState(false)
   const syncDisabled = syncing || syncCooldown
+  const syncGuardRef = useRef(createButtonGuard('cliente-em-dia-sync-now'))
   const [syncFeedback, setSyncFeedback] = useState<{
     type: 'success' | 'error'
     message: string
@@ -66,6 +68,7 @@ export default function ClienteEmDiaConfiguracoesPage() {
   ]
 
   async function handleSyncNow() {
+    if (syncDisabled || !syncGuardRef.current.canExecute()) return
     setSyncing(true)
     setSyncFeedback(null)
 
@@ -115,7 +118,10 @@ export default function ClienteEmDiaConfiguracoesPage() {
       setSyncing(false)
       // Cooldown to prevent spam
       setSyncCooldown(true)
-      setTimeout(() => setSyncCooldown(false), 3000)
+      setTimeout(() => {
+        setSyncCooldown(false)
+        syncGuardRef.current.reset()
+      }, 3000)
     }
   }
 

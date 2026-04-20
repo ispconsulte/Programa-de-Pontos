@@ -598,6 +598,7 @@ export async function campaignRoutes(app: FastifyInstance) {
       .order('ativo', { ascending: false })
       .order('pontos_necessarios', { ascending: true })
       .order('nome', { ascending: true })
+      .limit(100)
 
     const listResult = await (['admin', 'owner', 'manager'].includes(String(request.userRole ?? '').toLowerCase())
       ? query
@@ -862,6 +863,7 @@ export async function campaignRoutes(app: FastifyInstance) {
         .select('ixc_cliente_id, nome_cliente')
         .eq('tenant_id', request.tenantId)
         .in('ixc_cliente_id', customerIds)
+        .limit(customerIds.length)
 
       if (customersResult.error) {
         throw new AppError(500, customersResult.error.message)

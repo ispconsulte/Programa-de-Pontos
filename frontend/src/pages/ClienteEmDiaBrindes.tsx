@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import PageHeader from '@/components/PageHeader'
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
@@ -25,6 +25,7 @@ import {
   updateRewardCatalogItem,
 } from '@/lib/loyalty-admin'
 import { fetchCurrentUserProfile, isAdminUiRole } from '@/lib/user-management'
+import { createButtonGuard } from '@/utils/antiFlood'
 import {
   AlertTriangle,
   Award,
@@ -84,6 +85,7 @@ function GiftCatalogDialog({
   const [form, setForm] = useState<CatalogFormState>(toFormState(reward))
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const submitGuardRef = useRef(createButtonGuard(reward ? `catalog-update:${reward.id}` : 'catalog-create'))
   const isEditing = !!reward
 
   useEffect(() => {
@@ -131,6 +133,7 @@ function GiftCatalogDialog({
       setError('O estoque precisa ser vazio ou um número maior ou igual a zero.')
       return
     }
+    if (saving || !submitGuardRef.current.canExecute()) return
 
     setSaving(true)
     setError('')
@@ -160,6 +163,7 @@ function GiftCatalogDialog({
       setError(submitError instanceof Error ? submitError.message : 'Não foi possível salvar o brinde.')
     } finally {
       setSaving(false)
+      submitGuardRef.current.reset()
     }
   }
 
@@ -350,6 +354,7 @@ export default function ClienteEmDiaBrindesPage() {
   }, [search])
   const [deleteTarget, setDeleteTarget] = useState<ClienteEmDiaRewardItem | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const deleteGuardRef = useRef(createButtonGuard('catalog-delete'))
 
   useEffect(() => {
     void fetchCurrentUserProfile()
@@ -374,6 +379,7 @@ export default function ClienteEmDiaBrindesPage() {
 
   async function confirmDelete() {
     if (!deleteTarget) return
+    if (deleting || !deleteGuardRef.current.canExecute()) return
     setDeleting(true)
     try {
       await deleteRewardCatalogItem(deleteTarget.id, {
@@ -391,6 +397,7 @@ export default function ClienteEmDiaBrindesPage() {
       setDeleteTarget(null)
     } finally {
       setDeleting(false)
+      deleteGuardRef.current.reset()
     }
   }
 

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import AlertBanner from '@/components/AlertBanner'
 import { Button } from '@/components/ui/button'
 import {
@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { createButtonGuard } from '@/utils/antiFlood'
 
 export default function ManualPointsDialog({
   client,
@@ -39,6 +40,7 @@ export default function ManualPointsDialog({
   const [adjustmentType, setAdjustmentType] = useState<'credit' | 'debit'>('credit')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const submitGuardRef = useRef(createButtonGuard(`manual-points:${client?.id ?? 'none'}`))
 
   async function handleSubmit() {
     if (!client) return
@@ -55,6 +57,7 @@ export default function ManualPointsDialog({
       setError('O débito manual não pode exceder o saldo disponível do cliente.')
       return
     }
+    if (saving || !submitGuardRef.current.canExecute()) return
 
     setSaving(true)
     setError('')
@@ -76,6 +79,7 @@ export default function ManualPointsDialog({
       setError(submitError instanceof Error ? submitError.message : 'Não foi possível adicionar os pontos.')
     } finally {
       setSaving(false)
+      submitGuardRef.current.reset()
     }
   }
 

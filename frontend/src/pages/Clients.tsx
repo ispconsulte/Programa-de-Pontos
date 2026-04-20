@@ -22,6 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
+import { createButtonGuard } from '@/utils/antiFlood'
 
 /* ── Helpers ──────────────────────────────────────────────────────────────── */
 
@@ -64,7 +65,7 @@ function useAutocomplete() {
   const handleChange = useCallback((value: string) => {
     setQuery(value)
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => search(value), 300)
+    debounceRef.current = setTimeout(() => search(value), 400)
   }, [search])
 
   const close = useCallback(() => {
@@ -82,9 +83,11 @@ export default function ClientsPage() {
   const [faturas, setFaturas] = useState<ReceivableRow[]>([])
   const [detailLoading, setDetailLoading] = useState(false)
   const [error, setError] = useState('')
+  const selectClientGuardRef = useRef(createButtonGuard('clients-select-client'))
 
   /* Select a client from the autocomplete */
   const selectClient = useCallback(async (client: CampaignClientRow) => {
+    if (detailLoading || !selectClientGuardRef.current.canExecute()) return
     ac.setQuery(client.nome_cliente || '')
     ac.setShowDropdown(false)
     setSelectedClient(client)
@@ -99,8 +102,9 @@ export default function ClientsPage() {
       setError(err instanceof Error ? err.message : 'Erro ao carregar faturas.')
     } finally {
       setDetailLoading(false)
+      selectClientGuardRef.current.reset()
     }
-  }, [ac])
+  }, [ac, detailLoading])
 
   /* Refresh selected client data */
   const refreshClient = useCallback(async () => {
@@ -122,7 +126,7 @@ export default function ClientsPage() {
     }
   }, [selectedClient])
 
-  const [throttledRefresh, refreshBusy] = useThrottledAction(refreshClient)
+  const [throttledRefresh, refreshBusy] = useThrottledAction(refreshClient, 2000, 'clients-refresh-client')
 
   /* Clear selection */
   const clearSelection = useCallback(() => {

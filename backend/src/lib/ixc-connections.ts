@@ -48,6 +48,7 @@ export async function listTenantIxcConnections(tenantId: string): Promise<IxcCon
     .eq('tenant_id', tenantId)
     .order('active', { ascending: false })
     .order('created_at', { ascending: true })
+    .limit(100)
 
   if (error) {
     throw new AppError(500, error.message)

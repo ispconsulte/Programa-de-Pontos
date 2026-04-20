@@ -1,8 +1,9 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import { RefreshCw, X } from 'lucide-react'
 import { APP_VERSION, fetchRemoteAppVersion } from '@/lib/app-version'
 import { Button } from '@/components/ui/button'
+import { createButtonGuard } from '@/utils/antiFlood'
 
 const VERSION_CHECK_INTERVAL_MS = 5 * 60 * 1000
 const RESTORE_KEY = 'bonifica-restore-route'
@@ -19,6 +20,9 @@ export default function VersionUpdateNotifier() {
   const location = useLocation()
   const [nextVersion, setNextVersion] = useState<string | null>(null)
   const [dismissed, setDismissed] = useState(false)
+  const [updating, setUpdating] = useState(false)
+  const updateGuardRef = useRef(createButtonGuard('version-update-now'))
+  const versionCheckInFlightRef = useRef(false)
 
   // On mount, check if we need to restore a route after reload
   useEffect(() => {
@@ -54,14 +58,21 @@ export default function VersionUpdateNotifier() {
   // Poll for new versions
   useEffect(() => {
     let cancelled = false
+    let controller: AbortController | null = null
 
     const checkVersion = async () => {
+      if (versionCheckInFlightRef.current) return
+      versionCheckInFlightRef.current = true
+      controller = new AbortController()
       try {
-        const remoteVersion = await fetchRemoteAppVersion()
+        const remoteVersion = await fetchRemoteAppVersion(controller.signal)
         if (cancelled || !remoteVersion || remoteVersion === APP_VERSION) return
         setNextVersion(remoteVersion)
-      } catch {
+      } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') return
         // silently ignore
+      } finally {
+        versionCheckInFlightRef.current = false
       }
     }
 
@@ -76,6 +87,7 @@ export default function VersionUpdateNotifier() {
 
     return () => {
       cancelled = true
+      controller?.abort()
       window.clearInterval(interval)
       window.removeEventListener('focus', onVisible)
       document.removeEventListener('visibilitychange', onVisible)
@@ -83,6 +95,8 @@ export default function VersionUpdateNotifier() {
   }, [])
 
   const handleUpdateNow = useCallback(() => {
+    if (updating || !updateGuardRef.current.canExecute()) return
+    setUpdating(true)
     // Save where the user is so we can restore after reload
     try {
       sessionStorage.setItem(
@@ -95,7 +109,7 @@ export default function VersionUpdateNotifier() {
     } catch { /* ignore */ }
 
     window.location.reload()
-  }, [location])
+  }, [location, updating])
 
   const handleDismiss = useCallback(() => {
     setDismissed(true)
@@ -127,9 +141,9 @@ export default function VersionUpdateNotifier() {
             Preparamos melhorias para sua experiência. Atualize quando quiser — você não perderá o que está fazendo.
           </p>
           <div className="mt-4 flex flex-col gap-2.5 sm:flex-row">
-            <Button variant="default" size="sm" onClick={handleUpdateNow} className="gap-2">
+            <Button variant="default" size="sm" onClick={handleUpdateNow} disabled={updating} className="gap-2">
               <RefreshCw className="h-3.5 w-3.5" />
-              Atualizar agora
+              {updating ? 'Aguarde...' : 'Atualizar agora'}
             </Button>
             <Button
               variant="ghost"

@@ -1,5 +1,5 @@
 import type { PoolClient } from 'pg'
-import { pool } from '../db/pool.js'
+import { assertSafeLimit, pool, safeQuery } from '../db/pool.js'
 import { AppError } from './app-error.js'
 import type { ClienteContratoItem, ClienteItem, FnAreceberItem } from './ixc-proxy.js'
 import { getPaymentCategory, isActualPayment, resolveContractId } from './business-rules.js'
@@ -450,6 +450,7 @@ export async function resolveCustomerProfile(input: CustomerIdentityInput) {
 }
 
 export async function listCustomerProfiles(tenantId: string, limit = 50) {
+  assertSafeLimit(limit)
   const { rows } = await pool.query(
     `
       SELECT *
@@ -558,7 +559,7 @@ export async function listCampaignRules(tenantId: string, eventType?: CampaignEv
         ORDER BY event_type ASC, priority ASC, created_at ASC
       `
 
-  const { rows } = await pool.query(query, params)
+  const { rows } = await safeQuery(query, params, 100)
   return rows
 }
 
@@ -840,6 +841,7 @@ export async function listCampaignEvents(tenantId: string, options?: {
   limit?: number
 }) {
   const limit = options?.limit ?? 50
+  assertSafeLimit(limit)
 
   if (options?.customerProfileId) {
     const { rows } = await pool.query(
@@ -888,6 +890,7 @@ export async function listRewardRedemptions(tenantId: string, options?: {
   limit?: number
 }) {
   const limit = options?.limit ?? 50
+  assertSafeLimit(limit)
 
   if (options?.customerProfileId) {
     const { rows } = await pool.query(
@@ -1222,8 +1225,37 @@ export async function redeemCampaignReward(
 
   let redemption: any
   let reward: CampaignReward
+  const requestLockKey = `reward-redemption:${input.tenantId}:${input.customerProfileId ?? input.customerId}`
 
   try {
+    await pool.query('DELETE FROM request_locks WHERE expires_at <= now()')
+    const requestLock = await pool.query(
+      `
+        INSERT INTO request_locks (lock_key, locked_by, expires_at)
+        VALUES ($1, $2, now() + interval '30 seconds')
+        ON CONFLICT (lock_key) DO NOTHING
+        RETURNING lock_key
+      `,
+      [requestLockKey, input.createdBy ?? null]
+    )
+    if (!requestLock.rows[0]) {
+      await pool.query(
+        `
+          INSERT INTO flood_audit_log (
+            user_id,
+            endpoint,
+            attempts,
+            first_attempt_at,
+            last_attempt_at,
+            action_taken
+          )
+          VALUES ($1, $2, 1, now(), now(), 'request_lock')
+        `,
+        [input.createdBy ?? null, requestLockKey]
+      ).catch(() => {})
+      throw new AppError(429, 'Operação já em processamento. Aguarde alguns segundos.')
+    }
+
     await client.query('BEGIN')
 
     const ledgerLockTarget = input.customerProfileId ?? input.customerId
@@ -1319,6 +1351,7 @@ export async function redeemCampaignReward(
     await client.query('ROLLBACK')
     throw error
   } finally {
+    await pool.query('DELETE FROM request_locks WHERE lock_key = $1', [requestLockKey]).catch(() => {})
     client.release()
   }
 
@@ -1381,7 +1414,7 @@ export async function ensureDefaultMissions(tenantId: string) {
 export async function listCampaignMissions(tenantId: string, customerProfileId?: string) {
   await ensureDefaultMissions(tenantId)
 
-  const { rows } = await pool.query(
+  const { rows } = await safeQuery(
     `
       SELECT
         m.*,
@@ -1397,7 +1430,8 @@ export async function listCampaignMissions(tenantId: string, customerProfileId?:
       WHERE m.tenant_id = $1
       ORDER BY m.created_at ASC
     `,
-    [tenantId, customerProfileId ?? null]
+    [tenantId, customerProfileId ?? null],
+    100
   )
 
   return rows

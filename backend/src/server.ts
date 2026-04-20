@@ -14,6 +14,7 @@ import { settingsRoutes } from './modules/settings/settings.routes.js'
 import { campaignRoutes } from './modules/campaign/campaign.routes.js'
 import { usersRoutes } from './modules/users/users.routes.js'
 import { AppError } from './lib/app-error.js'
+import { registerEndpointRateLimit, registerIdempotencyCache } from './lib/anti-flood.js'
 
 export async function buildApp(redisClient?: Redis) {
   const useRedisRateLimit = process.env.NODE_ENV === 'production'
@@ -68,7 +69,7 @@ export async function buildApp(redisClient?: Redis) {
       callback(null, allowedOrigins.includes(origin))
     },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-IXC-Connection-Id'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-IXC-Connection-Id', 'Idempotency-Key'],
     credentials: true,
   })
 
@@ -110,17 +111,17 @@ export async function buildApp(redisClient?: Redis) {
 
   const rateLimitOptions: Parameters<typeof rateLimit>[1] = {
     keyGenerator(request) {
-      const tenantId = (request as unknown as { tenantId?: string }).tenantId
-      return tenantId ? `ratelimit:${tenantId}` : `ratelimit:ip:${request.ip}`
+      return `ratelimit:ip:${request.ip}`
     },
-    max: 60,
+    max: 100,
     timeWindow: '1 minute',
     errorResponseBuilder(_req, context) {
       return {
-        statusCode: 429,
-        error: 'Too Many Requests',
-        message: 'Rate limit exceeded',
+        error: 'too_many_requests',
+        message: 'Muitas requisições em pouco tempo. Aguarde alguns segundos.',
         retryAfter: Math.ceil(context.ttl / 1000),
+        limit: 100,
+        window: '60s',
       }
     },
   }
@@ -131,6 +132,8 @@ export async function buildApp(redisClient?: Redis) {
   await app.register(rateLimit, rateLimitOptions)
 
   app.decorate('redis', redis ?? null)
+  registerEndpointRateLimit(app)
+  registerIdempotencyCache(app)
 
   app.addHook('onRequest', (request, reply, done) => {
     const contentType = request.headers['content-type']

@@ -5,9 +5,10 @@ interface PaginationProps {
   page: number
   totalPages: number
   onPageChange: (page: number) => void
+  disabled?: boolean
 }
 
-export default function Pagination({ page, totalPages, onPageChange }: PaginationProps) {
+export default function Pagination({ page, totalPages, onPageChange, disabled = false }: PaginationProps) {
   if (totalPages <= 1) return null
 
   const pages: (number | string)[] = []
@@ -27,7 +28,7 @@ export default function Pagination({ page, totalPages, onPageChange }: Paginatio
         variant="outline"
         size="icon"
         onClick={() => onPageChange(page - 1)}
-        disabled={page === 1}
+        disabled={disabled || page === 1}
         className="h-8 w-8"
       >
         <ChevronLeft className="w-4 h-4" />
@@ -44,6 +45,7 @@ export default function Pagination({ page, totalPages, onPageChange }: Paginatio
             variant={p === page ? 'default' : 'ghost'}
             size="sm"
             onClick={() => onPageChange(p as number)}
+            disabled={disabled}
             className={`h-8 min-w-8 px-3 ${p === page ? '' : 'text-muted-foreground'}`}
           >
             {p}
@@ -55,7 +57,7 @@ export default function Pagination({ page, totalPages, onPageChange }: Paginatio
         variant="outline"
         size="icon"
         onClick={() => onPageChange(page + 1)}
-        disabled={page === totalPages}
+        disabled={disabled || page === totalPages}
         className="h-8 w-8"
       >
         <ChevronRight className="w-4 h-4" />

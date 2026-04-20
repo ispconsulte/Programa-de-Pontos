@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from 'react'
+import { FormEvent, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
@@ -20,6 +20,7 @@ import {
 } from '@/lib/supabase-queries'
 import { ArrowLeft, Megaphone, Plus, Save, Trash2, Zap } from 'lucide-react'
 import { friendlyError } from '@/lib/friendly-errors'
+import { createButtonGuard } from '@/utils/antiFlood'
 
 const SETTINGS_CAMPAIGNS_CACHE_TTL_MS = 60_000
 const settingsCampaignsCache = new Map<string, { expiresAt: number; campaigns: CampaignRuleSettings[] }>()
@@ -53,6 +54,14 @@ export default function SettingsCampaignsPage() {
   const [success, setSuccess] = useState('')
   const [settings, setSettings] = useState<CampaignRuleSettings | null>(null)
   const [campaigns, setCampaigns] = useState<CampaignRuleSettings[]>([])
+  const selectGuardRef = useRef(createButtonGuard('settings-campaigns-select'))
+  const submitGuardRef = useRef(createButtonGuard('settings-campaigns-submit'))
+  const deleteGuardRef = useRef(createButtonGuard('settings-campaigns-delete'))
+  const selectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => () => {
+    if (selectTimerRef.current) clearTimeout(selectTimerRef.current)
+  }, [])
 
   useEffect(() => {
     const load = async (force = false) => {
@@ -106,27 +115,33 @@ export default function SettingsCampaignsPage() {
 
   const handleSelectCampaign = async (campaignId: string) => {
     if (!tenantId) return
+    if (!selectGuardRef.current.canExecute()) return
 
     setError('')
 
-    if (campaignId === '__new__') {
-      setSettings(createDefaultCampaignRuleSettings())
-      return
-    }
+    try {
+      if (campaignId === '__new__') {
+        setSettings(createDefaultCampaignRuleSettings())
+        return
+      }
 
-    const selectedCampaign = campaigns.find((campaign) => campaign.campaignId === campaignId)
-    if (selectedCampaign) {
-      setSettings(selectedCampaign)
-      return
-    }
+      const selectedCampaign = campaigns.find((campaign) => campaign.campaignId === campaignId)
+      if (selectedCampaign) {
+        setSettings(selectedCampaign)
+        return
+      }
 
-    const activeCampaign = await fetchActiveCampaignRuleSettings(tenantId)
-    setSettings(activeCampaign)
+      const activeCampaign = await fetchActiveCampaignRuleSettings(tenantId)
+      setSettings(activeCampaign)
+    } finally {
+      selectGuardRef.current.reset()
+    }
   }
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
     if (!settings || !tenantId) return
+    if (saving || !submitGuardRef.current.canExecute()) return
 
     setSaving(true)
     setError('')
@@ -150,6 +165,7 @@ export default function SettingsCampaignsPage() {
       setError(friendlyError(err))
     } finally {
       setSaving(false)
+      submitGuardRef.current.reset()
     }
   }
 
@@ -158,6 +174,7 @@ export default function SettingsCampaignsPage() {
 
     const confirmed = window.confirm(`Excluir a campanha "${settings.campaignName}"?`)
     if (!confirmed) return
+    if (deleting || !deleteGuardRef.current.canExecute()) return
 
     setDeleting(true)
     setError('')
@@ -177,6 +194,7 @@ export default function SettingsCampaignsPage() {
       setError(friendlyError(err))
     } finally {
       setDeleting(false)
+      deleteGuardRef.current.reset()
     }
   }
 
@@ -244,7 +262,11 @@ export default function SettingsCampaignsPage() {
                       <select
                         id="campaign-selector"
                         value={settings?.campaignId ?? '__new__'}
-                        onChange={(e) => void handleSelectCampaign(e.target.value)}
+                        onChange={(e) => {
+                          const value = e.target.value
+                          if (selectTimerRef.current) clearTimeout(selectTimerRef.current)
+                          selectTimerRef.current = setTimeout(() => void handleSelectCampaign(value), 400)
+                        }}
                         className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none ring-offset-background transition-colors focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {campaigns.map((campaign) => (

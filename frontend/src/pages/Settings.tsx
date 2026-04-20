@@ -1,4 +1,4 @@
-import { useState, useEffect, FormEvent } from 'react'
+import { useState, useEffect, FormEvent, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Briefcase, Building2, Megaphone, Save, UserCog, Wifi, WifiOff } from 'lucide-react'
 import Spinner from '@/components/Spinner'
+import { createButtonGuard } from '@/utils/antiFlood'
 
 const SETTINGS_CACHE_TTL_MS = 60_000
 let settingsCache: { expiresAt: number; settings: TenantSettings | null } | null = null
@@ -46,6 +47,7 @@ export default function SettingsPage() {
   const [ixcUser, setIxcUser] = useState('')
   const [ixcToken, setIxcToken] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const submitGuardRef = useRef(createButtonGuard('settings-submit'))
 
   useEffect(() => {
     const fetchSettings = async (force = false) => {
@@ -103,6 +105,7 @@ export default function SettingsPage() {
     setSuccess(false)
 
     if (!validate()) return
+    if (saving || !submitGuardRef.current.canExecute()) return
 
     setSaving(true)
     try {
@@ -133,6 +136,7 @@ export default function SettingsPage() {
       setError(friendlyError(err))
     } finally {
       setSaving(false)
+      submitGuardRef.current.reset()
     }
   }
 

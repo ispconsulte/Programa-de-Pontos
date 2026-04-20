@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import RegisterRedemptionDialog from '@/components/RegisterRedemptionDialog'
@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils'
 import { Sparkles, ChevronRight, Gift } from 'lucide-react'
 import { fetchLegacyRedemptions, getCurrentTenantId } from '@/lib/supabase-queries'
 import { useNavigate } from 'react-router-dom'
+import { createButtonGuard } from '@/utils/antiFlood'
 
 type RedemptionStatus = 'pendente' | 'entregue' | 'cancelado'
 
@@ -51,6 +52,7 @@ function statusColor(s: string) {
 
 export default function ResgatesPage() {
   const navigate = useNavigate()
+  const openRedemptionGuardRef = useRef(createButtonGuard('redemptions-open-detail'))
   const [reloadKey, setReloadKey] = useState(0)
   const [tab, setTab] = useState<RedemptionStatus | 'all'>('all')
   const freshRedemptionsCache = redemptionsCache && redemptionsCache.expiresAt > Date.now() ? redemptionsCache : null
@@ -105,7 +107,9 @@ export default function ResgatesPage() {
   const filtered = tab === 'all' ? rows : rows.filter((r) => r.status_resgate === tab)
   const openRedemption = (row: RedemptionRow) => {
     if (!row.ixc_cliente_id) return
+    if (!openRedemptionGuardRef.current.canExecute()) return
     navigate(`/cliente-em-dia/${row.ixc_cliente_id}`, { state: { from: '/resgates' } })
+    setTimeout(() => openRedemptionGuardRef.current.reset(), 2000)
   }
 
   return (

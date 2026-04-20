@@ -55,6 +55,7 @@ import {
   formatPoints, formatDate, formatBRL, persistedDateRange, avatarColor,
   KpiCard, RankBadge, PointCard, InfoField, RedemptionStatusBadge,
 } from '@/components/dashboard/DashboardHelpers'
+import { createButtonGuard } from '@/utils/antiFlood'
 
 const DASHBOARD_CACHE_TTL_MS = 60_000
 
@@ -74,26 +75,41 @@ function useAutocomplete() {
   const [loading, setLoading] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const searchInFlightRef = useRef(false)
+  const mountedRef = useRef(true)
 
   const search = useCallback(async (value: string) => {
     if (value.trim().length < 2) { setSuggestions([]); setShowDropdown(false); return }
+    if (searchInFlightRef.current) return
+    searchInFlightRef.current = true
     setLoading(true)
     try {
       const tenantId = await getCurrentTenantId()
       if (!tenantId) return
       const results = await autocompleteCampaignClients({ tenantId, query: value })
+      if (!mountedRef.current) return
       setSuggestions(results)
       setShowDropdown(results.length > 0)
-    } catch { setSuggestions([]) } finally { setLoading(false) }
+    } catch {
+      if (mountedRef.current) setSuggestions([])
+    } finally {
+      searchInFlightRef.current = false
+      if (mountedRef.current) setLoading(false)
+    }
   }, [])
 
   const handleChange = useCallback((value: string) => {
     setQuery(value)
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => search(value), 300)
+    debounceRef.current = setTimeout(() => search(value), 400)
   }, [search])
 
   const close = useCallback(() => { setTimeout(() => setShowDropdown(false), 200) }, [])
+
+  useEffect(() => () => {
+    mountedRef.current = false
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+  }, [])
 
   return { query, setQuery, suggestions, loading, showDropdown, setShowDropdown, handleChange, close }
 }
@@ -120,6 +136,8 @@ export default function DashboardPage() {
   const [clientError, setClientError] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
   const [userName, setUserName] = useState('')
+  const selectClientGuardRef = useRef(createButtonGuard('dashboard-select-client'))
+  const fetchDataInFlightRef = useRef(false)
 
   const fetchData = useCallback(async (force = false) => {
     const cached = dashboardCache && dashboardCache.expiresAt > Date.now() ? dashboardCache : null
@@ -130,6 +148,8 @@ export default function DashboardPage() {
       setLoading(false)
       return
     }
+    if (fetchDataInFlightRef.current) return
+    fetchDataInFlightRef.current = true
 
     if (!ranking.length) {
       setLoading(true)
@@ -151,10 +171,13 @@ export default function DashboardPage() {
       }
     } catch (err) {
       setError(friendlyError(err))
-    } finally { setLoading(false) }
+    } finally {
+      fetchDataInFlightRef.current = false
+      setLoading(false)
+    }
   }, [period.from, period.to, ranking.length])
 
-  const [throttledFetch, refreshBusy] = useThrottledAction(fetchData)
+  const [throttledFetch, refreshBusy] = useThrottledAction(fetchData, 2000, 'dashboard-refresh-ranking')
 
   const handleRefresh = () => {
     clickCountRef.current += 1
@@ -165,6 +188,7 @@ export default function DashboardPage() {
   }
 
   const selectClient = useCallback(async (client: CampaignClientRow) => {
+    if (detailLoading || !selectClientGuardRef.current.canExecute()) return
     ac.setQuery(client.nome_cliente || '')
     ac.setShowDropdown(false)
     setSelectedClient(client)
@@ -182,8 +206,11 @@ export default function DashboardPage() {
     } catch (err) {
       console.error('[Dashboard] selectClient error:', err)
       setClientError(friendlyError(err))
-    } finally { setDetailLoading(false) }
-  }, [ac])
+    } finally {
+      setDetailLoading(false)
+      selectClientGuardRef.current.reset()
+    }
+  }, [ac, detailLoading])
 
   const refreshClient = useCallback(async () => {
     if (!selectedClient) return
@@ -204,7 +231,7 @@ export default function DashboardPage() {
     } finally { setDetailLoading(false) }
   }, [selectedClient])
 
-  const [throttledClientRefresh, clientRefreshBusy] = useThrottledAction(refreshClient)
+  const [throttledClientRefresh, clientRefreshBusy] = useThrottledAction(refreshClient, 2000, 'dashboard-refresh-client')
 
   const clearSelection = useCallback(() => {
     setSelectedClient(null)
@@ -276,7 +303,7 @@ export default function DashboardPage() {
                 refreshBusy={refreshBusy}
                 onToggleRanking={() => setRankingOpen(!rankingOpen)}
                 onRefresh={handleRefresh}
-                onRetry={() => void fetchData()}
+                onRetry={() => void throttledFetch(true)}
               />
             </>
           )}

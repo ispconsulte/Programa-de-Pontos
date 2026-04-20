@@ -1,4 +1,4 @@
-import { useState, FormEvent, useEffect, useMemo } from 'react'
+import { useState, FormEvent, useEffect, useMemo, useRef } from 'react'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { Eye, EyeOff, AlertCircle, CheckCircle, ArrowRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase-client'
@@ -6,6 +6,7 @@ import Spinner from '@/components/Spinner'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import logoPrincipal from '@/assets/logo-principal.png'
+import { createButtonGuard } from '@/utils/antiFlood'
 
 /* ── Floating reward particles (enhanced) ── */
 function RewardParticles({ prefersReducedMotion }: { prefersReducedMotion: boolean }) {
@@ -152,6 +153,7 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [mounted, setMounted] = useState(false)
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
+  const submitGuardRef = useRef(createButtonGuard('login-submit'))
 
   useEffect(() => { setRegistered(searchParams.get('registered') === '1') }, [searchParams])
   useEffect(() => { const t = setTimeout(() => setMounted(true), 60); return () => clearTimeout(t) }, [])
@@ -176,6 +178,7 @@ export default function LoginPage() {
     setError('')
     if (!email.trim()) { setError('E-mail é obrigatório.'); return }
     if (!password.trim()) { setError('Senha é obrigatória.'); return }
+    if (loading || !submitGuardRef.current.canExecute()) return
 
     setLoading(true)
     try {
@@ -198,6 +201,7 @@ export default function LoginPage() {
       setError('Erro ao fazer login. Verifique sua conexão e tente novamente.')
     } finally {
       setLoading(false)
+      submitGuardRef.current.reset()
     }
   }
 

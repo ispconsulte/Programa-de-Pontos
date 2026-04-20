@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useThrottledAction } from '@/hooks/useThrottledAction'
 import { friendlyError } from '@/lib/friendly-errors'
 import { Link } from 'react-router-dom'
@@ -43,6 +43,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { createButtonGuard } from '@/utils/antiFlood'
 
 /* ── Adapter: DB row → UI shape ── */
 function toShape(row: ReceivableRow, nameMap?: Map<string, string>) {
@@ -185,7 +186,13 @@ export default function ReceivablesPage() {
   const [page, setPage] = useState(persistedFilters?.page ?? 1)
   const [limit, setLimit] = useState(persistedFilters?.limit ?? 10)
   const [search, setSearch] = useState(persistedFilters?.search ?? '')
+  const [debouncedSearch, setDebouncedSearch] = useState(persistedFilters?.search ?? '')
   const [sortBy, setSortBy] = useState<SortOption>(persistedFilters?.sortBy ?? 'due_desc')
+  const [filterBusy, setFilterBusy] = useState(false)
+  const [pageBusy, setPageBusy] = useState(false)
+  const filterGuardRef = useRef(createButtonGuard('receivables-apply-filters'))
+  const pageGuardRef = useRef(createButtonGuard('receivables-pagination'))
+  const fetchInFlightRef = useRef(false)
   useEffect(() => {
     if (typeof window === 'undefined') return
     try {
@@ -207,7 +214,7 @@ export default function ReceivablesPage() {
       page,
       limit,
       appliedFilters,
-      search: search.trim(),
+      search: debouncedSearch.trim(),
     })
     const cached = receivablesCache.get(cacheKey)
     if (!force && cached && cached.expiresAt > Date.now()) {
@@ -220,6 +227,8 @@ export default function ReceivablesPage() {
       setLoading(false)
       return
     }
+    if (fetchInFlightRef.current) return
+    fetchInFlightRef.current = true
 
     if (!receivables.length) {
       setLoading(true)
@@ -237,7 +246,7 @@ export default function ReceivablesPage() {
         dateFrom: appliedFilters.dateFrom || undefined,
         dateTo: appliedFilters.dateTo || undefined,
       }
-      const normalizedSearch = search.trim()
+      const normalizedSearch = debouncedSearch.trim()
       const isSearchMode = normalizedSearch.length > 0
       const fetchPage = isSearchMode ? 1 : page
       const fetchLimit = isSearchMode ? 1000 : limit
@@ -290,18 +299,37 @@ export default function ReceivablesPage() {
       setError(friendlyError(err))
       setReceivables([])
     } finally {
+      fetchInFlightRef.current = false
       setLoading(false)
+      setFilterBusy(false)
+      setPageBusy(false)
+      filterGuardRef.current.reset()
+      pageGuardRef.current.reset()
     }
-  }, [page, limit, appliedFilters, search, receivables.length])
+  }, [page, limit, appliedFilters, debouncedSearch, receivables.length])
 
-  const [throttledFetch, refreshBusy] = useThrottledAction(fetchReceivablesData)
+  const [throttledFetch, refreshBusy] = useThrottledAction(fetchReceivablesData, 2000, 'receivables-refresh')
 
   useEffect(() => { void fetchReceivablesData() }, [fetchReceivablesData])
-  useEffect(() => { setPage(1) }, [search])
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setDebouncedSearch(search)
+      setPage(1)
+    }, 400)
+    return () => clearTimeout(timeout)
+  }, [search])
 
   const handleFilterApply = () => {
+    if (filterBusy || !filterGuardRef.current.canExecute()) return
+    setFilterBusy(true)
     setPage(1)
     setAppliedFilters({ category, dateFrom, dateTo })
+  }
+
+  const handlePageChange = (nextPage: number) => {
+    if (pageBusy || loading || !pageGuardRef.current.canExecute()) return
+    setPageBusy(true)
+    setPage(nextPage)
   }
 
   const filteredReceivables = sortReceivables(
@@ -433,9 +461,9 @@ export default function ReceivablesPage() {
                 </div>
                 <div className="responsive-action-group xl:ml-auto xl:justify-end">
                   <div>
-                    <Button onClick={handleFilterApply} className="min-h-[2.75rem]">
+                    <Button onClick={handleFilterApply} disabled={filterBusy || loading} className="min-h-[2.75rem]">
                       <Search className="h-3.5 w-3.5" />
-                      Aplicar
+                      {filterBusy ? 'Aguarde...' : 'Aplicar'}
                     </Button>
                   </div>
                   <div>
@@ -458,7 +486,7 @@ export default function ReceivablesPage() {
                     <ShieldAlert className="h-4 w-4 flex-shrink-0 text-destructive" />
                     <p className="text-sm text-foreground">{error}</p>
                   </div>
-                  <Button variant="outline" size="sm" className="mt-3" onClick={() => void fetchReceivablesData(true)}>Tentar novamente</Button>
+                  <Button variant="outline" size="sm" className="mt-3" disabled={refreshBusy || loading} onClick={() => void throttledFetch(true)}>Tentar novamente</Button>
                 </div>
               ) : receivables.length === 0 ? (
                 <div className="py-16 text-center">
@@ -541,7 +569,7 @@ export default function ReceivablesPage() {
                   </div>
 
                   <div className="border-t border-[hsl(var(--border))] px-4 py-4 sm:px-5">
-                    <Pagination page={page} totalPages={effectiveTotalPages} onPageChange={setPage} />
+                    <Pagination page={page} totalPages={effectiveTotalPages} onPageChange={handlePageChange} disabled={pageBusy || loading} />
                   </div>
                 </>
               )}

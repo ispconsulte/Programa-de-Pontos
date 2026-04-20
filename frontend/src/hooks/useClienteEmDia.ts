@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase-client'
 import { backendRequest } from '@/lib/backend-client'
 import { fetchRewardCatalogItems } from '@/lib/loyalty-admin'
@@ -274,6 +274,12 @@ export function useClienteEmDia(options: UseClienteEmDiaOptions = {}): UseClient
   const [rewards, setRewards] = useState<ClienteEmDiaRewardItem[]>(freshCache?.rewards ?? [])
   const [redemptions, setRedemptions] = useState<ClienteEmDiaRedemptionItem[]>(freshCache?.redemptions ?? [])
   const [settings, setSettings] = useState<ClienteEmDiaMinimalSettings | null>(freshCache?.settings ?? null)
+  const loadInFlightRef = useRef(false)
+  const mountedRef = useRef(true)
+
+  useEffect(() => () => {
+    mountedRef.current = false
+  }, [])
 
   useEffect(() => {
     const currentCache = clienteEmDiaCache.get(cacheKey)
@@ -303,6 +309,8 @@ export function useClienteEmDia(options: UseClienteEmDiaOptions = {}): UseClient
       setLoading(false)
       return
     }
+    if (loadInFlightRef.current) return
+    loadInFlightRef.current = true
 
     if (!overview.length && !rewards.length && !redemptions.length && !customerDetail && !settings) {
       setLoading(true)
@@ -480,9 +488,10 @@ export function useClienteEmDia(options: UseClienteEmDiaOptions = {}): UseClient
         },
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Não foi possível carregar os dados do Cliente em Dia.')
+      if (mountedRef.current) setError(err instanceof Error ? err.message : 'Não foi possível carregar os dados do Cliente em Dia.')
     } finally {
-      setLoading(false)
+      loadInFlightRef.current = false
+      if (mountedRef.current) setLoading(false)
     }
   }
 

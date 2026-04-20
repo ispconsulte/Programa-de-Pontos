@@ -58,6 +58,7 @@ async function loadTenantUsers(tenantId: string): Promise<TenantUserRow[]> {
     .select('id, email, role, created_at, is_active, session_revoked_at, updated_at')
     .eq('tenant_id', tenantId)
     .order('created_at', { ascending: true })
+    .limit(100)
 
   if (error) {
     throw new AppError(500, error.message)

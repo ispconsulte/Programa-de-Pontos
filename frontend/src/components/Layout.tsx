@@ -29,6 +29,7 @@ import {
   isAdminUiRole,
 } from '@/lib/user-management'
 import { clearCurrentTenantIdCache, fetchTenantSettings, getCurrentTenantId } from '@/lib/supabase-queries'
+import { createButtonGuard } from '@/utils/antiFlood'
 
 export type DashboardSearchType = 'name' | 'cpfCnpj' | 'id'
 export const DASHBOARD_CLIENT_SEARCH_EVENT = 'dashboard:client-search'
@@ -194,6 +195,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [profileLoading, setProfileLoading] = useState(() => !getCachedCurrentUserProfile())
   const [headerSearchType, setHeaderSearchType] = useState<DashboardSearchType>('name')
   const [headerSearchValue, setHeaderSearchValue] = useState('')
+  const [signingOut, setSigningOut] = useState(false)
+  const signOutGuardRef = useRef(createButtonGuard('layout-sign-out'))
   const navSections = useMemo(() => {
     return isAdminUiRole(profile.role) ? adminNavSections : baseNavSections
   }, [profile.role])
@@ -204,6 +207,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       window.localStorage.setItem('bonifica-sidebar-collapsed', String(next))
       return next
     })
+  }
+
+  const handleSignOut = async () => {
+    if (signingOut || !signOutGuardRef.current.canExecute()) return
+    setSigningOut(true)
+    try {
+      await supabase.auth.signOut()
+    } finally {
+      setSigningOut(false)
+      signOutGuardRef.current.reset()
+    }
   }
 
   /* Theme sync */
@@ -424,7 +438,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             collapsed={collapsed}
           />
           <button
-            onClick={() => supabase.auth.signOut()}
+            onClick={() => void handleSignOut()}
+            disabled={signingOut}
             title={collapsed ? 'Sair' : undefined}
             className={cn(
               'group flex w-full items-center rounded-xl text-[13px] font-medium text-muted-foreground transition-all duration-200 hover:bg-destructive/[0.08] hover:text-destructive mt-0.5',
@@ -432,7 +447,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             )}
           >
             <LogOut className="h-[18px] w-[18px]" />
-            {!collapsed && <span>Sair</span>}
+            {!collapsed && <span>{signingOut ? 'Aguarde...' : 'Sair'}</span>}
           </button>
         </div>
       </aside>
@@ -533,13 +548,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <div className="border-t border-border p-1.5">
                     <button
                       onClick={() => {
-                        void supabase.auth.signOut()
+                        void handleSignOut()
                         setUserMenuOpen(false)
                       }}
+                      disabled={signingOut}
                       className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-destructive/[0.08] hover:text-destructive"
                     >
                       <LogOut className="h-4 w-4" />
-                      Sair
+                      {signingOut ? 'Aguarde...' : 'Sair'}
                     </button>
                   </div>
                 </div>
