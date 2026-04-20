@@ -180,7 +180,14 @@ export default function LoginPage() {
     setLoading(true)
     try {
       const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
-      if (signInError || !data.session?.access_token) { setError('E-mail ou senha incorretos.'); return }
+      if (signInError) {
+        const msg = signInError.message?.toLowerCase() ?? ''
+        if (msg.includes('invalid login') || msg.includes('invalid credentials')) { setError('E-mail ou senha incorretos.'); return }
+        if (msg.includes('email not confirmed')) { setError('Confirme seu e-mail antes de entrar.'); return }
+        if (msg.includes('rate') || msg.includes('too many')) { setError('Muitas tentativas. Aguarde alguns minutos.'); return }
+        setError(signInError.message); return
+      }
+      if (!data.session?.access_token) { setError('Não foi possível iniciar a sessão. Tente novamente.'); return }
 
       try {
         await supabase.functions.invoke('bootstrap-tenant', { body: {} })
