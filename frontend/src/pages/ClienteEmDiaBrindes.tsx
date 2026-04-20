@@ -241,7 +241,7 @@ function GiftCatalogDialog({
             <div className="flex items-center gap-4 rounded-xl border border-border bg-muted/15 p-3">
               <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-card">
                 {form.imageUrl ? (
-                  <img src={form.imageUrl} alt={form.name || 'Preview'} className="h-full w-full object-contain p-1" />
+                  <img src={form.imageUrl} alt={form.name || 'Preview'} width={64} height={64} loading="lazy" decoding="async" className="h-full w-full object-contain p-1" />
                 ) : (
                   <Gift className="h-5 w-5 text-muted-foreground/40" />
                 )}
@@ -305,8 +305,11 @@ function GiftCardVisual({ reward }: { reward: ClienteEmDiaRewardItem }) {
       <img
         src={reward.imagemUrl}
         alt={reward.nome}
+        width={400}
+        height={400}
         className="h-full w-full object-contain p-2"
         loading="lazy"
+        decoding="async"
       />
     )
   }
