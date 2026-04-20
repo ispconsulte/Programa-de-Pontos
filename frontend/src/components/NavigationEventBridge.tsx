@@ -20,7 +20,22 @@ export default function NavigationEventBridge() {
     const handleNavigation = (event: Event) => {
       const detail = (event as CustomEvent<AppNavigateDetail>).detail
       if (!detail?.to) return
-      navigate(detail.to, { replace: detail.replace ?? false })
+
+      const run = () => navigate(detail.to, { replace: detail.replace ?? false })
+
+      const reduceMotion =
+        typeof window !== 'undefined' &&
+        window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+
+      const doc = document as Document & {
+        startViewTransition?: (cb: () => void) => unknown
+      }
+
+      if (!reduceMotion && typeof doc.startViewTransition === 'function') {
+        doc.startViewTransition(() => run())
+      } else {
+        run()
+      }
     }
 
     window.addEventListener(APP_NAVIGATE_EVENT, handleNavigation)
