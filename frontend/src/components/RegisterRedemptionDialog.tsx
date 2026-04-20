@@ -353,14 +353,16 @@ export default function RegisterRedemptionDialog({
             {isActiveCustomer ? (
               <>
                 <div className="space-y-2">
-                  <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Cliente</Label>
+                  <Label htmlFor="redemption-customer" className="text-[11px] uppercase tracking-wider text-muted-foreground">Cliente</Label>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                     <Input
+                      id="redemption-customer"
                       value={customerQuery}
                       onChange={(event) => handleSearchChange(event.target.value)}
                       placeholder="Nome ou CPF do cliente"
                       className="pl-9"
+                      autoComplete="off"
                     />
                     {searchLoading && (
                       <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -422,20 +424,24 @@ export default function RegisterRedemptionDialog({
             ) : (
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Nome</Label>
+                  <Label htmlFor="redemption-lead-name" className="text-[11px] uppercase tracking-wider text-muted-foreground">Nome</Label>
                   <Input
+                    id="redemption-lead-name"
                     value={leadName}
                     onChange={(event) => setLeadName(event.target.value)}
                     placeholder="Nome"
+                    autoComplete="name"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Telefone</Label>
+                  <Label htmlFor="redemption-lead-phone" className="text-[11px] uppercase tracking-wider text-muted-foreground">Telefone</Label>
                   <Input
+                    id="redemption-lead-phone"
                     value={leadPhone}
                     onChange={(event) => setLeadPhone(formatPhonePtBr(event.target.value))}
                     placeholder="(11) 99999-9999"
                     inputMode="numeric"
+                    autoComplete="tel"
                   />
                 </div>
               </div>
@@ -443,12 +449,12 @@ export default function RegisterRedemptionDialog({
 
             <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_120px]">
               <div className="space-y-2">
-                <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Brinde</Label>
+                <Label htmlFor="redemption-gift" className="text-[11px] uppercase tracking-wider text-muted-foreground">Brinde</Label>
                 {giftsLoading ? (
                   <div className="flex items-center justify-center py-4"><Spinner size="sm" /></div>
                 ) : (
                   <Select value={selectedGiftId} onValueChange={setSelectedGiftId}>
-                    <SelectTrigger>
+                    <SelectTrigger id="redemption-gift">
                       <SelectValue placeholder={gifts.length === 0 ? 'Nenhum brinde disponível' : 'Selecione o brinde'} />
                     </SelectTrigger>
                     <SelectContent>
@@ -463,8 +469,9 @@ export default function RegisterRedemptionDialog({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Quantidade</Label>
+                <Label htmlFor="redemption-quantity" className="text-[11px] uppercase tracking-wider text-muted-foreground">Quantidade</Label>
                 <Input
+                  id="redemption-quantity"
                   type="number"
                   min={1}
                   step={1}
@@ -482,8 +489,9 @@ export default function RegisterRedemptionDialog({
             )}
 
             <div className="space-y-2">
-              <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Responsável pela entrega</Label>
+              <Label htmlFor="redemption-responsible" className="text-[11px] uppercase tracking-wider text-muted-foreground">Responsável pela entrega</Label>
               <Input
+                id="redemption-responsible"
                 value={responsible}
                 onChange={(event) => setResponsible(event.target.value)}
                 placeholder="Responsável pela entrega"
@@ -491,8 +499,9 @@ export default function RegisterRedemptionDialog({
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Observações (opcional)</Label>
+              <Label htmlFor="redemption-notes" className="text-[11px] uppercase tracking-wider text-muted-foreground">Observações (opcional)</Label>
               <textarea
+                id="redemption-notes"
                 value={notes}
                 onChange={(event) => setNotes(event.target.value)}
                 placeholder="Observações (opcional)"
