@@ -167,14 +167,31 @@ export default function ReceivablesPage() {
   const [error, setError] = useState('')
   const [total, setTotal] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
-  const [category, setCategory] = useState('all')
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
-  const [appliedFilters, setAppliedFilters] = useState<AppliedFilters>({ category: 'all', dateFrom: '', dateTo: '' })
-  const [page, setPage] = useState(1)
-  const [limit, setLimit] = useState(10)
-  const [search, setSearch] = useState('')
-  const [sortBy, setSortBy] = useState<SortOption>('due_desc')
+  const persistedFilters = (() => {
+    if (typeof window === 'undefined') return null
+    try {
+      const raw = window.sessionStorage.getItem('pontuacao:filters')
+      return raw ? JSON.parse(raw) as Partial<{ category: string; dateFrom: string; dateTo: string; page: number; limit: number; search: string; sortBy: SortOption }> : null
+    } catch { return null }
+  })()
+  const [category, setCategory] = useState(persistedFilters?.category ?? 'all')
+  const [dateFrom, setDateFrom] = useState(persistedFilters?.dateFrom ?? '')
+  const [dateTo, setDateTo] = useState(persistedFilters?.dateTo ?? '')
+  const [appliedFilters, setAppliedFilters] = useState<AppliedFilters>({
+    category: persistedFilters?.category ?? 'all',
+    dateFrom: persistedFilters?.dateFrom ?? '',
+    dateTo: persistedFilters?.dateTo ?? '',
+  })
+  const [page, setPage] = useState(persistedFilters?.page ?? 1)
+  const [limit, setLimit] = useState(persistedFilters?.limit ?? 10)
+  const [search, setSearch] = useState(persistedFilters?.search ?? '')
+  const [sortBy, setSortBy] = useState<SortOption>(persistedFilters?.sortBy ?? 'due_desc')
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      window.sessionStorage.setItem('pontuacao:filters', JSON.stringify({ category, dateFrom, dateTo, page, limit, search, sortBy }))
+    } catch { /* noop */ }
+  }, [category, dateFrom, dateTo, page, limit, search, sortBy])
   const [clientNameMap, setClientNameMap] = useState<Map<string, string>>(new Map())
   const [summary, setSummary] = useState<ReceivablesSummary>({
     totalRecords: 0,
