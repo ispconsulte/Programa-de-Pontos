@@ -334,6 +334,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* ── Sidebar ── */}
       <aside
+        id="primary-sidebar"
+        aria-label="Navegação principal"
         className={cn(
           'fixed inset-y-0 left-0 z-50 flex flex-col border-r border-sidebar-border bg-sidebar transition-all duration-300 ease-out',
           'lg:relative lg:z-auto lg:translate-x-0',
