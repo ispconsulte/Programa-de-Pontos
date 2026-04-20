@@ -339,7 +339,15 @@ export default function ClienteEmDiaBrindesPage() {
   const { loading, error, rewards, reload } = useClienteEmDia({ rewardsOnly: true })
   const [isAdmin, setIsAdmin] = useState(false)
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(() => {
+    if (typeof window === 'undefined') return ''
+    return window.sessionStorage.getItem('catalogo:search') ?? ''
+  })
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (search) window.sessionStorage.setItem('catalogo:search', search)
+    else window.sessionStorage.removeItem('catalogo:search')
+  }, [search])
   const [deleteTarget, setDeleteTarget] = useState<ClienteEmDiaRewardItem | null>(null)
   const [deleting, setDeleting] = useState(false)
 
