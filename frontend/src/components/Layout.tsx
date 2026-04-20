@@ -135,6 +135,7 @@ function SidebarItem({
       to={item.href}
       onClick={onNav}
       title={collapsed ? item.label : undefined}
+      aria-current={isActive ? 'page' : undefined}
       className={cn(
         'group flex items-center rounded-xl transition-all duration-200',
         collapsed ? 'justify-center p-2.5' : 'gap-3 px-3 py-2.5',
@@ -333,6 +334,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* ── Sidebar ── */}
       <aside
+        id="primary-sidebar"
+        aria-label="Navegação principal"
         className={cn(
           'fixed inset-y-0 left-0 z-50 flex flex-col border-r border-sidebar-border bg-sidebar transition-all duration-300 ease-out',
           'lg:relative lg:z-auto lg:translate-x-0',
@@ -373,9 +376,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           {/* Mobile close */}
           <button
             onClick={() => setMobileOpen(false)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-muted-foreground hover:text-foreground lg:hidden"
+            aria-label="Fechar menu"
+            className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-1 focus-visible:ring-primary lg:hidden"
           >
-            <X className="h-4 w-4" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
@@ -448,7 +452,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
             <button
               onClick={() => setMobileOpen(true)}
-              className="rounded-lg p-1.5 text-muted-foreground hover:text-foreground lg:hidden"
+              aria-label="Abrir menu de navegação"
+              aria-expanded={mobileOpen}
+              aria-controls="primary-sidebar"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted/70 hover:text-foreground focus:outline-none focus-visible:ring-1 focus-visible:ring-primary lg:hidden"
             >
               <Menu className="h-5 w-5" />
             </button>
