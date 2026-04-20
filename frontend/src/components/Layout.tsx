@@ -373,9 +373,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           {/* Mobile close */}
           <button
             onClick={() => setMobileOpen(false)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-muted-foreground hover:text-foreground lg:hidden"
+            aria-label="Fechar menu"
+            className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-1 focus-visible:ring-primary lg:hidden"
           >
-            <X className="h-4 w-4" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
