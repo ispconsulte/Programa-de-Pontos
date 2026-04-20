@@ -113,15 +113,15 @@ export default function ResgatesPage() {
       <Layout>
         <div className="page-stack">
           {/* Header row */}
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
               <h1 className="text-lg font-bold text-foreground">Resgates</h1>
               <p className="text-xs text-muted-foreground">Acompanhe os resgates dos clientes</p>
             </div>
             <RegisterRedemptionDialog
               onRedemptionComplete={() => setReloadKey(k => k + 1)}
               trigger={
-                <Button size="sm">
+                <Button size="sm" className="w-full sm:w-auto">
                   <Sparkles className="h-3.5 w-3.5" />
                   Novo resgate
                 </Button>
@@ -141,13 +141,13 @@ export default function ResgatesPage() {
             }
           />
 
-          <div className="flex gap-1 rounded-lg border border-border bg-card p-1">
+          <div className="flex gap-1 overflow-x-auto rounded-lg border border-border bg-card p-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {STATUS_TABS.map((t) => (
               <button
                 key={t.value}
                 onClick={() => setTab(t.value)}
                 className={cn(
-                  'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                  'shrink-0 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
                   tab === t.value
                     ? 'bg-primary text-primary-foreground'
                     : 'text-muted-foreground hover:bg-muted hover:text-foreground'

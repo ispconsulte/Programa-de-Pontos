@@ -23,30 +23,30 @@ export default function ClienteEmDiaPage() {
           title="Cliente em Dia"
           subtitle="Visão administrativa da campanha de fidelização com foco em adimplência, pontos e saúde da base participante."
           actions={
-            <>
-              <Button asChild variant="outline" size="sm">
+            <div className="flex w-full flex-wrap gap-2 sm:w-auto">
+              <Button asChild variant="outline" size="sm" className="flex-1 sm:flex-none">
                 <Link to="/cliente-em-dia/configuracoes">
                   <Settings className="h-3.5 w-3.5" />
                   Configurações
                 </Link>
               </Button>
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="outline" size="sm" className="flex-1 sm:flex-none">
                 <Link to="/cliente-em-dia/brindes">
                   <Edit3 className="h-3.5 w-3.5" />
                   Catálogo de brindes
                 </Link>
               </Button>
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="outline" size="sm" className="flex-1 sm:flex-none">
                 <Link to="/cliente-em-dia/cadastrar">
                   <CheckCircle2 className="h-3.5 w-3.5" />
                   Cadastro em lote
                 </Link>
               </Button>
-              <Button variant="outline" size="sm" className="border-[hsl(var(--success)/0.2)] bg-[hsl(var(--success)/0.04)] text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/0.08)]">
+              <Button variant="outline" size="sm" className="flex-1 border-[hsl(var(--success)/0.2)] bg-[hsl(var(--success)/0.04)] text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/0.08)] sm:flex-none">
                 <Download className="h-3.5 w-3.5" />
                 Exportar
               </Button>
-            </>
+            </div>
           }
         />
 

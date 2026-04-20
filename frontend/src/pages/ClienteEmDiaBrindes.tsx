@@ -399,7 +399,7 @@ export default function ClienteEmDiaBrindesPage() {
               <GiftCatalogDialog
                 onSaved={handleSaved}
                 trigger={
-                  <Button className="bg-emerald-600 text-white hover:bg-emerald-500">
+                  <Button className="w-full bg-emerald-600 text-white hover:bg-emerald-500 sm:w-auto">
                     <Plus className="h-3.5 w-3.5" />
                     Adicionar brinde
                   </Button>
@@ -415,7 +415,7 @@ export default function ClienteEmDiaBrindesPage() {
             />
           )}
 
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
             <div className="relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-emerald-500/10 to-emerald-500/[0.02] p-5">
               <div className="flex items-start justify-between">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Itens cadastrados</p>
@@ -479,7 +479,7 @@ export default function ClienteEmDiaBrindesPage() {
               ) : filteredRewards.length === 0 ? (
                 <div className="p-8"><EmptyState title="Nenhum brinde encontrado" description="Ajuste a busca ou cadastre um novo item." /></div>
               ) : (
-                <div className="grid gap-px bg-border/30 md:grid-cols-2 xl:grid-cols-3">
+                <div className="grid gap-px bg-border/30 sm:grid-cols-2 xl:grid-cols-3">
                   {filteredRewards.map((reward) => {
                     const tier = tierColor(reward.pontosNecessarios)
                     return (
