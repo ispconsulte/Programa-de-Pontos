@@ -246,7 +246,7 @@ function GiftCatalogDialog({
                   <Gift className="h-5 w-5 text-muted-foreground/40" />
                 )}
               </div>
-              <p className="text-[11px] leading-relaxed text-muted-foreground">
+              <p className="text-xs leading-relaxed text-muted-foreground">
                 JPG, PNG ou WebP · até 1,5 MB · ideal 400×400 px
               </p>
             </div>
