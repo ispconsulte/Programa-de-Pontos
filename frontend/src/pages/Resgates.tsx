@@ -155,7 +155,7 @@ export default function ResgatesPage() {
               >
                 {t.label}
                 {t.value !== 'all' && (
-                  <span className="ml-1.5 text-[10px] opacity-70">
+                  <span className="ml-1.5 text-[11px] opacity-80">
                     {rows.filter((r) => r.status_resgate === t.value).length}
                   </span>
                 )}
