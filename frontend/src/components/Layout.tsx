@@ -449,7 +449,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
             <button
               onClick={() => setMobileOpen(true)}
-              className="rounded-lg p-1.5 text-muted-foreground hover:text-foreground lg:hidden"
+              aria-label="Abrir menu de navegação"
+              aria-expanded={mobileOpen}
+              aria-controls="primary-sidebar"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted/70 hover:text-foreground focus:outline-none focus-visible:ring-1 focus-visible:ring-primary lg:hidden"
             >
               <Menu className="h-5 w-5" />
             </button>
