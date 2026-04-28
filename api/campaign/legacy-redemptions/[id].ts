@@ -143,7 +143,7 @@ export default async function handler(request: any, response: any) {
 
     if (request.method === 'PATCH' || request.method === 'PUT') {
       const body = updateSchema.parse(getBody(request))
-      let current = await loadRedemption(auth.tenantId, id)
+      let current: Awaited<ReturnType<typeof loadRedemption>> | Awaited<ReturnType<typeof loadCompatibilityRedemption>> = await loadRedemption(auth.tenantId, id)
       if (current.error && isLegacyMutationCompatibilityError(current.error.message)) {
         current = await loadCompatibilityRedemption(auth.tenantId, id)
       }

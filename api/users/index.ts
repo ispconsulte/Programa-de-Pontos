@@ -195,13 +195,17 @@ export default async function handler(request: any, response: any) {
 
     const tenantUsers = await tenantUsersQuery
     const authUsers = await listAllAuthUsers()
-    const tenantNames = await loadTenantNames([
+    const tenantNamesResult = await loadTenantNames([
       ...new Set((tenantUsers.data ?? []).map((user) => user.tenant_id).filter(Boolean)),
     ] as string[])
 
-    if (tenantUsers.error || authUsers.error || tenantNames.error) {
+    if (tenantUsers.error || authUsers.error || tenantNamesResult.error) {
       return sendInternalError(response)
     }
+
+    const tenantNamesMap: Map<string, string | null> = tenantNamesResult.data instanceof Map
+      ? tenantNamesResult.data
+      : new Map()
 
     const authUsersById = new Map((authUsers.data.users ?? []).map((user) => [user.id, user]))
 
@@ -215,7 +219,7 @@ export default async function handler(request: any, response: any) {
           is_active: user.is_active,
           is_full_admin: (user as any).is_full_admin === true,
           tenant_id: (user as any).tenant_id ?? null,
-          tenant_name: user.tenant_id ? tenantNames.data.get(user.tenant_id) ?? null : null,
+          tenant_name: user.tenant_id ? tenantNamesMap.get(user.tenant_id) ?? null : null,
           name: normalizeDisplayName(authUser ?? user),
           created_at: user.created_at,
           updated_at: user.updated_at,
