@@ -13,6 +13,7 @@ import { clientsRoutes } from './modules/clients/clients.routes.js'
 import { settingsRoutes } from './modules/settings/settings.routes.js'
 import { campaignRoutes } from './modules/campaign/campaign.routes.js'
 import { usersRoutes } from './modules/users/users.routes.js'
+import { tenantsRoutes } from './modules/tenants/tenants.routes.js'
 import { AppError } from './lib/app-error.js'
 import { registerEndpointRateLimit, registerIdempotencyCache } from './lib/anti-flood.js'
 
@@ -203,6 +204,7 @@ export async function buildApp(redisClient?: Redis) {
   await app.register(settingsRoutes, { prefix: '/settings' })
   await app.register(campaignRoutes, { prefix: '/campaign' })
   await app.register(usersRoutes, { prefix: '/users' })
+  await app.register(tenantsRoutes, { prefix: '/tenants' })
 
   return app
 }

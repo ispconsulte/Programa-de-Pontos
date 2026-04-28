@@ -1,6 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/integrations/supabase/types'
-import { watchdogFetch } from '@/utils/requestWatchdog'
 
 declare const __PUBLIC_SUPABASE_URL__: string
 declare const __PUBLIC_SUPABASE_ANON_KEY__: string
@@ -74,9 +73,6 @@ function createSupabaseClient(): SupabaseLike {
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
-    },
-    global: {
-      fetch: (input, init) => watchdogFetch(input, init),
     },
   })
 }

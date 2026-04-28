@@ -19,6 +19,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { friendlyError } from '@/lib/friendly-errors'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
@@ -99,7 +100,7 @@ export default function ClientsPage() {
       const faturasData = await fetchCampaignClientFaturas(tenantId, client.id)
       setFaturas(faturasData)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar faturas.')
+      setError(friendlyError(err, { action: 'load' }))
     } finally {
       setDetailLoading(false)
       selectClientGuardRef.current.reset()
@@ -120,7 +121,7 @@ export default function ClientsPage() {
       if (updated) setSelectedClient(updated)
       setFaturas(faturasData)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao atualizar.')
+      setError(friendlyError(err, { action: 'load' }))
     } finally {
       setDetailLoading(false)
     }

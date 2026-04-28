@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase-client'
+import { friendlyError } from '@/lib/friendly-errors'
 import { watchdogFetch } from '@/utils/requestWatchdog'
 
 function resolveApiBaseUrl(): string {
@@ -19,46 +20,6 @@ function buildUrl(path: string): string {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
   const base = resolveApiBaseUrl()
   return `${base}${normalizedPath}`
-}
-
-/** Friendly error messages for common network/backend failures */
-function friendlyErrorMessage(raw: string, status?: number): string {
-  const lower = raw.toLowerCase()
-
-  if (lower.includes('failed to fetch') || lower.includes('networkerror') || lower.includes('load failed')) {
-    return 'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.'
-  }
-  if (lower.includes('timeout') || lower.includes('aborted')) {
-    return 'A requisição demorou demais. Tente novamente em alguns instantes.'
-  }
-  if (status === 401 || lower.includes('unauthorized') || lower.includes('session')) {
-    return 'Sua sessão expirou. Faça login novamente.'
-  }
-  if (status === 403 || lower.includes('forbidden') || lower.includes('user disabled')) {
-    return 'Você não tem permissão para acessar este recurso.'
-  }
-  if (status === 404) {
-    return 'O recurso solicitado não foi encontrado.'
-  }
-  if (status === 409) {
-    if (lower.includes('ixc') && (lower.includes('config') || lower.includes('integra'))) {
-      return 'A integração IXC ainda não foi configurada. Acesse Administração > Empresa para configurar.'
-    }
-
-    if (raw.length < 200) {
-      return raw
-    }
-  }
-  if (status && status >= 500) {
-    return 'Ocorreu um erro interno no servidor. Tente novamente em alguns instantes.'
-  }
-
-  // Return the original if it's already user-friendly (Portuguese)
-  if (/^[A-ZÁÉÍÓÚÃÕÂÊÎÔÛÇ]/.test(raw) && raw.length < 200) {
-    return raw
-  }
-
-  return 'Ocorreu um erro inesperado. Tente novamente.'
 }
 
 export async function backendRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -85,7 +46,7 @@ export async function backendRequest<T>(path: string, init: RequestInit = {}): P
     }, path.includes('refresh') ? 'refresh' : init.method && init.method !== 'GET' ? 'submit' : 'load')
   } catch (networkError) {
     const rawMsg = networkError instanceof Error ? networkError.message : 'Failed to fetch'
-    throw new Error(friendlyErrorMessage(rawMsg))
+    throw new Error(friendlyError(rawMsg, { action: init.method && init.method !== 'GET' ? 'save' : 'load', path }))
   }
 
   if (response.status === 204) {
@@ -95,7 +56,11 @@ export async function backendRequest<T>(path: string, init: RequestInit = {}): P
   const payload = await response.json().catch(() => null) as { error?: string } | null
   if (!response.ok) {
     const serverMsg = payload?.error || `Falha na requisição (${response.status})`
-    throw new Error(friendlyErrorMessage(serverMsg, response.status))
+    throw new Error(friendlyError(serverMsg, {
+      action: init.method && init.method !== 'GET' ? 'save' : 'load',
+      status: response.status,
+      path,
+    }))
   }
 
   return payload as T

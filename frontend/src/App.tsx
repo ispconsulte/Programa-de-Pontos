@@ -58,10 +58,10 @@ function App() {
             <Route path="/admin/empresa" element={<SettingsPage />} />
             <Route path="/admin/campanhas" element={<SettingsCampaignsPage />} />
             <Route path="/admin/usuarios" element={<SettingsUsersPage />} />
-            <Route path="/settings" element={<Navigate to="/admin/empresa" replace />} />
+            <Route path="/settings" element={<Navigate to="/admin/campanhas" replace />} />
             <Route path="/settings/campaigns" element={<Navigate to="/admin/campanhas" replace />} />
             <Route path="/settings/users" element={<Navigate to="/admin/usuarios" replace />} />
-            <Route path="/admin" element={<Navigate to="/admin/empresa" replace />} />
+            <Route path="/admin" element={<Navigate to="/admin/campanhas" replace />} />
             <Route path="/suporte" element={<SuportePage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

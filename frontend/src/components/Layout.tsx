@@ -71,6 +71,17 @@ const adminNavSections: NavSection[] = [
   {
     label: 'ADMINISTRAÇÃO',
     items: [
+      { href: '/admin/campanhas', label: 'Campanhas', icon: Megaphone },
+      { href: '/admin/usuarios', label: 'Usuários', icon: UserCog },
+    ],
+  },
+]
+
+const fullAdminNavSections: NavSection[] = [
+  adminNavSections[0],
+  {
+    label: 'ADMINISTRAÇÃO',
+    items: [
       { href: '/admin/empresa', label: 'Empresa', icon: Briefcase },
       { href: '/admin/campanhas', label: 'Campanhas', icon: Megaphone },
       { href: '/admin/usuarios', label: 'Usuários', icon: UserCog },
@@ -113,6 +124,21 @@ function buildFallbackProfile(user: any) {
     name: String(m.full_name || m.name || m.display_name || user?.email?.split('@')[0] || 'Usuário'),
     email: user?.email || 'Sem e-mail',
     role: resolveFallbackRole(user),
+    isFullAdmin: false,
+  }
+}
+
+function toLayoutProfile(currentUser: {
+  name: string
+  email: string
+  role: string
+  is_full_admin: boolean
+}) {
+  return {
+    name: currentUser.name,
+    email: currentUser.email,
+    role: currentUser.role,
+    isFullAdmin: currentUser.is_full_admin === true,
   }
 }
 
@@ -183,12 +209,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState(() => {
     const cachedProfile = getCachedCurrentUserProfile()
     if (!cachedProfile) {
-      return { name: 'Usuário', email: 'Sem e-mail', role: '' }
+      return { name: 'Usuário', email: 'Sem e-mail', role: '', isFullAdmin: false }
     }
     return {
       name: cachedProfile.name,
       email: cachedProfile.email,
       role: cachedProfile.role,
+      isFullAdmin: cachedProfile.is_full_admin === true,
     }
   })
   const [tenantName, setTenantName] = useState('Empresa')
@@ -198,8 +225,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [signingOut, setSigningOut] = useState(false)
   const signOutGuardRef = useRef(createButtonGuard('layout-sign-out'))
   const navSections = useMemo(() => {
+    if (profile.isFullAdmin) return fullAdminNavSections
     return isAdminUiRole(profile.role) ? adminNavSections : baseNavSections
-  }, [profile.role])
+  }, [profile.isFullAdmin, profile.role])
+  const hasProfile = profile.email !== 'Sem e-mail' || Boolean(profile.role) || profile.isFullAdmin
+  const profileRoleLabel = profileLoading && !hasProfile
+    ? 'Carregando'
+    : profile.isFullAdmin
+      ? 'Full Administrador'
+      : isAdminUiRole(profile.role)
+        ? 'Administrador'
+        : profile.role
+          ? 'Operador'
+          : 'Perfil'
 
   const toggleCollapse = () => {
     setCollapsed((prev) => {
@@ -232,15 +270,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true
     const apply = async () => {
+      const cached = getCachedCurrentUserProfile()
+      if (cached) {
+        setProfile(toLayoutProfile(cached))
+        setProfileLoading(false)
+        fetchCurrentUserProfile({ force: true, preserveCache: true })
+          .then((currentUser) => {
+            if (!mounted) return
+            setProfile(toLayoutProfile(currentUser))
+          })
+          .catch(() => {})
+        return
+      }
       setProfileLoading(true)
       try {
-        const currentUser = await fetchCurrentUserProfile({ force: true })
+        const currentUser = await fetchCurrentUserProfile()
         if (!mounted) return
-        setProfile({
-          name: currentUser.name,
-          email: currentUser.email,
-          role: currentUser.role,
-        })
+        setProfile(toLayoutProfile(currentUser))
 
         const tenantId = await getCurrentTenantId()
         if (!mounted || !tenantId) return
@@ -261,20 +307,30 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       }
     }
     apply()
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      clearCurrentUserProfileCache()
-      clearCurrentTenantIdCache()
-      setTenantName('Empresa')
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'TOKEN_REFRESHED') return
+      if (event !== 'SIGNED_IN' && event !== 'SIGNED_OUT' && event !== 'USER_UPDATED' && event !== 'PASSWORD_RECOVERY') return
+      // On SIGNED_IN, only reload if the user actually changed
+      if (event === 'SIGNED_IN') {
+        const cached = getCachedCurrentUserProfile()
+        if (cached && session?.user?.id === cached.id) return
+      }
       if (!session?.user) {
-        setProfile({ name: 'Usuário', email: 'Sem e-mail', role: '' })
+        clearCurrentUserProfileCache()
+        clearCurrentTenantIdCache()
+        setTenantName('Empresa')
+        setProfile({ name: 'Usuário', email: 'Sem e-mail', role: '', isFullAdmin: false })
         setProfileLoading(false)
         return
       }
-      setProfileLoading(true)
-      fetchCurrentUserProfile({ force: true })
+      const hadProfile = Boolean(getCachedCurrentUserProfile())
+      if (!hadProfile) {
+        setProfileLoading(true)
+      }
+      fetchCurrentUserProfile({ force: true, preserveCache: true })
         .then((currentUser) => {
           if (!mounted) return
-          setProfile({ name: currentUser.name, email: currentUser.email, role: currentUser.role })
+          setProfile(toLayoutProfile(currentUser))
           getCurrentTenantId().then((tid) => {
             if (!mounted || !tid) return
             fetchTenantSettings(tid).then((t) => {
@@ -284,6 +340,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           }).catch(() => {})
         })
         .catch(() => {
+          if (hadProfile) return
           const user = session.user
           if (!mounted) return
           setProfile(buildFallbackProfile(user))
@@ -504,7 +561,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <div className="hidden max-w-[8.5rem] min-w-0 text-left sm:block">
                   <p className="truncate text-[12.5px] font-semibold text-foreground">{profile.name}</p>
                   <p className="truncate text-[11px] text-muted-foreground">
-                    {profileLoading ? 'Carregando' : isAdminUiRole(profile.role) ? 'Administrador' : profile.role ? 'Operador' : 'Perfil'}
+                    {profileRoleLabel}
                   </p>
                 </div>
               </button>
@@ -520,7 +577,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         <p className="truncate text-[13px] font-semibold text-foreground">{profile.name}</p>
                         <p className="truncate text-[11.5px] text-muted-foreground">{profile.email}</p>
                         <span className="mt-1 inline-block rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-primary">
-                          {profileLoading ? 'Carregando' : isAdminUiRole(profile.role) ? 'Administrador' : profile.role ? 'Operador' : 'Perfil'}
+                          {profileRoleLabel}
                         </span>
                       </div>
                     </div>
@@ -537,12 +594,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       Alterar foto
                     </button>
                     <Link
-                      to={isAdminUiRole(profile.role) ? '/admin/empresa' : '/operacao'}
+                      to={profile.isFullAdmin ? '/admin/empresa' : isAdminUiRole(profile.role) ? '/admin/campanhas' : '/operacao'}
                       onClick={() => setUserMenuOpen(false)}
                       className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
                     >
                       <Settings className="h-4 w-4" />
-                      {isAdminUiRole(profile.role) ? 'Administração' : 'Operação'}
+                      {profile.isFullAdmin || isAdminUiRole(profile.role) ? 'Administração' : 'Operação'}
                     </Link>
                   </div>
                   <div className="border-t border-border p-1.5">

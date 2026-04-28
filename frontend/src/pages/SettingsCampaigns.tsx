@@ -10,6 +10,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
   createDefaultCampaignRuleSettings,
   deleteCampaignRuleSettings,
   fetchCampaignRuleSettingsList,
@@ -208,9 +215,9 @@ export default function SettingsCampaignsPage() {
             subtitle="Defina as regras e a lógica de pontos válidas para a empresa atual."
             actions={
               <Button asChild variant="outline" size="sm">
-                <Link to="/admin/empresa">
+                <Link to="/operacao">
                   <ArrowLeft className="h-3.5 w-3.5" />
-                  Administração
+                  Operação
                 </Link>
               </Button>
             }
@@ -259,23 +266,25 @@ export default function SettingsCampaignsPage() {
                   <div className="flex flex-col gap-3 md:flex-row md:items-end">
                     <div className="flex-1 space-y-2">
                       <Label htmlFor="campaign-selector">Campanha</Label>
-                      <select
-                        id="campaign-selector"
+                      <Select
                         value={settings?.campaignId ?? '__new__'}
-                        onChange={(e) => {
-                          const value = e.target.value
+                        onValueChange={(value) => {
                           if (selectTimerRef.current) clearTimeout(selectTimerRef.current)
                           selectTimerRef.current = setTimeout(() => void handleSelectCampaign(value), 400)
                         }}
-                        className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none ring-offset-background transition-colors focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        {campaigns.map((campaign) => (
-                          <option key={campaign.campaignId ?? campaign.campaignName} value={campaign.campaignId ?? ''}>
-                            {campaign.campaignName}{campaign.active ? ' (ativa)' : ''}
-                          </option>
-                        ))}
-                        <option value="__new__">Nova campanha</option>
-                      </select>
+                        <SelectTrigger id="campaign-selector">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {campaigns.map((campaign) => (
+                            <SelectItem key={campaign.campaignId ?? campaign.campaignName} value={campaign.campaignId ?? '__new__'}>
+                              {campaign.campaignName}{campaign.active ? ' (ativa)' : ''}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value="__new__">Nova campanha</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <div className="flex gap-2">
@@ -387,7 +396,7 @@ export default function SettingsCampaignsPage() {
               {/* Submit */}
               <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                 <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
-                  <Link to="/admin/empresa">Cancelar</Link>
+                  <Link to="/operacao">Cancelar</Link>
                 </Button>
                 <Button type="submit" disabled={saving || deleting} size="lg" className="w-full gap-2 sm:w-auto sm:min-w-[220px]">
                   {saving ? <Spinner size="sm" /> : <Save className="h-4 w-4" />}

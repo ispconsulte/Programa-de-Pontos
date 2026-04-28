@@ -1,0 +1,1 @@
+-- Intentionally empty: full_admin is managed from the users table, not by hardcoded email.

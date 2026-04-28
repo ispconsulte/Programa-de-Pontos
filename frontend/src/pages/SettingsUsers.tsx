@@ -5,7 +5,6 @@ import PageHeader from '@/components/PageHeader'
 import AlertBanner from '@/components/AlertBanner'
 import Spinner from '@/components/Spinner'
 import StatCard from '@/components/StatCard'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -19,17 +18,26 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
   createManagedUser,
   deleteManagedUser,
   disconnectManagedUser,
   fetchCurrentUserProfile,
   fetchManagedUsers,
   isAdminUiRole,
+  isFullAdminProfile,
   updateManagedUser,
   type CreateManagedUserInput,
   type CurrentUserProfile,
   type ManagedUser,
 } from '@/lib/user-management'
+import { fetchAllTenants, type TenantListItem } from '@/lib/supabase-queries'
 import { Edit3, KeyRound, LogOut, Shield, Trash2, UserCog, UserPlus, Users } from 'lucide-react'
 import { friendlyError } from '@/lib/friendly-errors'
 import { createButtonGuard } from '@/utils/antiFlood'
@@ -39,16 +47,19 @@ let settingsUsersCache: {
   expiresAt: number
   currentUser: CurrentUserProfile | null
   users: ManagedUser[]
+  tenants: TenantListItem[]
 } | null = null
 
 type DialogMode = 'create' | 'edit'
+type ManagedUserRole = 'admin' | 'operator' | 'full_admin'
 
 interface UserFormState {
   name: string
   email: string
   password: string
-  role: 'admin' | 'operator'
+  role: ManagedUserRole
   isActive: boolean
+  tenantId: string
 }
 
 const initialFormState: UserFormState = {
@@ -57,6 +68,7 @@ const initialFormState: UserFormState = {
   password: '',
   role: 'operator',
   isActive: true,
+  tenantId: '',
 }
 
 const PASSWORD_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%*-_'
@@ -74,8 +86,13 @@ function formatDateTime(value: string | null): string {
   return parsed.toLocaleString('pt-BR')
 }
 
-function roleLabel(role: string): string {
-  return isAdminUiRole(role) ? 'Administrador' : 'Operador'
+function roleLabel(user: Pick<ManagedUser, 'role' | 'is_full_admin'>): string {
+  if (user.is_full_admin) return 'Full Administrador'
+  return isAdminUiRole(user.role) ? 'Administrador' : 'Operador'
+}
+
+function tenantLabel(user: Pick<ManagedUser, 'tenant_id' | 'tenant_name'>, tenants: TenantListItem[]): string {
+  return user.tenant_name || tenants.find((tenant) => tenant.id === user.tenant_id)?.name || user.tenant_id || '-'
 }
 
 /* ── Compact user card for mobile ── */
@@ -85,12 +102,16 @@ function UserCard({
   onEdit,
   onDisconnect,
   onDelete,
+  tenants,
+  canManage,
 }: {
   user: ManagedUser
   busy: boolean
   onEdit: () => void
   onDisconnect: () => void
   onDelete: () => void
+  tenants: TenantListItem[]
+  canManage: boolean
 }) {
   const initial = (user.name?.trim()?.[0] || user.email?.[0] || 'U').toUpperCase()
 
@@ -103,18 +124,12 @@ function UserCard({
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
           <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+          <p className="truncate text-xs text-muted-foreground">{tenantLabel(user, tenants)}</p>
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            <Badge variant="outline" className="border-primary/20 bg-primary/5 text-primary text-[10px]">
-              {roleLabel(user.role)}
-            </Badge>
-            <Badge
-              variant="outline"
-              className={user.is_active
-                ? 'border-emerald-500/20 bg-emerald-500/10 text-[hsl(var(--success))] text-[10px]'
-                : 'border-amber-500/20 bg-amber-500/10 text-[hsl(var(--warning))] text-[10px]'}
-            >
+            <span className="badge-status badge-status--role">{roleLabel(user)}</span>
+            <span className={user.is_active ? 'badge-status badge-status--active' : 'badge-status badge-status--inactive'}>
               {user.is_active ? 'Ativo' : 'Inativo'}
-            </Badge>
+            </span>
           </div>
         </div>
       </div>
@@ -131,11 +146,11 @@ function UserCard({
       </div>
 
       <div className="flex gap-2 border-t border-[hsl(var(--border))] pt-3">
-        <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={onEdit}>
+        <Button variant="outline" size="sm" className="flex-1 text-xs" disabled={!canManage} onClick={onEdit}>
           <Edit3 className="h-3 w-3" />
           Editar
         </Button>
-        <Button variant="outline" size="sm" className="flex-1 text-xs" disabled={busy} onClick={onDisconnect}>
+        <Button variant="outline" size="sm" className="flex-1 text-xs" disabled={busy || !canManage} onClick={onDisconnect}>
           {busy ? <Spinner size="sm" /> : <LogOut className="h-3 w-3" />}
           {busy ? 'Aguarde...' : 'Revogar'}
         </Button>
@@ -143,7 +158,7 @@ function UserCard({
           variant="outline"
           size="sm"
           className="text-xs text-destructive hover:text-destructive"
-          disabled={busy || user.is_current_user}
+          disabled={busy || user.is_current_user || !canManage}
           onClick={onDelete}
         >
           {busy ? <Spinner size="sm" /> : <Trash2 className="h-3 w-3" />}
@@ -166,6 +181,8 @@ export default function SettingsUsersPage() {
   const [dialogMode, setDialogMode] = useState<DialogMode>('create')
   const [editingUser, setEditingUser] = useState<ManagedUser | null>(null)
   const [form, setForm] = useState<UserFormState>(initialFormState)
+  const [tenants, setTenants] = useState<TenantListItem[]>(freshSettingsUsersCache?.tenants ?? [])
+  const [tenantsLoadError, setTenantsLoadError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [copyFeedback, setCopyFeedback] = useState('')
   const submitGuardRef = useRef(createButtonGuard('settings-users-submit'))
@@ -183,6 +200,8 @@ export default function SettingsUsersPage() {
     if (!force && cached) {
       setCurrentUser(cached.currentUser)
       setUsers(cached.users)
+      setTenants(cached.tenants)
+      setTenantsLoadError('')
       setError('')
       setLoading(false)
       return
@@ -198,20 +217,48 @@ export default function SettingsUsersPage() {
       if (!me) throw new Error('Perfil do usuário não pôde ser carregado.')
       setCurrentUser(me)
 
-      if (isAdminUiRole(me.role)) {
+      if (isFullAdminProfile(me) || isAdminUiRole(me.role)) {
         const managedUsers = await fetchManagedUsers()
+        let tenantList: TenantListItem[] = []
+        let tenantError = ''
+
+        if (isFullAdminProfile(me)) {
+          try {
+            tenantList = await fetchAllTenants()
+          } catch (tenantLoadError) {
+            console.error('[SettingsUsers] tenants load error:', tenantLoadError)
+            tenantError = 'Não foi possível carregar a lista completa de empresas agora.'
+          }
+        } else if (me.tenant_id) {
+          const ownTenantName = managedUsers.find((user) => user.tenant_id === me.tenant_id)?.tenant_name
+          tenantList = [{ id: me.tenant_id, name: ownTenantName || me.tenant_id }]
+        }
+
+        if (isFullAdminProfile(me) && tenantList.length === 0) {
+          const fallbackTenants = new Map<string, string>()
+          for (const user of managedUsers) {
+            if (user.tenant_id) fallbackTenants.set(user.tenant_id, user.tenant_name || user.tenant_id)
+          }
+          tenantList = Array.from(fallbackTenants, ([id, name]) => ({ id, name }))
+        }
+
         setUsers(managedUsers)
+        setTenants(tenantList)
+        setTenantsLoadError(tenantError)
         settingsUsersCache = {
           expiresAt: Date.now() + SETTINGS_USERS_CACHE_TTL_MS,
           currentUser: me,
           users: managedUsers,
+          tenants: tenantList,
         }
       } else {
         settingsUsersCache = {
           expiresAt: Date.now() + SETTINGS_USERS_CACHE_TTL_MS,
           currentUser: me,
           users: [],
+          tenants: [],
         }
+        setTenantsLoadError('')
       }
     } catch (loadError) {
       console.error('[SettingsUsers] loadData error:', loadError)
@@ -226,7 +273,10 @@ export default function SettingsUsersPage() {
   function openCreateDialog() {
     setDialogMode('create')
     setEditingUser(null)
-    setForm(initialFormState)
+    setForm({
+      ...initialFormState,
+      tenantId: isFullAdmin ? (tenantOptions.length === 1 ? tenantOptions[0].id : '') : currentUser?.tenant_id ?? '',
+    })
     setShowPassword(false)
     setCopyFeedback('')
     setDialogOpen(true)
@@ -239,8 +289,9 @@ export default function SettingsUsersPage() {
       name: user.name,
       email: user.email,
       password: '',
-      role: isAdminUiRole(user.role) ? 'admin' : 'operator',
+      role: user.is_full_admin ? 'full_admin' : isAdminUiRole(user.role) ? 'admin' : 'operator',
       isActive: user.is_active,
+      tenantId: user.tenant_id ?? '',
     })
     setShowPassword(false)
     setCopyFeedback('')
@@ -294,6 +345,7 @@ export default function SettingsUsersPage() {
           password: form.password,
           name: form.name.trim() || undefined,
           role: form.role,
+          tenantId: form.tenantId || undefined,
         }
         await createManagedUser(payload)
         setSuccess('Usuário criado com sucesso.')
@@ -303,6 +355,7 @@ export default function SettingsUsersPage() {
           password: form.password || undefined,
           role: form.role,
           isActive: form.isActive,
+          tenantId: form.tenantId || undefined,
         })
         setSuccess('Usuário atualizado com sucesso.')
       }
@@ -362,7 +415,23 @@ export default function SettingsUsersPage() {
     }
   }
 
-  const isAdmin = Boolean(currentUser && isAdminUiRole(currentUser.role))
+  const isAdmin = Boolean(currentUser && (isFullAdminProfile(currentUser) || isAdminUiRole(currentUser.role)))
+  const isFullAdmin = Boolean(currentUser && isFullAdminProfile(currentUser))
+  const tenantOptions = useMemo(() => {
+    const ownTenant = currentUser?.tenant_id
+      ? {
+          id: currentUser.tenant_id,
+          name: users.find((user) => user.tenant_id === currentUser.tenant_id)?.tenant_name || currentUser.tenant_id,
+        }
+      : null
+    const baseOptions = isFullAdmin ? tenants : ownTenant ? [ownTenant] : []
+    if (!form.tenantId || baseOptions.some((tenant) => tenant.id === form.tenantId)) {
+      return baseOptions
+    }
+
+    const fallbackName = editingUser ? tenantLabel(editingUser, tenants) : form.tenantId
+    return [...baseOptions, { id: form.tenantId, name: fallbackName }]
+  }, [currentUser?.tenant_id, editingUser, form.tenantId, isFullAdmin, tenants, users])
 
   return (
     <ProtectedRoute allowRoles={['admin']}>
@@ -412,7 +481,7 @@ export default function SettingsUsersPage() {
                   {/* Desktop table */}
                   <Card className="hidden md:block overflow-hidden">
                     <CardHeader className="border-b border-[hsl(var(--border))]">
-                      <CardTitle>Equipe da empresa</CardTitle>
+                      <CardTitle>{isFullAdmin ? 'Todos os usuários' : 'Equipe da empresa'}</CardTitle>
                       <CardDescription>
                         Crie acessos, ajuste papéis, revogue sessões e mantenha o escopo operacional separado da administração.
                       </CardDescription>
@@ -423,6 +492,7 @@ export default function SettingsUsersPage() {
                           <thead>
                             <tr className="border-b border-[hsl(var(--border))] text-left">
                               <th className="px-5 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Usuário</th>
+                              <th className="px-5 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Empresa</th>
                               <th className="px-5 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Papel</th>
                               <th className="px-5 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Status</th>
                               <th className="px-5 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Último login</th>
@@ -433,6 +503,7 @@ export default function SettingsUsersPage() {
                           <tbody className="divide-y divide-[hsl(var(--border))]">
                             {users.map((user) => {
                               const rowBusy = busyUserId === user.id
+                              const canManageUser = isFullAdmin || !user.is_full_admin
                               const initial = (user.name?.trim()?.[0] || 'U').toUpperCase()
                               return (
                                 <tr key={user.id} className="transition-colors hover:bg-[hsl(var(--muted)/0.4)]">
@@ -447,30 +518,26 @@ export default function SettingsUsersPage() {
                                       </div>
                                     </div>
                                   </td>
-                                  <td className="px-5 py-3.5">
-                                    <Badge variant="outline" className="border-primary/20 bg-primary/5 text-primary">
-                                      {roleLabel(user.role)}
-                                    </Badge>
+                                  <td className="px-5 py-3.5 text-xs text-muted-foreground">
+                                    {tenantLabel(user, tenants)}
                                   </td>
                                   <td className="px-5 py-3.5">
-                                    <Badge
-                                      variant="outline"
-                                      className={user.is_active
-                                        ? 'border-emerald-500/20 bg-emerald-500/10 text-[hsl(var(--success))]'
-                                        : 'border-amber-500/20 bg-amber-500/10 text-[hsl(var(--warning))]'}
-                                    >
+                                    <span className="badge-status badge-status--role">{roleLabel(user)}</span>
+                                  </td>
+                                  <td className="px-5 py-3.5">
+                                    <span className={user.is_active ? 'badge-status badge-status--active' : 'badge-status badge-status--inactive'}>
                                       {user.is_active ? 'Ativo' : 'Inativo'}
-                                    </Badge>
+                                    </span>
                                   </td>
                                   <td className="px-5 py-3.5 text-xs text-muted-foreground whitespace-nowrap">{formatDateTime(user.last_sign_in_at)}</td>
                                   <td className="px-5 py-3.5 text-xs text-muted-foreground whitespace-nowrap">{formatDateTime(user.session_revoked_at)}</td>
                                   <td className="px-5 py-3.5 text-right">
                                     <div className="flex items-center justify-end gap-2">
-                                      <Button variant="outline" size="sm" onClick={() => openEditDialog(user)}>
+                                      <Button variant="outline" size="sm" disabled={!canManageUser} onClick={() => openEditDialog(user)}>
                                         <Edit3 className="h-3 w-3" />
                                         Editar
                                       </Button>
-                                      <Button variant="outline" size="sm" disabled={rowBusy} onClick={() => void handleDisconnect(user)}>
+                                      <Button variant="outline" size="sm" disabled={rowBusy || !canManageUser} onClick={() => void handleDisconnect(user)}>
                                         {rowBusy ? <Spinner size="sm" /> : <LogOut className="h-3 w-3" />}
                                         {rowBusy ? 'Aguarde...' : 'Revogar'}
                                       </Button>
@@ -478,7 +545,7 @@ export default function SettingsUsersPage() {
                                         variant="outline"
                                         size="sm"
                                         className="text-destructive hover:text-destructive"
-                                        disabled={rowBusy || user.is_current_user}
+                                        disabled={rowBusy || user.is_current_user || !canManageUser}
                                         onClick={() => void handleDelete(user)}
                                       >
                                         {rowBusy ? <Spinner size="sm" /> : <Trash2 className="h-3 w-3" />}
@@ -490,7 +557,7 @@ export default function SettingsUsersPage() {
                             })}
                             {users.length === 0 && (
                               <tr>
-                                <td colSpan={6} className="px-5 py-12 text-center text-sm text-muted-foreground">
+                                <td colSpan={7} className="px-5 py-12 text-center text-sm text-muted-foreground">
                                   Nenhum usuário encontrado.
                                 </td>
                               </tr>
@@ -514,6 +581,8 @@ export default function SettingsUsersPage() {
                         onEdit={() => openEditDialog(user)}
                         onDisconnect={() => void handleDisconnect(user)}
                         onDelete={() => void handleDelete(user)}
+                        tenants={tenants}
+                        canManage={isFullAdmin || !user.is_full_admin}
                       />
                     ))}
                   </div>
@@ -569,30 +638,57 @@ export default function SettingsUsersPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="user-role">Papel</Label>
-                  <select
-                    id="user-role"
+                  <Select
                     value={form.role}
-                    onChange={(e) => setForm((prev) => ({ ...prev, role: e.target.value as 'admin' | 'operator' }))}
-                    className="h-10 w-full rounded-lg border border-[hsl(var(--border))] bg-background px-3 text-sm text-foreground outline-none focus:ring-1 focus:ring-primary/40"
+                    onValueChange={(v) => setForm((prev) => ({ ...prev, role: v as ManagedUserRole }))}
                   >
-                    <option value="admin">Administrador</option>
-                    <option value="operator">Operador</option>
-                  </select>
+                    <SelectTrigger id="user-role">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {isFullAdmin && <SelectItem value="full_admin">Full Administrador</SelectItem>}
+                      <SelectItem value="admin">Administrador</SelectItem>
+                      <SelectItem value="operator">Operador</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="user-status">Status</Label>
-                  <select
-                    id="user-status"
+                  <Select
                     value={form.isActive ? 'active' : 'inactive'}
+                    onValueChange={(v) => setForm((prev) => ({ ...prev, isActive: v === 'active' }))}
                     disabled={dialogMode === 'create'}
-                    onChange={(e) => setForm((prev) => ({ ...prev, isActive: e.target.value === 'active' }))}
-                    className="h-10 w-full rounded-lg border border-[hsl(var(--border))] bg-background px-3 text-sm text-foreground outline-none focus:ring-1 focus:ring-primary/40"
                   >
-                    <option value="active">Ativo</option>
-                    <option value="inactive">Inativo</option>
-                  </select>
+                    <SelectTrigger id="user-status">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Ativo</SelectItem>
+                      <SelectItem value="inactive">Inativo</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="user-tenant">Empresa</Label>
+                <Select
+                  value={form.tenantId}
+                  onValueChange={(v) => setForm((prev) => ({ ...prev, tenantId: v }))}
+                  disabled={!isFullAdmin}
+                >
+                  <SelectTrigger id="user-tenant">
+                    <SelectValue placeholder="Selecione a empresa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tenantOptions.filter((tenant) => tenant.id).map((tenant) => (
+                      <SelectItem key={tenant.id} value={tenant.id}>{tenant.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {tenantsLoadError && <p className="text-xs text-amber-500">{tenantsLoadError}</p>}
+                {tenantOptions.length === 0 && <p className="text-xs text-destructive">Nenhuma empresa disponível para seleção.</p>}
               </div>
 
               <div className="space-y-2">
@@ -651,6 +747,7 @@ export default function SettingsUsersPage() {
                   disabled={
                     saving
                     || !form.email.trim()
+                    || !form.tenantId
                     || (dialogMode === 'create' && form.password.length < 8)
                     || (dialogMode === 'edit' && form.password.length > 0 && form.password.length < 8)
                   }

@@ -17,6 +17,18 @@ export function sendInternalError(response: any): void {
 }
 
 export function sendException(response: any, error: unknown): void {
+  if (error && typeof error === 'object' && 'status' in error && 'message' in error) {
+    const status = Number((error as any).status)
+    if (status >= 400 && status < 500) {
+      sendJson(response, status, { error: String((error as any).message) })
+      return
+    }
+  }
+  if (error && typeof error === 'object' && (error as any).name === 'ZodError') {
+    sendJson(response, 400, { error: 'Invalid request payload' })
+    return
+  }
+
   if (error instanceof Error) {
     if (error.message === 'Unauthorized') {
       sendJson(response, 401, { error: 'Unauthorized' })

@@ -9,12 +9,13 @@ import { statusBadge } from '@/components/Badge'
 import {
   fetchCampaignClientById,
   fetchCampaignClientFaturas,
-  getCurrentTenantId,
+  resolveCurrentTenant,
   type CampaignClientRow,
   type ReceivableRow,
 } from '@/lib/supabase-queries'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { friendlyError } from '@/lib/friendly-errors'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
@@ -72,8 +73,11 @@ export default function ClientDetailPage() {
       setLoading(true)
       setError('')
       try {
-        const tenantId = await getCurrentTenantId()
-        if (!tenantId) { setError('Usuário não associado a um tenant.'); return }
+        const resolved = await resolveCurrentTenant()
+        if (resolved.error === 'no_session') { setError('Sessão expirada. Saia e entre novamente.'); return }
+        if (resolved.error === 'no_user_record') { setError('Sessão inválida ou usuário sem cadastro. Saia e entre novamente.'); return }
+        if (resolved.error === 'no_tenant' && !resolved.isFullAdmin) { setError('Usuário não associado a um tenant.'); return }
+        const tenantId = resolved.tenantId!
         if (!id) { setError('ID inválido.'); return }
 
         const [clientData, faturasData] = await Promise.all([
@@ -85,7 +89,7 @@ export default function ClientDetailPage() {
         setClient(clientData)
         setFaturas(faturasData)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Erro ao carregar cliente.')
+        setError(friendlyError(err, { action: 'load' }))
       } finally {
         setLoading(false)
       }

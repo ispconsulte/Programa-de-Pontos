@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { grantManualPoints } from '@/lib/loyalty-admin'
 import { fetchCurrentUserProfile } from '@/lib/user-management'
+import { friendlyError } from '@/lib/friendly-errors'
 import type { CampaignClientRow } from '@/lib/supabase-queries'
 import { Plus } from 'lucide-react'
 import {
@@ -76,7 +77,7 @@ export default function ManualPointsDialog({
       setAdjustmentType('credit')
       setOpen(false)
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Não foi possível adicionar os pontos.')
+      setError(friendlyError(submitError, { action: 'save' }))
     } finally {
       setSaving(false)
       submitGuardRef.current.reset()
@@ -87,7 +88,7 @@ export default function ManualPointsDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger ?? (
-          <Button className="bg-emerald-600 text-white hover:bg-emerald-500" disabled={!client}>
+          <Button variant="success" disabled={!client}>
             <Plus className="h-3.5 w-3.5" />
             Adicionar pontos manualmente
           </Button>

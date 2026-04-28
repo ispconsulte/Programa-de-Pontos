@@ -53,7 +53,7 @@ function isCatalogCompatibilityError(message: string | undefined): boolean {
 export default async function handler(request: any, response: any) {
   try {
     const auth = await authenticateRequest(request)
-    assertAdmin(auth.userRole)
+    assertAdmin(auth.userRole, auth.isFullAdmin)
     const id = String(request.query.id ?? '')
 
     if (!id) {
@@ -98,6 +98,7 @@ export default async function handler(request: any, response: any) {
             ativo: body.active ?? true,
           })
           .eq('id', id)
+          .eq('tenant_id', auth.tenantId)
           .select('id, nome, descricao, pontos_necessarios, estoque, imagem_url, ativo, created_at, updated_at')
           .maybeSingle()
 
@@ -131,10 +132,22 @@ export default async function handler(request: any, response: any) {
           return status === 500 ? sendInternalError(response) : sendJson(response, status, { error: message })
         }
 
+        const compatibilityTarget = await supabaseAdmin
+          .from('pontuacao_catalogo_brindes')
+          .select('id')
+          .eq('id', id)
+          .eq('tenant_id', auth.tenantId)
+          .maybeSingle()
+
+        if (compatibilityTarget.error || !compatibilityTarget.data) {
+          return sendJson(response, 404, { error: 'Brinde não encontrado' })
+        }
+
         const compatibilityDelete = await supabaseAdmin
           .from('pontuacao_catalogo_brindes')
           .delete()
           .eq('id', id)
+          .eq('tenant_id', auth.tenantId)
           .select('id')
           .maybeSingle()
 

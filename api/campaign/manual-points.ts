@@ -45,7 +45,7 @@ export default async function handler(request: any, response: any) {
     }
 
     const auth = await authenticateRequest(request)
-    assertAdmin(auth.userRole)
+    assertAdmin(auth.userRole, auth.isFullAdmin)
     const body = manualPointsSchema.parse(getBody(request))
 
     const actorResult = await supabaseAdmin

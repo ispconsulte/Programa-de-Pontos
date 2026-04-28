@@ -11,6 +11,7 @@ import { Sparkles, ChevronRight, Gift } from 'lucide-react'
 import { fetchLegacyRedemptions, getCurrentTenantId } from '@/lib/supabase-queries'
 import { useNavigate } from 'react-router-dom'
 import { createButtonGuard } from '@/utils/antiFlood'
+import { friendlyError } from '@/lib/friendly-errors'
 
 type RedemptionStatus = 'pendente' | 'entregue' | 'cancelado'
 
@@ -58,6 +59,7 @@ export default function ResgatesPage() {
   const freshRedemptionsCache = redemptionsCache && redemptionsCache.expiresAt > Date.now() ? redemptionsCache : null
   const [rows, setRows] = useState<RedemptionRow[]>(freshRedemptionsCache?.rows ?? [])
   const [loading, setLoading] = useState(!freshRedemptionsCache)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     let mounted = true
@@ -73,6 +75,7 @@ export default function ResgatesPage() {
         setLoading(true)
       }
       try {
+        setError('')
         const tenantId = await getCurrentTenantId()
         if (!tenantId || !mounted) return
 
@@ -94,8 +97,9 @@ export default function ResgatesPage() {
           expiresAt: Date.now() + REDEMPTIONS_CACHE_TTL_MS,
           rows: nextRows,
         }
-      } catch {
+      } catch (loadError) {
         setRows([])
+        setError(friendlyError(loadError, { action: 'load' }))
       } finally {
         if (mounted) setLoading(false)
       }
@@ -172,6 +176,12 @@ export default function ResgatesPage() {
             <div className="flex items-center justify-center py-16">
               <Spinner size="md" />
             </div>
+          ) : error ? (
+            <EmptyState
+              icon={<Gift className="h-5 w-5" />}
+              title="Não foi possível carregar os resgates"
+              description={error}
+            />
           ) : filtered.length === 0 ? (
             <EmptyState
               icon={<Gift className="h-5 w-5" />}

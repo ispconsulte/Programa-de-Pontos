@@ -4,6 +4,7 @@ export interface AuthContext {
   userId: string
   tenantId: string
   userRole: string
+  isFullAdmin: boolean
 }
 
 export async function authenticateRequest(request: any): Promise<AuthContext> {
@@ -24,7 +25,7 @@ export async function authenticateRequest(request: any): Promise<AuthContext> {
 
   const dbUser = await supabaseAdmin
     .from('users')
-    .select('id, tenant_id, role, is_active, session_revoked_at')
+    .select('id, tenant_id, role, is_active, session_revoked_at, is_full_admin')
     .eq('id', authUser.data.user.id)
     .maybeSingle()
 
@@ -48,6 +49,7 @@ export async function authenticateRequest(request: any): Promise<AuthContext> {
     userId: dbUser.data.id,
     tenantId: dbUser.data.tenant_id,
     userRole: dbUser.data.role,
+    isFullAdmin: dbUser.data.is_full_admin === true,
   }
 }
 
@@ -65,8 +67,14 @@ function decodeJwtIssuedAt(token: string): number | null {
   }
 }
 
-export function assertAdmin(userRole: string): void {
-  if (!isAdminRole(userRole)) {
+export function assertAdmin(userRole: string, isFullAdmin = false): void {
+  if (!isFullAdmin && !isAdminRole(userRole)) {
+    throw new Error('Forbidden')
+  }
+}
+
+export function assertFullAdmin(isFullAdmin = false): void {
+  if (!isFullAdmin) {
     throw new Error('Forbidden')
   }
 }

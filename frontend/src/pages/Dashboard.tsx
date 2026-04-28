@@ -44,6 +44,7 @@ import {
   fetchClientRanking,
   fetchDashboardMetrics,
   getCurrentTenantId,
+  resolveCurrentTenant,
   type CampaignClientRow,
   type RankingClientRow,
   type ReceivableRow,
@@ -156,8 +157,11 @@ export default function DashboardPage() {
     }
     setError('')
     try {
-      const tenantId = await getCurrentTenantId()
-      if (!tenantId) { setError('Usuário não associado a um tenant.'); return }
+      const resolved = await resolveCurrentTenant()
+      if (resolved.error === 'no_session') { setError('Sessão expirada. Saia e entre novamente.'); return }
+      if (resolved.error === 'no_user_record') { setError('Sessão inválida ou usuário sem cadastro. Saia e entre novamente.'); return }
+      if (resolved.error === 'no_tenant' && !resolved.isFullAdmin) { setError('Usuário não associado a um tenant.'); return }
+      const tenantId = resolved.tenantId!
       const [metricData, rankingData] = await Promise.all([
         fetchDashboardMetrics({ tenantId, dateFrom: period.from, dateTo: period.to }),
         fetchClientRanking(tenantId, 10),
@@ -622,7 +626,7 @@ function SelectedClientView({ client, faturas, redemptions, detailLoading, clien
             preselectedClient={client}
             onRedemptionComplete={onRefreshClient}
             trigger={
-              <Button className="bg-emerald-600 text-white hover:bg-emerald-500 shrink-0">
+              <Button variant="success" className="shrink-0">
                 <Gift className="h-3.5 w-3.5 mr-1.5" />
                 Resgatar
               </Button>

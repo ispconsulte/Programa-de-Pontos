@@ -10,13 +10,14 @@ import {
   fetchReceivableById,
   fetchCampaignClientByIxcClienteId,
   fetchRecentFaturasByIxcClienteId,
-  getCurrentTenantId,
+  resolveCurrentTenant,
   type ReceivableRow,
   type CampaignClientRow,
 } from '@/lib/supabase-queries'
 import { getCampaignRuleLabel, getPaymentBehaviorLabel, getPaymentScore } from '@/lib/receivables-utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { friendlyError } from '@/lib/friendly-errors'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
@@ -101,8 +102,11 @@ export default function ReceivableDetailPage() {
       setLoading(true)
       setError('')
       try {
-        const tenantId = await getCurrentTenantId()
-        if (!tenantId) { setError('Usuário não associado a um tenant.'); return }
+        const resolved = await resolveCurrentTenant()
+        if (resolved.error === 'no_session') { setError('Sessão expirada. Saia e entre novamente.'); return }
+        if (resolved.error === 'no_user_record') { setError('Sessão inválida ou usuário sem cadastro. Saia e entre novamente.'); return }
+        if (resolved.error === 'no_tenant' && !resolved.isFullAdmin) { setError('Usuário não associado a um tenant.'); return }
+        const tenantId = resolved.tenantId!
         if (!id) { setError('ID inválido.'); return }
 
         const data = await fetchReceivableById(tenantId, id)
@@ -117,7 +121,7 @@ export default function ReceivableDetailPage() {
         setCliente(clientData)
         setRecentFaturas(faturas.filter(f => f.id !== data.id)) // exclude current
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Erro ao carregar recebimento.')
+        setError(friendlyError(err, { action: 'load' }))
       } finally {
         setLoading(false)
       }

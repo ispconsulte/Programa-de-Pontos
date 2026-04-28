@@ -75,6 +75,15 @@ const rulesQuerySchema = z.object({
   eventType: z.enum(['payment', 'upgrade', 'sva', 'loyalty_renewal']).optional(),
 })
 
+const campaignRuleSettingsSchema = z.object({
+  campaignId: z.string().uuid().nullable().optional(),
+  campaignName: z.string().trim().min(1).max(120),
+  thresholdEarlyDays: z.coerce.number().int().min(0),
+  pointsEarly: z.coerce.number().int().min(0),
+  pointsOnDue: z.coerce.number().int().min(0),
+  pointsLate: z.coerce.number().int().min(0),
+})
+
 const eventCreateSchema = z.object({
   customerId: z.string().optional(),
   customerProfileId: z.string().uuid().optional(),
@@ -174,8 +183,28 @@ const legacyRedemptionSchema = z.object({
 
 const legacyRedemptionsQuerySchema = z.object({
   customerId: z.string().optional(),
+  dateFrom: z.string().optional(),
+  dateTo: z.string().optional(),
   limit: z.coerce.number().int().positive().max(200).default(100),
 })
+
+function isLegacyCompatibilityError(message: string | undefined): boolean {
+  const normalized = String(message ?? '').toLowerCase()
+  return normalized.includes('contato_id')
+    || normalized.includes('quantity')
+    || normalized.includes('deleted_at')
+    || normalized.includes('tipo_destinatario')
+    || normalized.includes('destinatario_nome')
+    || normalized.includes('destinatario_telefone')
+}
+
+function isCatalogCompatibilityError(message: string | undefined): boolean {
+  const normalized = String(message ?? '').toLowerCase()
+  return normalized.includes('deleted_at')
+    || normalized.includes('catalog_item_secure_upsert')
+    || normalized.includes('catalog_item_secure_soft_delete')
+    || normalized.includes('tenant_id')
+}
 
 function getLegacyRedemptionErrorStatus(message: string): number {
   if (message === 'Cliente não encontrado' || message === 'Brinde não encontrado') {
@@ -200,6 +229,10 @@ function getLegacyRedemptionErrorStatus(message: string): number {
 }
 
 function getMutationErrorStatus(message: string): number {
+  if (isLegacyCompatibilityError(message)) {
+    return 409
+  }
+
   if (message === 'Resgate não encontrado' || message === 'Brinde não encontrado' || message === 'Cliente não encontrado') {
     return 404
   }
@@ -228,6 +261,16 @@ function getMutationErrorStatus(message: string): number {
   return 500
 }
 
+function getCatalogMutationErrorStatus(error: { code?: string; message?: string } | null | undefined): number {
+  const message = String(error?.message ?? '')
+  if (message === 'Forbidden') return 403
+  if (message === 'Idempotency key é obrigatória') return 400
+  if (message.includes('inválid')) return 400
+  if (error?.code === '23505' || message.toLowerCase().includes('duplicate')) return 409
+  if (error?.code === '23514' || message.toLowerCase().includes('check constraint')) return 400
+  return 500
+}
+
 function resolveIdempotencyKey(value: string | undefined, scope: string): string {
   const trimmed = value?.trim()
   if (trimmed) {
@@ -235,6 +278,31 @@ function resolveIdempotencyKey(value: string | undefined, scope: string): string
   }
 
   return `${scope}:${crypto.randomUUID()}`
+}
+
+function mapCampaignRuleSettings(
+  campaign: { id: string; nome: string | null; ativa: boolean | null },
+  rules: Array<{ regra_codigo: string | null; dias_antecedencia_min: number | null; pontos: number | null }>
+) {
+  const byCode = new Map<string, { points: number; days: number | null }>()
+  for (const row of rules) {
+    const code = String(row.regra_codigo ?? '')
+    if (!code) continue
+    byCode.set(code, {
+      points: Number(row.pontos ?? 0),
+      days: row.dias_antecedencia_min == null ? null : Number(row.dias_antecedencia_min),
+    })
+  }
+
+  return {
+    campaignId: String(campaign.id),
+    campaignName: String(campaign.nome ?? 'Campanha padrão'),
+    active: Boolean(campaign.ativa),
+    thresholdEarlyDays: byCode.get('antecipado')?.days ?? 3,
+    pointsEarly: byCode.get('antecipado')?.points ?? 5,
+    pointsOnDue: byCode.get('no_vencimento')?.points ?? 4,
+    pointsLate: byCode.get('apos_vencimento')?.points ?? 2,
+  }
 }
 
 export async function campaignRoutes(app: FastifyInstance) {
@@ -387,6 +455,164 @@ export async function campaignRoutes(app: FastifyInstance) {
     })
 
     return reply.send(rule)
+  })
+
+  app.get('/rule-settings', {
+    schema: {
+      tags: ['Campaign'],
+      summary: 'Listar configurações de campanhas de pontos',
+      security: [{ bearerAuth: [] }],
+    },
+  }, async (request, reply) => {
+    const campaignsResult = await supabaseAdmin
+      .from('pontuacao_campanhas')
+      .select('id, nome, ativa, updated_at, created_at')
+      .eq('tenant_id', request.tenantId)
+      .order('ativa', { ascending: false })
+      .order('updated_at', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false, nullsFirst: false })
+
+    if (campaignsResult.error) {
+      throw new AppError(500, campaignsResult.error.message)
+    }
+
+    const campaigns = campaignsResult.data ?? []
+    if (!campaigns.length) {
+      return reply.send({ data: [] })
+    }
+
+    const rulesResult = await supabaseAdmin
+      .from('pontuacao_campanha_regras')
+      .select('campanha_id, regra_codigo, dias_antecedencia_min, pontos, ativo')
+      .eq('tenant_id', request.tenantId)
+      .in('campanha_id', campaigns.map((campaign) => String(campaign.id)))
+      .eq('ativo', true)
+
+    if (rulesResult.error) {
+      throw new AppError(500, rulesResult.error.message)
+    }
+
+    const rulesByCampaign = new Map<string, Array<{ regra_codigo: string | null; dias_antecedencia_min: number | null; pontos: number | null }>>()
+    for (const row of rulesResult.data ?? []) {
+      const campaignId = String(row.campanha_id ?? '')
+      if (!campaignId) continue
+      const rows = rulesByCampaign.get(campaignId) ?? []
+      rows.push(row)
+      rulesByCampaign.set(campaignId, rows)
+    }
+
+    return reply.send({
+      data: campaigns.map((campaign) => mapCampaignRuleSettings(campaign, rulesByCampaign.get(String(campaign.id)) ?? [])),
+    })
+  })
+
+  app.post('/rule-settings', {
+    schema: {
+      tags: ['Campaign'],
+      summary: 'Salvar configuração de campanha de pontos',
+      security: [{ bearerAuth: [] }],
+    },
+  }, async (request, reply) => {
+    const body = campaignRuleSettingsSchema.parse(request.body)
+    let campaignId = body.campaignId ?? null
+    const campaignName = body.campaignName.trim() || 'Campanha padrão'
+
+    if (campaignId) {
+      const updateResult = await supabaseAdmin
+        .from('pontuacao_campanhas')
+        .update({ nome: campaignName })
+        .eq('tenant_id', request.tenantId)
+        .eq('id', campaignId)
+      if (updateResult.error) throw new AppError(500, updateResult.error.message)
+    } else {
+      const insertResult = await supabaseAdmin
+        .from('pontuacao_campanhas')
+        .insert({ tenant_id: request.tenantId, nome: campaignName, ativa: false })
+        .select('id')
+        .single()
+      if (insertResult.error || !insertResult.data) throw new AppError(500, insertResult.error?.message ?? 'Não foi possível criar campanha')
+      campaignId = String(insertResult.data.id)
+    }
+
+    const deactivateResult = await supabaseAdmin
+      .from('pontuacao_campanhas')
+      .update({ ativa: false })
+      .eq('tenant_id', request.tenantId)
+      .neq('id', campaignId)
+    if (deactivateResult.error) throw new AppError(500, deactivateResult.error.message)
+
+    const activateResult = await supabaseAdmin
+      .from('pontuacao_campanhas')
+      .update({ ativa: true })
+      .eq('tenant_id', request.tenantId)
+      .eq('id', campaignId)
+    if (activateResult.error) throw new AppError(500, activateResult.error.message)
+
+    const rules = [
+      { tenant_id: request.tenantId, campanha_id: campaignId, regra_codigo: 'antecipado', dias_antecedencia_min: body.thresholdEarlyDays, pontos: body.pointsEarly, ativo: true },
+      { tenant_id: request.tenantId, campanha_id: campaignId, regra_codigo: 'no_vencimento', dias_antecedencia_min: null, pontos: body.pointsOnDue, ativo: true },
+      { tenant_id: request.tenantId, campanha_id: campaignId, regra_codigo: 'apos_vencimento', dias_antecedencia_min: null, pontos: body.pointsLate, ativo: true },
+    ]
+    const rulesResult = await supabaseAdmin
+      .from('pontuacao_campanha_regras')
+      .upsert(rules, { onConflict: 'campanha_id,regra_codigo' })
+    if (rulesResult.error) throw new AppError(500, rulesResult.error.message)
+
+    return reply.status(204).send()
+  })
+
+  app.delete('/rule-settings/:id', {
+    schema: {
+      tags: ['Campaign'],
+      summary: 'Excluir configuração de campanha de pontos',
+      security: [{ bearerAuth: [] }],
+    },
+  }, async (request, reply) => {
+    const { id } = z.object({ id: z.string().uuid() }).parse(request.params)
+    const currentResult = await supabaseAdmin
+      .from('pontuacao_campanhas')
+      .select('id, ativa')
+      .eq('tenant_id', request.tenantId)
+      .eq('id', id)
+      .maybeSingle()
+    if (currentResult.error) throw new AppError(500, currentResult.error.message)
+    if (!currentResult.data) return reply.status(204).send()
+
+    const rulesResult = await supabaseAdmin
+      .from('pontuacao_campanha_regras')
+      .delete()
+      .eq('tenant_id', request.tenantId)
+      .eq('campanha_id', id)
+    if (rulesResult.error) throw new AppError(500, rulesResult.error.message)
+
+    const campaignResult = await supabaseAdmin
+      .from('pontuacao_campanhas')
+      .delete()
+      .eq('tenant_id', request.tenantId)
+      .eq('id', id)
+    if (campaignResult.error) throw new AppError(500, campaignResult.error.message)
+
+    if (currentResult.data.ativa) {
+      const replacementResult = await supabaseAdmin
+        .from('pontuacao_campanhas')
+        .select('id')
+        .eq('tenant_id', request.tenantId)
+        .order('updated_at', { ascending: false, nullsFirst: false })
+        .order('created_at', { ascending: false, nullsFirst: false })
+        .limit(1)
+        .maybeSingle()
+      if (replacementResult.error) throw new AppError(500, replacementResult.error.message)
+      if (replacementResult.data) {
+        const activateReplacementResult = await supabaseAdmin
+          .from('pontuacao_campanhas')
+          .update({ ativa: true })
+          .eq('tenant_id', request.tenantId)
+          .eq('id', replacementResult.data.id)
+        if (activateReplacementResult.error) throw new AppError(500, activateReplacementResult.error.message)
+      }
+    }
+
+    return reply.status(204).send()
   })
 
   app.get('/missions', {
@@ -577,7 +803,33 @@ export async function campaignRoutes(app: FastifyInstance) {
       .single()
 
     if (insertResult.error || !insertResult.data) {
-      throw new AppError(getMutationErrorStatus(insertResult.error?.message ?? ''), insertResult.error?.message ?? 'Não foi possível criar o brinde')
+      const message = insertResult.error?.message ?? 'Não foi possível criar o brinde'
+      if (!isCatalogCompatibilityError(message)) {
+        throw new AppError(getMutationErrorStatus(message), message)
+      }
+
+      const compatibilityResult = await supabaseAdmin
+        .from('pontuacao_catalogo_brindes')
+        .insert({
+          tenant_id: request.tenantId,
+          nome: body.name.trim(),
+          descricao: body.description?.trim() || null,
+          pontos_necessarios: body.requiredPoints,
+          estoque: body.stock ?? null,
+          imagem_url: body.imageUrl?.trim() || null,
+          ativo: body.active ?? true,
+        })
+        .select('id, nome, descricao, pontos_necessarios, estoque, imagem_url, ativo, created_at, updated_at')
+        .single()
+
+      if (compatibilityResult.error || !compatibilityResult.data) {
+        throw new AppError(
+          getCatalogMutationErrorStatus(compatibilityResult.error),
+          compatibilityResult.error?.message ?? 'Não foi possível criar o brinde'
+        )
+      }
+
+      return reply.status(201).send(compatibilityResult.data)
     }
 
     return reply.status(201).send(insertResult.data)
@@ -605,7 +857,28 @@ export async function campaignRoutes(app: FastifyInstance) {
       : query.eq('ativo', true))
 
     if (listResult.error) {
-      throw new AppError(500, listResult.error.message)
+      if (!isCatalogCompatibilityError(listResult.error.message)) {
+        throw new AppError(500, listResult.error.message)
+      }
+
+      const compatibilityQuery = supabaseAdmin
+        .from('pontuacao_catalogo_brindes')
+        .select('id, nome, descricao, pontos_necessarios, estoque, imagem_url, ativo, created_at, updated_at')
+        .eq('tenant_id', request.tenantId)
+        .order('ativo', { ascending: false })
+        .order('pontos_necessarios', { ascending: true })
+        .order('nome', { ascending: true })
+        .limit(100)
+
+      const compatibilityResult = await (['admin', 'owner', 'manager'].includes(String(request.userRole ?? '').toLowerCase())
+        ? compatibilityQuery
+        : compatibilityQuery.eq('ativo', true))
+
+      if (compatibilityResult.error) {
+        throw new AppError(500, compatibilityResult.error.message)
+      }
+
+      return reply.send(compatibilityResult.data ?? [])
     }
 
     return reply.send(listResult.data ?? [])
@@ -633,7 +906,31 @@ export async function campaignRoutes(app: FastifyInstance) {
       .single()
 
     if (updateResult.error || !updateResult.data) {
-      throw new AppError(getMutationErrorStatus(updateResult.error?.message ?? ''), updateResult.error?.message ?? 'Não foi possível atualizar o brinde')
+      const message = updateResult.error?.message ?? 'Não foi possível atualizar o brinde'
+      if (!isCatalogCompatibilityError(message)) {
+        throw new AppError(getMutationErrorStatus(message), message)
+      }
+
+      const compatibilityResult = await supabaseAdmin
+        .from('pontuacao_catalogo_brindes')
+        .update({
+          nome: body.name.trim(),
+          descricao: body.description?.trim() || null,
+          pontos_necessarios: body.requiredPoints,
+          estoque: body.stock ?? null,
+          imagem_url: body.imageUrl?.trim() || null,
+          ativo: body.active ?? true,
+        })
+        .eq('tenant_id', request.tenantId)
+        .eq('id', id)
+        .select('id, nome, descricao, pontos_necessarios, estoque, imagem_url, ativo, created_at, updated_at')
+        .maybeSingle()
+
+      if (compatibilityResult.error || !compatibilityResult.data) {
+        throw new AppError(404, 'Brinde não encontrado')
+      }
+
+      return reply.send(compatibilityResult.data)
     }
 
     return reply.send(updateResult.data)
@@ -698,7 +995,25 @@ export async function campaignRoutes(app: FastifyInstance) {
       .single()
 
     if (deleteResult.error) {
-      throw new AppError(getMutationErrorStatus(deleteResult.error.message), deleteResult.error.message)
+      if (!isCatalogCompatibilityError(deleteResult.error.message)) {
+        throw new AppError(getMutationErrorStatus(deleteResult.error.message), deleteResult.error.message)
+      }
+
+      const compatibilityDelete = await supabaseAdmin
+        .from('pontuacao_catalogo_brindes')
+        .update({
+          deleted_at: new Date().toISOString(),
+          deleted_by: request.userId,
+          deleted_reason: body.reason?.trim() || 'Exclusão solicitada pela interface administrativa',
+        })
+        .eq('tenant_id', request.tenantId)
+        .eq('id', id)
+        .select('id')
+        .maybeSingle()
+
+      if (compatibilityDelete.error || !compatibilityDelete.data) {
+        throw new AppError(404, 'Brinde não encontrado')
+      }
     }
 
     return reply.status(204).send()
@@ -841,10 +1156,58 @@ export async function campaignRoutes(app: FastifyInstance) {
       selectQuery = selectQuery.eq('ixc_cliente_id', query.customerId)
     }
 
+    if (query.dateFrom?.trim()) {
+      selectQuery = selectQuery.gte('created_at', `${query.dateFrom.trim()}T00:00:00.000Z`)
+    }
+
+    if (query.dateTo?.trim()) {
+      selectQuery = selectQuery.lte('created_at', `${query.dateTo.trim()}T23:59:59.999Z`)
+    }
+
     const result = await selectQuery
 
     if (result.error) {
-      throw new AppError(500, result.error.message)
+      if (!isLegacyCompatibilityError(result.error.message)) {
+        throw new AppError(500, result.error.message)
+      }
+
+      let compatibilityQuery = supabaseAdmin
+        .from('pontuacao_resgates')
+        .select('id, tenant_id, ixc_cliente_id, brinde_id, brinde_nome, pontos_utilizados, status_resgate, data_entrega, responsavel_entrega, observacoes, confirmacao_cliente, created_at, updated_at', { count: 'exact' })
+        .eq('tenant_id', request.tenantId)
+        .order('created_at', { ascending: false })
+        .limit(query.limit)
+
+      if (query.customerId) {
+        compatibilityQuery = compatibilityQuery.eq('ixc_cliente_id', query.customerId)
+      }
+
+      if (query.dateFrom?.trim()) {
+        compatibilityQuery = compatibilityQuery.gte('created_at', `${query.dateFrom.trim()}T00:00:00.000Z`)
+      }
+
+      if (query.dateTo?.trim()) {
+        compatibilityQuery = compatibilityQuery.lte('created_at', `${query.dateTo.trim()}T23:59:59.999Z`)
+      }
+
+      const compatibilityResult = await compatibilityQuery
+      if (compatibilityResult.error) {
+        throw new AppError(500, compatibilityResult.error.message)
+      }
+
+      return reply.send({
+        data: (compatibilityResult.data ?? []).map((row) => ({
+          ...row,
+          quantity: 1,
+          tipo_destinatario: String(row.ixc_cliente_id ?? '').startsWith('lead:') ? 'contato' : 'cliente',
+          destinatario_nome: null,
+          destinatario_telefone: null,
+          cliente_nome: null,
+        })),
+        meta: {
+          total: Number(compatibilityResult.count ?? compatibilityResult.data?.length ?? 0),
+        },
+      })
     }
 
     const rows = result.data ?? []
@@ -885,6 +1248,9 @@ export async function campaignRoutes(app: FastifyInstance) {
           || customerNameMap.get(String(row.ixc_cliente_id))
           || null,
       })),
+      meta: {
+        total: rows.length,
+      },
     })
   })
 
@@ -915,9 +1281,8 @@ export async function campaignRoutes(app: FastifyInstance) {
 
     const current = await supabaseAdmin
       .from('pontuacao_resgates')
-      .select('id, tenant_id, ixc_cliente_id, contato_id, brinde_id, brinde_nome, pontos_utilizados, quantity, status_resgate, data_entrega, responsavel_entrega, observacoes, confirmacao_cliente, tipo_destinatario, destinatario_nome, destinatario_telefone, created_at, updated_at')
+      .select('id, tenant_id, ixc_cliente_id, brinde_id, brinde_nome, pontos_utilizados, status_resgate, data_entrega, responsavel_entrega, observacoes, confirmacao_cliente, created_at, updated_at')
       .eq('tenant_id', request.tenantId)
-      .is('deleted_at', null)
       .eq('id', id)
       .maybeSingle()
 
@@ -948,6 +1313,37 @@ export async function campaignRoutes(app: FastifyInstance) {
       .single()
 
     if (updateResult.error || !updateResult.data) {
+      if (isLegacyCompatibilityError(updateResult.error?.message)) {
+        const updatePayload: Record<string, unknown> = {}
+        if (body.status) updatePayload.status_resgate = body.status
+        if (body.responsible) updatePayload.responsavel_entrega = body.responsible.trim()
+        if (body.notes !== undefined) updatePayload.observacoes = body.notes?.trim() || null
+        if (body.status === 'entregue') {
+          updatePayload.data_entrega = new Date().toISOString()
+          updatePayload.confirmacao_cliente = true
+        }
+
+        const compatibilityResult = await supabaseAdmin
+          .from('pontuacao_resgates')
+          .update(updatePayload)
+          .eq('tenant_id', request.tenantId)
+          .eq('id', id)
+          .select('id, tenant_id, ixc_cliente_id, brinde_id, brinde_nome, pontos_utilizados, status_resgate, data_entrega, responsavel_entrega, observacoes, confirmacao_cliente, created_at, updated_at')
+          .single()
+
+        if (compatibilityResult.error || !compatibilityResult.data) {
+          throw new AppError(500, compatibilityResult.error?.message ?? 'Não foi possível atualizar o resgate')
+        }
+
+        return reply.send({
+          ...compatibilityResult.data,
+          quantity: 1,
+          tipo_destinatario: String(compatibilityResult.data.ixc_cliente_id ?? '').startsWith('lead:') ? 'contato' : 'cliente',
+          destinatario_nome: null,
+          destinatario_telefone: null,
+        })
+      }
+
       throw new AppError(getMutationErrorStatus(updateResult.error?.message ?? ''), updateResult.error?.message ?? 'Não foi possível atualizar o resgate')
     }
 
@@ -990,6 +1386,10 @@ export async function campaignRoutes(app: FastifyInstance) {
       .single()
 
     if (deleteResult.error) {
+      if (isLegacyCompatibilityError(deleteResult.error.message)) {
+        throw new AppError(409, 'Exclusão de resgate indisponível: o banco atual não possui soft delete para resgates')
+      }
+
       throw new AppError(getMutationErrorStatus(deleteResult.error.message), deleteResult.error.message)
     }
 

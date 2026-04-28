@@ -3,42 +3,54 @@
  * Todos os dados são buscados diretamente do Supabase.
  */
 import { supabase } from './supabase-client'
-import { getCachedCurrentUserProfile } from './user-management'
+import { getCachedCurrentUserProfile, type CurrentUserProfile } from './user-management'
 import { backendRequest } from './backend-client'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-let tenantIdCache: { userId: string; tenantId: string | null } | null = null
+let tenantIdCache: { userId: string; tenantId: string | null; isFullAdmin: boolean } | null = null
 
 export function clearCurrentTenantIdCache(): void {
   tenantIdCache = null
 }
 
-/** Retorna o tenant_id do usuário autenticado via tabela users */
-export async function getCurrentTenantId(): Promise<string | null> {
+export type TenantResolution =
+  | { tenantId: string; isFullAdmin: boolean; error: null }
+  | { tenantId: null; isFullAdmin: boolean; error: 'no_session' | 'no_user_record' | 'no_tenant' }
+
+/** Resolves the current user's tenant_id and full-admin flag.
+ * Returns an error discriminant instead of throwing so callers can show precise messages. */
+export async function resolveCurrentTenant(): Promise<TenantResolution> {
   const { data: sessionData } = await supabase.auth.getSession()
   const userId = sessionData.session?.user?.id
-  if (!userId) return null
+  if (!userId) return { tenantId: null, isFullAdmin: false, error: 'no_session' }
 
   const cachedProfile = getCachedCurrentUserProfile()
   if (cachedProfile?.id === userId) {
-    tenantIdCache = { userId, tenantId: cachedProfile.tenant_id }
-    return cachedProfile.tenant_id
+    tenantIdCache = { userId, tenantId: cachedProfile.tenant_id, isFullAdmin: cachedProfile.is_full_admin === true }
+    if (!cachedProfile.tenant_id && !cachedProfile.is_full_admin) return { tenantId: null, isFullAdmin: false, error: 'no_tenant' }
+    return { tenantId: cachedProfile.tenant_id as string, isFullAdmin: cachedProfile.is_full_admin === true, error: null }
   }
 
   if (tenantIdCache?.userId === userId) {
-    return tenantIdCache.tenantId
+    const { tenantId, isFullAdmin } = tenantIdCache
+    if (!tenantId && !isFullAdmin) return { tenantId: null, isFullAdmin: false, error: 'no_tenant' }
+    return { tenantId: tenantId as string, isFullAdmin, error: null }
   }
 
-  const { data } = await supabase
-    .from('users')
-    .select('tenant_id')
-    .eq('id', userId)
-    .maybeSingle()
+  const profile = await backendRequest<CurrentUserProfile>('/users/me')
+  const tenantId = profile.tenant_id ?? null
+  const isFullAdmin = profile.is_full_admin === true
+  tenantIdCache = { userId, tenantId, isFullAdmin }
 
-  const tenantId = data?.tenant_id ?? null
-  tenantIdCache = { userId, tenantId }
-  return tenantId
+  if (!tenantId && !isFullAdmin) return { tenantId: null, isFullAdmin: false, error: 'no_tenant' }
+  return { tenantId: tenantId as string, isFullAdmin, error: null }
+}
+
+/** Retorna o tenant_id do usuário autenticado via tabela users */
+export async function getCurrentTenantId(): Promise<string | null> {
+  const result = await resolveCurrentTenant()
+  return result.tenantId
 }
 
 // ── Faturas processadas (Receivables) ────────────────────────────────────────
@@ -381,55 +393,11 @@ export async function fetchLegacyRedemptions(options?: {
   customerId?: string
   limit?: number
 }): Promise<RedemptionRow[]> {
-  try {
-    const params = new URLSearchParams()
-    if (options?.customerId) params.set('customerId', options.customerId)
-    params.set('limit', String(options?.limit ?? 100))
-    const response = await backendRequest<{ data: RedemptionRow[] }>(`/campaign/legacy-redemptions?${params.toString()}`)
-    return response.data ?? []
-  } catch {
-    // Fallback: query Supabase directly when backend is unavailable
-    const tenantId = await getCurrentTenantId()
-    if (!tenantId) return []
-
-    let redemptionsQuery = supabase
-      .from('pontuacao_resgates' as any)
-      .select('id, ixc_cliente_id, brinde_id, brinde_nome, pontos_utilizados, status_resgate, data_entrega, responsavel_entrega, observacoes, created_at, updated_at')
-      .order('created_at', { ascending: false })
-      .eq('tenant_id', tenantId)
-      .limit(options?.limit ?? 100)
-
-    if (options?.customerId) {
-      redemptionsQuery = redemptionsQuery.eq('ixc_cliente_id', options.customerId)
-    }
-
-    const { data: resgates } = await redemptionsQuery as { data: any[] | null }
-    if (!resgates || resgates.length === 0) return []
-
-    const customerIds = Array.from(new Set(
-      resgates.map((r: any) => String(r.ixc_cliente_id ?? '')).filter(Boolean),
-    ))
-    let nameMap = new Map<string, string>()
-
-    if (customerIds.length > 0) {
-      const { data: customers } = await supabase
-        .from('pontuacao_campanha_clientes' as any)
-        .select('ixc_cliente_id, nome_cliente')
-        .eq('tenant_id', tenantId)
-        .in('ixc_cliente_id', customerIds) as { data: any[] | null }
-
-      nameMap = new Map((customers ?? []).map((c: any) => [String(c.ixc_cliente_id), String(c.nome_cliente ?? '')]))
-    }
-
-    return (resgates ?? []).map((r: any) => ({
-      ...r,
-      quantity: 1,
-      tipo_destinatario: String(r.ixc_cliente_id ?? '').startsWith('lead:') ? 'contato' : 'cliente',
-      destinatario_nome: r.destinatario_nome || null,
-      destinatario_telefone: r.destinatario_telefone || null,
-      cliente_nome: r.destinatario_nome || nameMap.get(String(r.ixc_cliente_id)) || null,
-    })) as RedemptionRow[]
-  }
+  const params = new URLSearchParams()
+  if (options?.customerId) params.set('customerId', options.customerId)
+  params.set('limit', String(options?.limit ?? 100))
+  const response = await backendRequest<{ data: RedemptionRow[] }>(`/campaign/legacy-redemptions?${params.toString()}`)
+  return response.data ?? []
 }
 
 export async function fetchCampaignClientRedemptions(
@@ -476,6 +444,7 @@ export interface TenantSettings {
 }
 
 export async function fetchTenantSettings(tenantId: string): Promise<TenantSettings | null> {
+  const params = tenantId ? `?tenantId=${encodeURIComponent(tenantId)}` : ''
   const response = await backendRequest<{
     name: string
     ixc_base_url: string | null
@@ -483,7 +452,7 @@ export async function fetchTenantSettings(tenantId: string): Promise<TenantSetti
     ixc_configured: boolean
     ixc_connection_id: string | null
     ixc_connection_name: string | null
-  }>('/settings')
+  }>(`/settings${params}`)
 
   const conn = response.ixc_configured
     ? {
@@ -504,7 +473,7 @@ export async function fetchTenantSettings(tenantId: string): Promise<TenantSetti
 }
 
 export async function saveTenantSettings(
-  _tenantId: string,
+  tenantId: string,
   opts: {
     tenantName?: string
     ixcBaseUrl: string
@@ -521,6 +490,10 @@ export async function saveTenantSettings(
     ixcToken: opts.ixcToken || undefined,
   }
 
+  if (tenantId) {
+    payload.tenantId = tenantId
+  }
+
   if (opts.connectionId) {
     payload.ixcConnectionId = opts.connectionId
   }
@@ -529,6 +502,91 @@ export async function saveTenantSettings(
     method: 'PUT',
     body: JSON.stringify(payload),
   })
+}
+
+// ── IXC Connections management ───────────────────────────────────────────────
+
+export interface IxcConnectionDetail extends IxcConnection {
+  created_at: string | null
+  updated_at: string | null
+}
+
+export async function fetchIxcConnections(tenantId?: string): Promise<IxcConnectionDetail[]> {
+  const params = tenantId ? `?tenantId=${encodeURIComponent(tenantId)}` : ''
+  const response = await backendRequest<{ data: IxcConnectionDetail[] }>(`/settings/ixc/connections${params}`)
+  return response.data ?? []
+}
+
+export async function createIxcConnection(opts: {
+  tenantId?: string
+  name: string
+  ixcBaseUrl: string
+  ixcUser: string
+  ixcToken: string
+  active?: boolean
+}): Promise<{ id: string }> {
+  return backendRequest<{ id: string }>('/settings/ixc/connections', {
+    method: 'POST',
+    body: JSON.stringify({
+      name: opts.name,
+      tenantId: opts.tenantId,
+      ixcBaseUrl: opts.ixcBaseUrl,
+      ixcUser: opts.ixcUser,
+      ixcToken: opts.ixcToken,
+      active: opts.active ?? false,
+    }),
+  })
+}
+
+export async function updateIxcConnection(
+  id: string,
+  opts: {
+    tenantId?: string
+    name?: string
+    ixcBaseUrl?: string
+    ixcUser?: string
+    ixcToken?: string
+  }
+): Promise<void> {
+  const params = opts.tenantId ? `?tenantId=${encodeURIComponent(opts.tenantId)}` : ''
+  await backendRequest(`/settings/ixc/connections/${id}${params}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      name: opts.name,
+      ixcBaseUrl: opts.ixcBaseUrl,
+      ixcUser: opts.ixcUser,
+      ixcToken: opts.ixcToken || undefined,
+    }),
+  })
+}
+
+export async function activateIxcConnection(id: string, tenantId?: string): Promise<void> {
+  const params = tenantId ? `?tenantId=${encodeURIComponent(tenantId)}` : ''
+  await backendRequest(`/settings/ixc/connections/${id}/activate${params}`, {
+    method: 'POST',
+    body: JSON.stringify({}),
+  })
+}
+
+export async function deactivateIxcConnection(id: string, tenantId?: string): Promise<void> {
+  const params = tenantId ? `?tenantId=${encodeURIComponent(tenantId)}` : ''
+  await backendRequest(`/settings/ixc/connections/${id}${params}`, {
+    method: 'PUT',
+    body: JSON.stringify({ active: false }),
+  })
+}
+
+// ── Tenants listing (full_admin only) ────────────────────────────────────────
+
+export interface TenantListItem {
+  id: string
+  name: string
+}
+
+export async function fetchAllTenants(): Promise<TenantListItem[]> {
+  const response = await backendRequest<{ data?: TenantListItem[] } | null>('/tenants')
+  const data = response?.data ?? []
+  return data.map((t) => ({ id: t.id, name: t.name || t.id }))
 }
 
 // ── Campanhas (regras de pontuação) ─────────────────────────────────────────
@@ -553,253 +611,40 @@ const DEFAULT_CAMPAIGN_RULE_SETTINGS: CampaignRuleSettings = {
   pointsLate: 2,
 }
 
-function mapCampaignRuleSettings(
-  campaign: { id: string; nome: string | null; ativa: boolean | null },
-  rules: Array<{
-    regra_codigo: string | null
-    dias_antecedencia_min: number | null
-    pontos: number | null
-  }>,
-): CampaignRuleSettings {
-  const byCode = new Map<string, { points: number; days: number | null }>()
-  for (const row of rules) {
-    const code = String(row.regra_codigo ?? '')
-    if (!code) continue
-    byCode.set(code, {
-      points: Number(row.pontos ?? 0),
-      days: row.dias_antecedencia_min === null || row.dias_antecedencia_min === undefined
-        ? null
-        : Number(row.dias_antecedencia_min),
-    })
-  }
-
-  return {
-    campaignId: String(campaign.id),
-    campaignName: String(campaign.nome ?? DEFAULT_CAMPAIGN_RULE_SETTINGS.campaignName),
-    active: Boolean(campaign.ativa),
-    thresholdEarlyDays: byCode.get('antecipado')?.days ?? DEFAULT_CAMPAIGN_RULE_SETTINGS.thresholdEarlyDays,
-    pointsEarly: byCode.get('antecipado')?.points ?? DEFAULT_CAMPAIGN_RULE_SETTINGS.pointsEarly,
-    pointsOnDue: byCode.get('no_vencimento')?.points ?? DEFAULT_CAMPAIGN_RULE_SETTINGS.pointsOnDue,
-    pointsLate: byCode.get('apos_vencimento')?.points ?? DEFAULT_CAMPAIGN_RULE_SETTINGS.pointsLate,
-  }
-}
-
 export function createDefaultCampaignRuleSettings(): CampaignRuleSettings {
   return { ...DEFAULT_CAMPAIGN_RULE_SETTINGS }
 }
 
 export async function fetchCampaignRuleSettingsList(tenantId: string): Promise<CampaignRuleSettings[]> {
-  const { data: campaigns, error: campaignsError } = await (supabase as any)
-    .from('pontuacao_campanhas')
-    .select('id, nome, ativa, updated_at, created_at')
-    .eq('tenant_id', tenantId)
-    .order('ativa', { ascending: false })
-    .order('updated_at', { ascending: false, nullsFirst: false })
-    .order('created_at', { ascending: false, nullsFirst: false })
-
-  if (campaignsError) throw new Error(campaignsError.message)
-  if (!campaigns || campaigns.length === 0) return []
-
-  const campaignIds = campaigns.map((campaign: any) => String(campaign.id))
-  const { data: rules, error: rulesError } = await (supabase as any)
-    .from('pontuacao_campanha_regras')
-    .select('campanha_id, regra_codigo, dias_antecedencia_min, pontos, ativo')
-    .eq('tenant_id', tenantId)
-    .in('campanha_id', campaignIds)
-    .eq('ativo', true)
-
-  if (rulesError) throw new Error(rulesError.message)
-
-  const rulesByCampaign = new Map<string, Array<{
-    regra_codigo: string | null
-    dias_antecedencia_min: number | null
-    pontos: number | null
-  }>>()
-
-  for (const row of rules ?? []) {
-    const campaignId = String(row.campanha_id ?? '')
-    if (!campaignId) continue
-    const currentRules = rulesByCampaign.get(campaignId) ?? []
-    currentRules.push({
-      regra_codigo: row.regra_codigo ?? null,
-      dias_antecedencia_min: row.dias_antecedencia_min ?? null,
-      pontos: row.pontos ?? null,
-    })
-    rulesByCampaign.set(campaignId, currentRules)
-  }
-
-  return campaigns.map((campaign: any) =>
-    mapCampaignRuleSettings(
-      {
-        id: String(campaign.id),
-        nome: campaign.nome ?? null,
-        ativa: campaign.ativa ?? false,
-      },
-      rulesByCampaign.get(String(campaign.id)) ?? [],
-    ),
-  )
+  void tenantId
+  const response = await backendRequest<{ data: CampaignRuleSettings[] }>('/campaign/rule-settings')
+  return response.data ?? []
 }
 
 export async function fetchActiveCampaignRuleSettings(tenantId: string): Promise<CampaignRuleSettings> {
-  const { data: campaign, error: campaignError } = await (supabase as any)
-    .from('pontuacao_campanhas')
-    .select('id, nome, ativa')
-    .eq('tenant_id', tenantId)
-    .eq('ativa', true)
-    .order('updated_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-
-  if (campaignError) throw new Error(campaignError.message)
-  if (!campaign) return createDefaultCampaignRuleSettings()
-
-  const { data: rules, error: rulesError } = await (supabase as any)
-    .from('pontuacao_campanha_regras')
-    .select('regra_codigo, dias_antecedencia_min, pontos, ativo')
-    .eq('tenant_id', tenantId)
-    .eq('campanha_id', campaign.id)
-    .eq('ativo', true)
-
-  if (rulesError) throw new Error(rulesError.message)
-  return mapCampaignRuleSettings(
-    {
-      id: String(campaign.id),
-      nome: campaign.nome ?? null,
-      ativa: campaign.ativa ?? false,
-    },
-    (rules ?? []).map((row: any) => ({
-      regra_codigo: row.regra_codigo ?? null,
-      dias_antecedencia_min: row.dias_antecedencia_min ?? null,
-      pontos: row.pontos ?? null,
-    })),
-  )
+  const campaigns = await fetchCampaignRuleSettingsList(tenantId)
+  return campaigns.find((campaign) => campaign.active) ?? createDefaultCampaignRuleSettings()
 }
 
 export async function saveCampaignRuleSettings(
   tenantId: string,
   settings: CampaignRuleSettings,
 ): Promise<void> {
-  const campaignPayload = {
-    tenant_id: tenantId,
-    nome: settings.campaignName.trim() || 'Campanha padrão',
-  }
-
-  let campaignId = settings.campaignId
-  if (campaignId) {
-    const { error } = await (supabase as any)
-      .from('pontuacao_campanhas')
-      .update({ nome: campaignPayload.nome })
-      .eq('id', campaignId)
-      .eq('tenant_id', tenantId)
-    if (error) throw new Error(error.message)
-  } else {
-    const { data, error } = await (supabase as any)
-      .from('pontuacao_campanhas')
-      .insert({ ...campaignPayload, ativa: false })
-      .select('id')
-      .single()
-    if (error) throw new Error(error.message)
-    campaignId = String(data.id)
-  }
-
-  // Keep a single active campaign per tenant.
-  const { error: deactivateError } = await (supabase as any)
-    .from('pontuacao_campanhas')
-    .update({ ativa: false })
-    .eq('tenant_id', tenantId)
-    .neq('id', campaignId)
-  if (deactivateError) throw new Error(deactivateError.message)
-
-  const { error: activateError } = await (supabase as any)
-    .from('pontuacao_campanhas')
-    .update({ ativa: true })
-    .eq('tenant_id', tenantId)
-    .eq('id', campaignId)
-  if (activateError) throw new Error(activateError.message)
-
-  const rules = [
-    {
-      tenant_id: tenantId,
-      campanha_id: campaignId,
-      regra_codigo: 'antecipado',
-      dias_antecedencia_min: Math.max(0, Number(settings.thresholdEarlyDays)),
-      pontos: Math.max(0, Number(settings.pointsEarly)),
-      ativo: true,
-    },
-    {
-      tenant_id: tenantId,
-      campanha_id: campaignId,
-      regra_codigo: 'no_vencimento',
-      dias_antecedencia_min: null,
-      pontos: Math.max(0, Number(settings.pointsOnDue)),
-      ativo: true,
-    },
-    {
-      tenant_id: tenantId,
-      campanha_id: campaignId,
-      regra_codigo: 'apos_vencimento',
-      dias_antecedencia_min: null,
-      pontos: Math.max(0, Number(settings.pointsLate)),
-      ativo: true,
-    },
-  ]
-
-  const { error: rulesError } = await (supabase as any)
-    .from('pontuacao_campanha_regras')
-    .upsert(rules, { onConflict: 'campanha_id,regra_codigo' })
-
-  if (rulesError) throw new Error(rulesError.message)
+  void tenantId
+  await backendRequest('/campaign/rule-settings', {
+    method: 'POST',
+    body: JSON.stringify(settings),
+  })
 }
 
 export async function deleteCampaignRuleSettings(
   tenantId: string,
   campaignId: string,
 ): Promise<void> {
-  const { data: currentCampaign, error: currentCampaignError } = await (supabase as any)
-    .from('pontuacao_campanhas')
-    .select('id, ativa')
-    .eq('tenant_id', tenantId)
-    .eq('id', campaignId)
-    .maybeSingle()
-
-  if (currentCampaignError) throw new Error(currentCampaignError.message)
-  if (!currentCampaign) return
-
-  const { error: rulesError } = await (supabase as any)
-    .from('pontuacao_campanha_regras')
-    .delete()
-    .eq('tenant_id', tenantId)
-    .eq('campanha_id', campaignId)
-  if (rulesError) throw new Error(rulesError.message)
-
-  const { error: campaignError } = await (supabase as any)
-    .from('pontuacao_campanhas')
-    .delete()
-    .eq('tenant_id', tenantId)
-    .eq('id', campaignId)
-  if (campaignError) throw new Error(campaignError.message)
-
-  if (!currentCampaign.ativa) return
-
-  const { data: replacementCampaign, error: replacementError } = await (supabase as any)
-    .from('pontuacao_campanhas')
-    .select('id')
-    .eq('tenant_id', tenantId)
-    .order('updated_at', { ascending: false, nullsFirst: false })
-    .order('created_at', { ascending: false, nullsFirst: false })
-    .limit(1)
-    .maybeSingle()
-
-  if (replacementError) throw new Error(replacementError.message)
-  if (!replacementCampaign) return
-
-  const { error: activateError } = await (supabase as any)
-    .from('pontuacao_campanhas')
-    .update({ ativa: true })
-    .eq('tenant_id', tenantId)
-    .eq('id', replacementCampaign.id)
-
-  if (activateError) throw new Error(activateError.message)
+  void tenantId
+  await backendRequest(`/campaign/rule-settings/${campaignId}`, {
+    method: 'DELETE',
+  })
 }
 
 // ── Dashboard (pontuação) ────────────────────────────────────────────────────

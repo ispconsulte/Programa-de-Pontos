@@ -42,6 +42,14 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: devServerHost,
     port: 8080,
+    proxy: {
+      '/users': 'http://localhost:3000',
+      '/settings': 'http://localhost:3000',
+      '/campaign': 'http://localhost:3000',
+      '/receivables': 'http://localhost:3000',
+      '/clients': 'http://localhost:3000',
+      '/contracts': 'http://localhost:3000',
+    },
   },
   preview: {
     host: devServerHost,

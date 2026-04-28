@@ -11,9 +11,17 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import EmptyState from '@/components/EmptyState'
 import { useClienteEmDia } from '@/hooks/useClienteEmDia'
 import { supabase } from '@/lib/supabase-client'
+import { friendlyError } from '@/lib/friendly-errors'
 import { Clock3, RefreshCw, Settings, ShieldCheck, Wifi } from 'lucide-react'
 import { createButtonGuard } from '@/utils/antiFlood'
 
@@ -42,6 +50,7 @@ export default function ClienteEmDiaConfiguracoesPage() {
   }, [])
   const [dateFrom, setDateFrom] = useState(defaultDateRange.from)
   const [dateTo, setDateTo] = useState(defaultDateRange.to)
+  const [syncInterval, setSyncInterval] = useState('30')
   const [syncing, setSyncing] = useState(false)
   const [syncCooldown, setSyncCooldown] = useState(false)
   const syncDisabled = syncing || syncCooldown
@@ -112,7 +121,7 @@ export default function ClienteEmDiaConfiguracoesPage() {
       setSyncFeedback({
         type: 'error',
         message: 'Não foi possível concluir a sincronização manual agora.',
-        details: syncError instanceof Error ? syncError.message : String(syncError),
+        details: friendlyError(syncError, { action: 'save' }),
       })
     } finally {
       setSyncing(false)
@@ -133,7 +142,7 @@ export default function ClienteEmDiaConfiguracoesPage() {
           title="Configurações da Campanha"
           subtitle="Ajuste calendário, conexão IXC e rotinas de sincronização do módulo Cliente em Dia em uma única visão administrativa."
           actions={
-            <Button onClick={handleSyncNow} disabled={syncDisabled} className="bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-70">
+            <Button onClick={handleSyncNow} disabled={syncDisabled} variant="success">
               <RefreshCw className={`h-3.5 w-3.5 transition-transform ${syncing ? 'animate-spin' : ''}`} />
               {syncing ? 'Sincronizando…' : 'Sync now'}
             </Button>
@@ -261,16 +270,17 @@ export default function ClienteEmDiaConfiguracoesPage() {
                   <Label htmlFor="sync-interval" className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
                     Sync interval
                   </Label>
-                  <select
-                    id="sync-interval"
-                    defaultValue="30"
-                    className="h-10 w-full rounded-lg border border-[hsl(var(--border))] bg-background px-3 text-sm text-white focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
-                  >
-                    <option value="15">15 minutos</option>
-                    <option value="30">30 minutos</option>
-                    <option value="60">60 minutos</option>
-                    <option value="180">180 minutos</option>
-                  </select>
+                  <Select value={syncInterval} onValueChange={setSyncInterval}>
+                    <SelectTrigger id="sync-interval">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="15">15 minutos</SelectItem>
+                      <SelectItem value="30">30 minutos</SelectItem>
+                      <SelectItem value="60">60 minutos</SelectItem>
+                      <SelectItem value="180">180 minutos</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {syncFeedback && (
@@ -289,7 +299,7 @@ export default function ClienteEmDiaConfiguracoesPage() {
                 )}
 
                 <div className="flex justify-end">
-                  <Button onClick={handleSyncNow} disabled={syncDisabled} className="bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-70">
+                  <Button onClick={handleSyncNow} disabled={syncDisabled} variant="success">
                     <RefreshCw className={`h-3.5 w-3.5 transition-transform ${syncing ? 'animate-spin' : ''}`} />
                     {syncing ? 'Sincronizando…' : 'Sync now'}
                   </Button>

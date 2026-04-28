@@ -43,6 +43,16 @@ function isCatalogCompatibilityError(message: string | undefined): boolean {
     || normalized.includes('catalog_item_secure_upsert')
 }
 
+function getCatalogMutationErrorStatus(error: { code?: string; message?: string } | null | undefined): number {
+  const message = String(error?.message ?? '')
+  if (message === 'Forbidden') return 403
+  if (message === 'Idempotency key é obrigatória') return 400
+  if (message.includes('inválid')) return 400
+  if (error?.code === '23505' || message.toLowerCase().includes('duplicate')) return 409
+  if (error?.code === '23514' || message.toLowerCase().includes('check constraint')) return 400
+  return 500
+}
+
 export default async function handler(request: any, response: any) {
   try {
     const auth = await authenticateRequest(request)
@@ -69,6 +79,7 @@ export default async function handler(request: any, response: any) {
         const compatibilityQuery = supabaseAdmin
           .from('pontuacao_catalogo_brindes')
           .select('id, nome, descricao, pontos_necessarios, estoque, imagem_url, ativo, created_at, updated_at')
+          .eq('tenant_id', auth.tenantId)
           .order('ativo', { ascending: false })
           .order('pontos_necessarios', { ascending: true })
           .order('nome', { ascending: true })
@@ -91,7 +102,7 @@ export default async function handler(request: any, response: any) {
       return methodNotAllowed(response)
     }
 
-    assertAdmin(auth.userRole)
+    assertAdmin(auth.userRole, auth.isFullAdmin)
 
     const body = catalogRewardSchema.parse(getBody(request))
     const rpcResult = await supabaseAdmin
@@ -121,6 +132,7 @@ export default async function handler(request: any, response: any) {
       const compatibilityResult = await supabaseAdmin
         .from('pontuacao_catalogo_brindes')
         .insert({
+          tenant_id: auth.tenantId,
           nome: body.name.trim(),
           descricao: body.description?.trim() || null,
           pontos_necessarios: body.requiredPoints,
@@ -132,7 +144,10 @@ export default async function handler(request: any, response: any) {
         .single()
 
       if (compatibilityResult.error || !compatibilityResult.data) {
-        return sendInternalError(response)
+        const status = getCatalogMutationErrorStatus(compatibilityResult.error)
+        return status === 500
+          ? sendInternalError(response)
+          : sendJson(response, status, { error: compatibilityResult.error?.message ?? 'Não foi possível criar o brinde' })
       }
 
       return sendJson(response, 201, compatibilityResult.data)
@@ -140,6 +155,10 @@ export default async function handler(request: any, response: any) {
 
     return sendJson(response, 201, rpcResult.data)
   } catch (error) {
+    if (error instanceof SyntaxError) {
+      return sendJson(response, 400, { error: 'Invalid JSON payload' })
+    }
+
     if (error instanceof z.ZodError) {
       return sendJson(response, 400, { error: 'Validation error' })
     }

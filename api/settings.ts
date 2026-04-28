@@ -1,4 +1,4 @@
-import { authenticateRequest, assertAdmin } from './_lib/auth'
+import { authenticateRequest, assertFullAdmin } from './_lib/auth'
 import { sendException, sendJson, methodNotAllowed, sendInternalError } from './_lib/http'
 import { supabaseAdmin } from './_lib/supabase'
 
@@ -9,12 +9,16 @@ export default async function handler(request: any, response: any) {
     }
 
     const auth = await authenticateRequest(request)
-    assertAdmin(auth.userRole)
+    assertFullAdmin(auth.isFullAdmin)
+    const tenantId = String(request.query.tenantId ?? auth.tenantId ?? '')
+    if (!tenantId) {
+      return sendJson(response, 403, { error: 'Forbidden' })
+    }
 
     const tenantResult = await supabaseAdmin
       .from('tenants')
       .select('name')
-      .eq('id', auth.tenantId)
+      .eq('id', tenantId)
       .maybeSingle()
 
     if (tenantResult.error || !tenantResult.data) {
@@ -24,7 +28,7 @@ export default async function handler(request: any, response: any) {
     const activeConnection = await supabaseAdmin
       .from('ixc_connections')
       .select('id, name, ixc_base_url, ixc_user, active')
-      .eq('tenant_id', auth.tenantId)
+      .eq('tenant_id', tenantId)
       .eq('active', true)
       .limit(1)
       .maybeSingle()

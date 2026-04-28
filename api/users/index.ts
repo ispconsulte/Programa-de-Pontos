@@ -1,6 +1,7 @@
 import { authenticateRequest, assertAdmin } from '../_lib/auth'
 import { methodNotAllowed, sendException, sendJson, sendInternalError } from '../_lib/http'
 import { normalizeDisplayName, supabaseAdmin } from '../_lib/supabase'
+import { createUserSchema, HttpError, isDuplicateUserError, toFullAdminFlag, toStoredRole } from './_shared'
 
 async function listAllAuthUsers() {
   const users: Array<any> = []
@@ -27,24 +28,132 @@ async function listAllAuthUsers() {
   }
 }
 
+async function loadTenantNames(tenantIds: string[]) {
+  if (tenantIds.length === 0) {
+    return new Map<string, string | null>()
+  }
+
+  const tenants = await supabaseAdmin
+    .from('tenants')
+    .select('id, name')
+    .in('id', tenantIds)
+
+  if (tenants.error) {
+    return tenants
+  }
+
+  return {
+    data: new Map((tenants.data ?? []).map((tenant: any) => [tenant.id, tenant.name ?? null])),
+    error: null,
+  }
+}
+
 export default async function handler(request: any, response: any) {
   try {
-    if (request.method !== 'GET') {
+    if (!['GET', 'POST'].includes(request.method)) {
       return methodNotAllowed(response)
     }
 
     const auth = await authenticateRequest(request)
-    assertAdmin(auth.userRole)
+    assertAdmin(auth.userRole, auth.isFullAdmin)
 
-    const tenantUsers = await supabaseAdmin
-      .from('users')
-      .select('id, email, role, created_at, is_active, session_revoked_at, updated_at')
-      .eq('tenant_id', auth.tenantId)
-      .order('created_at', { ascending: true })
+    if (request.method === 'POST') {
+      const body = createUserSchema.parse(request.body)
+      if (!auth.isFullAdmin && body.role === 'full_admin') {
+        throw new HttpError(403, 'Forbidden')
+      }
 
+      const requestedTenantId = body.tenantId ?? body.tenant_id
+      if (!auth.isFullAdmin && requestedTenantId && requestedTenantId !== auth.tenantId) {
+        throw new HttpError(403, 'Forbidden')
+      }
+
+      const effectiveTenantId = auth.isFullAdmin && requestedTenantId ? requestedTenantId : auth.tenantId
+      const storedRole = toStoredRole(body.role)
+      const isFullAdmin = toFullAdminFlag(body.role)
+
+      if (!effectiveTenantId) {
+        throw new HttpError(400, 'Tenant não identificado para criação do usuário')
+      }
+
+      const existingUser = await supabaseAdmin
+        .from('users')
+        .select('id')
+        .eq('tenant_id', effectiveTenantId)
+        .eq('email', body.email)
+        .maybeSingle()
+
+      if (existingUser.error) {
+        return sendInternalError(response)
+      }
+      if (existingUser.data) {
+        throw new HttpError(409, 'Já existe um usuário com esse e-mail neste tenant')
+      }
+
+      const createdAuthUser = await supabaseAdmin.auth.admin.createUser({
+        email: body.email,
+        password: body.password,
+        email_confirm: true,
+        user_metadata: {
+          full_name: body.name?.trim() || undefined,
+        },
+        app_metadata: {
+          role: storedRole,
+          tenant_id: effectiveTenantId,
+          is_full_admin: isFullAdmin,
+        },
+      })
+
+      if (createdAuthUser.error || !createdAuthUser.data.user) {
+        if (isDuplicateUserError(createdAuthUser.error)) {
+          throw new HttpError(409, 'Já existe um usuário com esse e-mail')
+        }
+        return sendInternalError(response)
+      }
+
+      const authUserId = createdAuthUser.data.user.id
+      const insertResult = await supabaseAdmin
+        .from('users')
+        .insert({
+          id: authUserId,
+          tenant_id: effectiveTenantId,
+          email: body.email,
+          role: storedRole,
+          is_full_admin: isFullAdmin,
+          is_active: true,
+        })
+
+      if (insertResult.error) {
+        await supabaseAdmin.auth.admin.deleteUser(authUserId)
+        if (isDuplicateUserError(insertResult.error)) {
+          throw new HttpError(409, 'Já existe um usuário com esse e-mail neste tenant')
+        }
+        return sendInternalError(response)
+      }
+
+      return sendJson(response, 201, { id: authUserId })
+    }
+
+    const tenantUsersQuery = auth.isFullAdmin
+      ? supabaseAdmin
+          .from('users')
+          .select('id, email, role, created_at, is_active, session_revoked_at, updated_at, is_full_admin, tenant_id')
+          .order('tenant_id', { ascending: true })
+          .order('created_at', { ascending: true })
+          .limit(500)
+      : supabaseAdmin
+          .from('users')
+          .select('id, email, role, created_at, is_active, session_revoked_at, updated_at, is_full_admin, tenant_id')
+          .eq('tenant_id', auth.tenantId)
+          .order('created_at', { ascending: true })
+
+    const tenantUsers = await tenantUsersQuery
     const authUsers = await listAllAuthUsers()
+    const tenantNames = await loadTenantNames([
+      ...new Set((tenantUsers.data ?? []).map((user) => user.tenant_id).filter(Boolean)),
+    ] as string[])
 
-    if (tenantUsers.error || authUsers.error) {
+    if (tenantUsers.error || authUsers.error || tenantNames.error) {
       return sendInternalError(response)
     }
 
@@ -58,6 +167,9 @@ export default async function handler(request: any, response: any) {
           email: user.email,
           role: user.role,
           is_active: user.is_active,
+          is_full_admin: (user as any).is_full_admin === true,
+          tenant_id: (user as any).tenant_id ?? null,
+          tenant_name: user.tenant_id ? tenantNames.data.get(user.tenant_id) ?? null : null,
           name: normalizeDisplayName(authUser ?? user),
           created_at: user.created_at,
           updated_at: user.updated_at,

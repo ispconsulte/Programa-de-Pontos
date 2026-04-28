@@ -26,6 +26,7 @@ import {
 } from '@/lib/loyalty-admin'
 import { fetchCurrentUserProfile, isAdminUiRole } from '@/lib/user-management'
 import { createButtonGuard } from '@/utils/antiFlood'
+import { friendlyError } from '@/lib/friendly-errors'
 import {
   AlertTriangle,
   Award,
@@ -85,6 +86,7 @@ function GiftCatalogDialog({
   const [form, setForm] = useState<CatalogFormState>(toFormState(reward))
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [missingImageConfirmOpen, setMissingImageConfirmOpen] = useState(false)
   const submitGuardRef = useRef(createButtonGuard(reward ? `catalog-update:${reward.id}` : 'catalog-create'))
   const isEditing = !!reward
 
@@ -92,6 +94,7 @@ function GiftCatalogDialog({
     if (open) {
       setForm(toFormState(reward))
       setError('')
+      setMissingImageConfirmOpen(false)
     }
   }, [open, reward])
 
@@ -117,7 +120,7 @@ function GiftCatalogDialog({
     }
   }
 
-  async function handleSubmit() {
+  async function handleSubmit(skipMissingImageConfirm = false) {
     const requiredPoints = Number(form.requiredPoints)
     const stockValue = form.stock.trim() ? Number(form.stock) : null
 
@@ -133,10 +136,15 @@ function GiftCatalogDialog({
       setError('O estoque precisa ser vazio ou um número maior ou igual a zero.')
       return
     }
+    if (!isEditing && !form.imageUrl && !skipMissingImageConfirm) {
+      setMissingImageConfirmOpen(true)
+      return
+    }
     if (saving || !submitGuardRef.current.canExecute()) return
 
     setSaving(true)
     setError('')
+    setMissingImageConfirmOpen(false)
 
     try {
       const payload = {
@@ -155,12 +163,12 @@ function GiftCatalogDialog({
         await onSaved(`Brinde "${form.name}" atualizado com sucesso.`)
       } else {
         await createRewardCatalogItem(payload)
-        await onSaved(`Brinde "${form.name}" criado com sucesso.`)
+        await onSaved(form.imageUrl ? `Brinde "${form.name}" criado com sucesso.` : 'Brinde criado. Você pode adicionar uma imagem depois.')
       }
 
       setOpen(false)
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Não foi possível salvar o brinde.')
+      setError(friendlyError(submitError, { action: 'save' }))
     } finally {
       setSaving(false)
       submitGuardRef.current.reset()
@@ -168,18 +176,19 @@ function GiftCatalogDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-lg border-[hsl(var(--border))] bg-[hsl(var(--background))]">
-        <DialogHeader>
-          <DialogTitle className="text-foreground">{isEditing ? 'Editar brinde' : 'Novo brinde'}</DialogTitle>
-          <DialogDescription>
-            Preencha as informações abaixo para {isEditing ? 'atualizar' : 'cadastrar'} o brinde no catálogo.
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
+        <DialogContent className="max-w-lg border-[hsl(var(--border))] bg-[hsl(var(--background))]">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">{isEditing ? 'Editar brinde' : 'Novo brinde'}</DialogTitle>
+            <DialogDescription>
+              Preencha as informações abaixo para {isEditing ? 'atualizar' : 'cadastrar'} o brinde no catálogo.
+            </DialogDescription>
+          </DialogHeader>
 
-        <div className="space-y-5 px-5 py-4 sm:px-6">
-          {error && <AlertBanner variant="error" message={error} />}
+          <div className="space-y-5 px-5 py-4 sm:px-6">
+            {error && <AlertBanner variant="error" message={error} />}
 
           <div className="space-y-1.5">
             <Label htmlFor="gift-name" className="text-xs font-medium text-muted-foreground">Nome</Label>
@@ -268,16 +277,36 @@ function GiftCatalogDialog({
           </label>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>
-            Cancelar
-          </Button>
-          <Button variant="success" onClick={() => void handleSubmit()} disabled={saving}>
-            {saving ? 'Salvando...' : isEditing ? 'Salvar alterações' : 'Salvar brinde'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>
+              Cancelar
+            </Button>
+            <Button variant="success" onClick={() => void handleSubmit()} disabled={saving}>
+              {saving ? 'Salvando...' : isEditing ? 'Salvar alterações' : 'Criar brinde'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={missingImageConfirmOpen} onOpenChange={setMissingImageConfirmOpen}>
+        <DialogContent className="max-w-sm border-[hsl(var(--border))] bg-[hsl(var(--background))]">
+          <DialogHeader>
+            <DialogTitle>Brinde sem imagem</DialogTitle>
+            <DialogDescription>
+              Você não adicionou uma imagem para este brinde. Deseja continuar assim mesmo?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMissingImageConfirmOpen(false)} disabled={saving}>
+              Voltar e adicionar imagem
+            </Button>
+            <Button variant="success" onClick={() => void handleSubmit(true)} disabled={saving}>
+              Salvar sem imagem
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 
@@ -392,7 +421,7 @@ export default function ClienteEmDiaBrindesPage() {
     } catch (deleteError) {
       setFeedback({
         type: 'error',
-        message: deleteError instanceof Error ? deleteError.message : 'Não foi possível excluir o brinde.',
+        message: friendlyError(deleteError, { action: 'delete' }),
       })
       setDeleteTarget(null)
     } finally {
@@ -417,7 +446,7 @@ export default function ClienteEmDiaBrindesPage() {
               <GiftCatalogDialog
                 onSaved={handleSaved}
                 trigger={
-                  <Button className="w-full bg-emerald-600 text-white hover:bg-emerald-500 sm:w-auto">
+                  <Button variant="success" className="w-full sm:w-auto">
                     <Plus className="h-3.5 w-3.5" />
                     Adicionar brinde
                   </Button>
@@ -519,6 +548,11 @@ export default function ClienteEmDiaBrindesPage() {
                             }`}>
                               {reward.ativo ? 'Ativo' : 'Inativo'}
                             </span>
+                            {!reward.imagemUrl && (
+                              <span className="mt-0.5 shrink-0 rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400">
+                                Sem imagem
+                              </span>
+                            )}
                           </div>
                           <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{reward.descricao ?? 'Sem descrição cadastrada.'}</p>
                         </div>

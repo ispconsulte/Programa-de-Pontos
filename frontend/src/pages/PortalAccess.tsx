@@ -129,7 +129,7 @@ export default function PortalAccessPage() {
                         />
                       </div>
 
-                      <Button type="submit" className="w-full bg-emerald-500 text-white hover:bg-emerald-500/90" size="lg">
+                      <Button type="submit" variant="success" className="w-full" size="lg">
                         <ArrowRight className="h-4 w-4" />
                         Enviar link de acesso
                       </Button>
@@ -168,7 +168,7 @@ export default function PortalAccessPage() {
                         <Button type="button" variant="outline" className="flex-1" disabled>
                           Solicitar codigo
                         </Button>
-                        <Button type="submit" className="flex-1 bg-emerald-500 text-white hover:bg-emerald-500/90">
+                        <Button type="submit" variant="success" className="flex-1">
                           <CheckCircle2 className="h-4 w-4" />
                           Validar e entrar
                         </Button>

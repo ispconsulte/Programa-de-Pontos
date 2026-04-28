@@ -29,6 +29,7 @@ import {
 } from '@/lib/loyalty-admin'
 import Spinner from '@/components/Spinner'
 import { createButtonGuard } from '@/utils/antiFlood'
+import { friendlyError } from '@/lib/friendly-errors'
 
 interface RegisterRedemptionDialogProps {
   trigger: ReactNode
@@ -296,7 +297,7 @@ export default function RegisterRedemptionDialog({
         onRedemptionComplete?.()
       }, 1200)
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : 'Não foi possível registrar o resgate.')
+      setSubmitError(friendlyError(error, { action: 'save' }))
     } finally {
       setSubmitting(false)
       confirmGuardRef.current.reset()
@@ -320,8 +321,8 @@ export default function RegisterRedemptionDialog({
         <DialogContent className="max-w-lg gap-0 border-border bg-card p-0">
           <DialogHeader className="px-6 pb-4 pt-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 ring-1 ring-emerald-500/20">
-              <Gift className="h-5 w-5 text-emerald-400" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[hsl(var(--success)/0.1)] ring-1 ring-[hsl(var(--success)/0.2)]">
+              <Gift className="h-5 w-5 text-[hsl(var(--success))]" />
             </div>
             <div>
               <DialogTitle className="text-base">Registrar resgate</DialogTitle>
@@ -334,8 +335,8 @@ export default function RegisterRedemptionDialog({
 
           {success ? (
             <div className="flex flex-col items-center justify-center px-6 py-12">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10">
-              <CheckCircle2 className="h-8 w-8 text-emerald-400" />
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[hsl(var(--success)/0.1)]">
+              <CheckCircle2 className="h-8 w-8 text-[hsl(var(--success))]" />
             </div>
             <p className="mt-4 text-lg font-bold text-foreground">Resgate registrado!</p>
             <p className="mt-1 text-center text-sm text-muted-foreground">
@@ -363,7 +364,7 @@ export default function RegisterRedemptionDialog({
                       setSuggestions([])
                     }
                   }}
-                  className="h-4 w-4 rounded border-input bg-background accent-emerald-500"
+                  className="h-4 w-4 rounded border-input bg-background"
                 />
                 <Label htmlFor="cliente-ativo" className="text-sm font-medium text-foreground">
                   Cliente ativo
@@ -407,7 +408,7 @@ export default function RegisterRedemptionDialog({
                               <p className="truncate font-medium text-foreground">{client.nome_cliente}</p>
                               <p className="text-xs text-muted-foreground">{client.documento || `IXC #${client.ixc_cliente_id}`}</p>
                             </div>
-                            <span className="ml-2 shrink-0 text-xs font-bold text-emerald-400">
+                            <span className="ml-2 shrink-0 text-xs font-bold text-[hsl(var(--success))]">
                               {(client.pontos_disponiveis ?? 0).toLocaleString('pt-BR')} pts
                             </span>
                           </button>
@@ -418,8 +419,8 @@ export default function RegisterRedemptionDialog({
                 </div>
 
                 {selectedClient && (
-                  <div className="flex items-center gap-3 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.06] p-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-bold text-emerald-400">
+                  <div className="flex items-center gap-3 rounded-lg border border-[hsl(var(--success)/0.2)] bg-[hsl(var(--success)/0.06)] p-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[hsl(var(--success)/0.15)] text-xs font-bold text-[hsl(var(--success))]">
                       {(selectedClient.nome_cliente?.[0] || '?').toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -474,18 +475,23 @@ export default function RegisterRedemptionDialog({
                 {giftsLoading ? (
                   <div className="flex items-center justify-center py-4"><Spinner size="sm" /></div>
                 ) : (
-                  <Select value={selectedGiftId} onValueChange={setSelectedGiftId}>
+                  <Select value={selectedGiftId} onValueChange={setSelectedGiftId} disabled={gifts.length === 0}>
                     <SelectTrigger id="redemption-gift">
                       <SelectValue placeholder={gifts.length === 0 ? 'Nenhum brinde disponível' : 'Selecione o brinde'} />
                     </SelectTrigger>
-                    <SelectContent>
-                      {gifts.map((gift) => (
-                        <SelectItem key={gift.id} value={gift.id}>
-                          {gift.name} - {gift.requiredPoints} pts
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
+                    {gifts.length > 0 && (
+                      <SelectContent>
+                        {gifts.map((gift) => (
+                          <SelectItem key={gift.id} value={gift.id}>
+                            {gift.name} - {gift.requiredPoints} pts
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    )}
                   </Select>
+                )}
+                {!giftsLoading && gifts.length === 0 && (
+                  <p className="text-xs text-muted-foreground">Cadastre um brinde ativo no catálogo para registrar resgates.</p>
                 )}
               </div>
 
@@ -526,16 +532,16 @@ export default function RegisterRedemptionDialog({
                 value={notes}
                 onChange={(event) => setNotes(event.target.value)}
                 placeholder="Observações (opcional)"
-                className="min-h-[88px] w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20"
+                className="textarea"
               />
             </div>
 
             {isBlocked && (
-              <div className="flex items-start gap-3 rounded-lg border border-destructive/20 bg-destructive/[0.06] p-3">
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+              <div className="feedback-block feedback-block--error">
+                <AlertTriangle className="feedback-block__icon" />
                 <div>
-                  <p className="text-sm font-semibold text-destructive">Saldo insuficiente</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
+                  <p className="feedback-block__title">Saldo insuficiente</p>
+                  <p className="feedback-block__body">
                     O cliente tem {availablePoints.toLocaleString('pt-BR')} pts, mas precisa de {requiredPoints.toLocaleString('pt-BR')} pts.
                   </p>
                 </div>
@@ -543,11 +549,11 @@ export default function RegisterRedemptionDialog({
             )}
 
             {isOutOfStock && (
-              <div className="flex items-start gap-3 rounded-lg border border-amber-500/20 bg-amber-500/[0.06] p-3">
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+              <div className="feedback-block feedback-block--warning">
+                <AlertTriangle className="feedback-block__icon" />
                 <div>
-                  <p className="text-sm font-semibold text-amber-400">Estoque indisponível</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
+                  <p className="feedback-block__title">Estoque indisponível</p>
+                  <p className="feedback-block__body">
                     A quantidade escolhida é maior que o estoque disponível deste brinde.
                   </p>
                 </div>
@@ -555,8 +561,8 @@ export default function RegisterRedemptionDialog({
             )}
 
             {submitError && (
-              <div className="rounded-lg border border-destructive/20 bg-destructive/[0.06] p-3">
-                <p className="text-sm text-destructive">{submitError}</p>
+              <div className="feedback-block feedback-block--error">
+                <p>{submitError}</p>
               </div>
             )}
           </div>
@@ -568,7 +574,7 @@ export default function RegisterRedemptionDialog({
                 Cancelar
               </Button>
               <Button
-                className="bg-emerald-600 text-white hover:bg-emerald-500"
+                variant="success"
                 disabled={!canConfirm}
                 onClick={handleConfirm}
               >

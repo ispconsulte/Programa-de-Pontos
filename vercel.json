@@ -42,8 +42,32 @@
       "destination": "/api/users"
     },
     {
+      "source": "/users/(.*)/disconnect",
+      "destination": "/api/users/[id]/disconnect?id=$1"
+    },
+    {
+      "source": "/users/(.*)",
+      "destination": "/api/users/[id]?id=$1"
+    },
+    {
+      "source": "/tenants",
+      "destination": "/api/tenants"
+    },
+    {
       "source": "/settings",
       "destination": "/api/settings"
+    },
+    {
+      "source": "/settings/ixc/connections/(.*)/activate",
+      "destination": "/api/settings/ixc-connections/[id]/activate?id=$1"
+    },
+    {
+      "source": "/settings/ixc/connections/(.*)",
+      "destination": "/api/settings/ixc-connections/[id]?id=$1"
+    },
+    {
+      "source": "/settings/ixc/connections",
+      "destination": "/api/settings/ixc-connections"
     },
     {
       "source": "/campaign/legacy-redemptions",
@@ -56,6 +80,14 @@
     {
       "source": "/campaign/manual-points",
       "destination": "/api/campaign/manual-points"
+    },
+    {
+      "source": "/campaign/rule-settings",
+      "destination": "/api/campaign/rule-settings"
+    },
+    {
+      "source": "/campaign/rule-settings/(.*)",
+      "destination": "/api/campaign/rule-settings/[id]?id=$1"
     },
     {
       "source": "/campaign/catalog",

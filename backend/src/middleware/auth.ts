@@ -24,6 +24,7 @@ declare module 'fastify' {
     userId: string
     tenantId: string
     userRole: string
+    isFullAdmin: boolean
     ixcConnectionId?: string
   }
 }
@@ -60,7 +61,7 @@ export async function authenticate(request: FastifyRequest, _reply: FastifyReply
 
   const { data: userRow, error: userRowError } = await supabaseAdmin
     .from('users')
-    .select('id, tenant_id, role, is_active, session_revoked_at')
+    .select('id, tenant_id, role, is_active, session_revoked_at, is_full_admin')
     .eq('id', supabaseUser.id)
     .maybeSingle()
 
@@ -68,7 +69,7 @@ export async function authenticate(request: FastifyRequest, _reply: FastifyReply
     throw new AppError(500, userRowError.message)
   }
   if (!userRow) {
-    throw new AppError(401, 'Unauthorized')
+    throw new AppError(401, 'No user record found. Please sign out and sign in again.')
   }
 
   if (userRow.is_active === false) {
@@ -86,10 +87,17 @@ export async function authenticate(request: FastifyRequest, _reply: FastifyReply
   request.userId = userRow.id
   request.tenantId = userRow.tenant_id
   request.userRole = userRow.role
+  request.isFullAdmin = userRow.is_full_admin === true
 }
 
 export async function requireAdmin(request: FastifyRequest, _reply: FastifyReply): Promise<void> {
-  if (!isAdminRole(request.userRole)) {
+  if (!request.isFullAdmin && !isAdminRole(request.userRole)) {
+    throw new AppError(403, 'Forbidden')
+  }
+}
+
+export async function requireFullAdmin(request: FastifyRequest, _reply: FastifyReply): Promise<void> {
+  if (!request.isFullAdmin) {
     throw new AppError(403, 'Forbidden')
   }
 }

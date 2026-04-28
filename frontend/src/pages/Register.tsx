@@ -96,9 +96,9 @@ export default function RegisterPage() {
         <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-6">
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="flex items-center gap-2.5 rounded-lg border border-destructive/20 bg-destructive/[0.06] px-4 py-3">
-                <AlertCircle className="h-4 w-4 flex-shrink-0 text-destructive" />
-                <p className="text-sm text-foreground">{error}</p>
+              <div className="feedback-block feedback-block--error">
+                <AlertCircle className="feedback-block__icon" />
+                <p>{error}</p>
               </div>
             )}
 

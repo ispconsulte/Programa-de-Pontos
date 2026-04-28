@@ -337,6 +337,7 @@ export default async function handler(request: any, response: any) {
           .from('pontuacao_catalogo_brindes')
           .select('id, nome, pontos_necessarios, ativo, estoque')
           .eq('id', body.rewardId)
+          .eq('tenant_id', auth.tenantId)
           .maybeSingle()
 
         if (rewardResult.error || !rewardResult.data) {
@@ -422,6 +423,7 @@ export default async function handler(request: any, response: any) {
             .from('pontuacao_catalogo_brindes')
             .update({ estoque: remainingStock })
             .eq('id', rewardResult.data.id)
+            .eq('tenant_id', auth.tenantId)
 
           if (stockUpdate.error) {
             return sendInternalError(response)

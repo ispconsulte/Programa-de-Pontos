@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockRpcSingle = vi.fn()
+const mockFrom = vi.fn()
 const mockResponse = () => {
   const response = {
     statusCode: 200,
@@ -37,6 +38,7 @@ vi.mock('../../api/_lib/supabase', () => {
       rpc: vi.fn(() => ({
         single: mockRpcSingle,
       })),
+      from: mockFrom,
     },
     isAdminRole: (role: string | null | undefined) => ['admin', 'owner', 'manager'].includes(String(role ?? '').toLowerCase()),
   }
@@ -53,6 +55,91 @@ describe('catalog item API handler', () => {
         imagem_url: 'data:image/png;base64,abc123',
       },
     })
+    mockFrom.mockReset()
+  })
+
+  it('creates catalog items through the compatibility insert when the RPC is absent', async () => {
+    const { default: handler } = await import('../../api/campaign/catalog/index.ts')
+    const response = mockResponse()
+    const mockInsert = vi.fn(() => ({
+      select: vi.fn(() => ({
+        single: vi.fn(async () => ({
+          error: null,
+          data: {
+            id: 'gift-new',
+            nome: 'Squeeze',
+            descricao: 'Garrafa',
+            pontos_necessarios: 20,
+            estoque: 5,
+            imagem_url: null,
+            ativo: true,
+          },
+        })),
+      })),
+    }))
+
+    mockRpcSingle.mockResolvedValueOnce({
+      error: { message: 'Could not find the function public.catalog_item_secure_upsert' },
+      data: null,
+    })
+    mockFrom.mockReturnValueOnce({ insert: mockInsert })
+
+    await handler({
+      method: 'POST',
+      headers: { authorization: 'Bearer token' },
+      body: JSON.stringify({
+        name: 'Squeeze',
+        description: 'Garrafa',
+        requiredPoints: 20,
+        stock: 5,
+        imageUrl: null,
+        active: true,
+      }),
+    }, response)
+
+    expect(response.statusCode).toBe(201)
+    expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({
+      tenant_id: 'tenant-1',
+      nome: 'Squeeze',
+      pontos_necessarios: 20,
+      estoque: 5,
+    }))
+  })
+
+  it('returns a controlled conflict when catalog create violates a unique constraint', async () => {
+    const { default: handler } = await import('../../api/campaign/catalog/index.ts')
+    const response = mockResponse()
+
+    mockRpcSingle.mockResolvedValueOnce({
+      error: { message: 'Could not find the function public.catalog_item_secure_upsert' },
+      data: null,
+    })
+    mockFrom.mockReturnValueOnce({
+      insert: vi.fn(() => ({
+        select: vi.fn(() => ({
+          single: vi.fn(async () => ({
+            error: { code: '23505', message: 'duplicate key value violates unique constraint' },
+            data: null,
+          })),
+        })),
+      })),
+    })
+
+    await handler({
+      method: 'POST',
+      headers: { authorization: 'Bearer token' },
+      body: {
+        name: 'Squeeze',
+        description: null,
+        requiredPoints: 20,
+        stock: 5,
+        imageUrl: null,
+        active: true,
+      },
+    }, response)
+
+    expect(response.statusCode).toBe(409)
+    expect(response.body).toEqual({ error: 'duplicate key value violates unique constraint' })
   })
 
   it('accepts PUT updates and preserves image payloads', async () => {

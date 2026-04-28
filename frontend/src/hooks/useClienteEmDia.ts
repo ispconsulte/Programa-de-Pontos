@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase-client'
 import { backendRequest } from '@/lib/backend-client'
+import { friendlyError } from '@/lib/friendly-errors'
 import { fetchRewardCatalogItems } from '@/lib/loyalty-admin'
 import { fetchLegacyRedemptions } from '@/lib/supabase-queries'
 
@@ -342,10 +343,16 @@ export function useClienteEmDia(options: UseClienteEmDiaOptions = {}): UseClient
         return
       }
 
-      const overviewQuery = db
-        .from('pontuacao_campanha_clientes')
-        .select('*')
-        .order('updated_at', { ascending: false })
+      const overviewQuery = options.customerId
+        ? db
+            .from('pontuacao_campanha_clientes')
+            .select('*')
+            .eq('ixc_cliente_id', options.customerId)
+            .limit(1)
+        : db
+            .from('pontuacao_campanha_clientes')
+            .select('*')
+            .order('updated_at', { ascending: false })
 
       const latestSyncQuery = db
         .from('pontuacao_sync_log')
@@ -374,7 +381,7 @@ export function useClienteEmDia(options: UseClienteEmDiaOptions = {}): UseClient
         fetchLegacyRedemptions({
           customerId: options.redemptionsCustomerId,
           limit: 100,
-        }),
+        }).catch(() => [] as import('@/lib/supabase-queries').RedemptionRow[]),
       ])
 
       if (overviewResult.error) throw overviewResult.error
@@ -456,7 +463,7 @@ export function useClienteEmDia(options: UseClienteEmDiaOptions = {}): UseClient
         fetchLegacyRedemptions({
           customerId: customer.ixcClienteId,
           limit: 50,
-        }),
+        }).catch(() => [] as import('@/lib/supabase-queries').RedemptionRow[]),
       ])
 
       if (historicoResult.error) throw historicoResult.error
@@ -488,7 +495,7 @@ export function useClienteEmDia(options: UseClienteEmDiaOptions = {}): UseClient
         },
       })
     } catch (err) {
-      if (mountedRef.current) setError(err instanceof Error ? err.message : 'Não foi possível carregar os dados do Cliente em Dia.')
+      if (mountedRef.current) setError(friendlyError(err, { action: 'load' }))
     } finally {
       loadInFlightRef.current = false
       if (mountedRef.current) setLoading(false)

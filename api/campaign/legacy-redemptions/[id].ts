@@ -138,7 +138,7 @@ function mapMutationErrorStatus(message: string): number {
 export default async function handler(request: any, response: any) {
   try {
     const auth = await authenticateRequest(request)
-    assertAdmin(auth.userRole)
+    assertAdmin(auth.userRole, auth.isFullAdmin)
     const { id } = paramsSchema.parse(request.query ?? request.params ?? {})
 
     if (request.method === 'PATCH' || request.method === 'PUT') {

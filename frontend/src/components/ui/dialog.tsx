@@ -44,7 +44,7 @@ const DialogContent = React.forwardRef<
       <div className="scrollable-content max-h-[var(--modal-max-height)]">
         {children}
       </div>
-      <DialogPrimitive.Close className="absolute right-3.5 top-3.5 flex h-7 w-7 items-center justify-center rounded-lg bg-[hsl(var(--surface-3))] text-muted-foreground transition-all hover:bg-[hsl(var(--muted))] hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-background disabled:pointer-events-none">
+      <DialogPrimitive.Close className="absolute right-3.5 top-3.5 z-30 flex h-7 w-7 items-center justify-center rounded-lg bg-[hsl(var(--surface-3))] text-muted-foreground transition-all hover:bg-[hsl(var(--muted))] hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-background disabled:pointer-events-none">
         <X className="h-3.5 w-3.5" />
         <span className="sr-only">Fechar</span>
       </DialogPrimitive.Close>
@@ -59,7 +59,7 @@ const DialogHeader = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col gap-1.5 border-b border-[hsl(var(--border))] px-5 py-4 sm:px-6 sm:py-5",
+      "sticky top-0 z-20 flex flex-col gap-1.5 border-b border-[hsl(var(--border))] bg-[hsl(var(--background))] px-5 py-4 !pr-14 sm:px-6 sm:py-5 sm:!pr-14",
       className
     )}
     {...props}

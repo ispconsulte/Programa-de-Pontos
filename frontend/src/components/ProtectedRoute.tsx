@@ -13,12 +13,14 @@ import Spinner from './Spinner'
 interface ProtectedRouteProps {
   children: React.ReactNode
   allowRoles?: Array<'admin' | 'operator'>
+  fullAdminOnly?: boolean
   redirectTo?: string
 }
 
 export default function ProtectedRoute({
   children,
   allowRoles,
+  fullAdminOnly = false,
   redirectTo = '/operacao',
 }: ProtectedRouteProps) {
   const navigate = useNavigate()
@@ -40,8 +42,12 @@ export default function ProtectedRoute({
 
       try {
         const profile = await fetchCurrentUserProfile()
-        const normalizedRole: 'admin' | 'operator' = isAdminUiRole(profile.role) ? 'admin' : 'operator'
+        const normalizedRole: 'admin' | 'operator' = profile.is_full_admin === true || isAdminUiRole(profile.role) ? 'admin' : 'operator'
 
+        if (fullAdminOnly && profile.is_full_admin !== true) {
+          navigate(redirectTo, { replace: true })
+          return
+        }
         if (allowRoles?.length && !allowRoles.includes(normalizedRole)) {
           navigate(redirectTo, { replace: true })
           return

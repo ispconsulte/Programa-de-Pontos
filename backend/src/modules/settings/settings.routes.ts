@@ -5,9 +5,10 @@ import { encrypt } from '../../lib/crypto.js'
 import { activateTenantIxcConnection, listTenantIxcConnections, loadTenantIxcConnection } from '../../lib/ixc-connections.js'
 import { assertSafeUrl } from '../../lib/ssrf-guard.js'
 import { supabaseAdmin, toByteaHex } from '../../lib/supabase-admin.js'
-import { authenticate, requireAdmin } from '../../middleware/auth.js'
+import { authenticate, requireFullAdmin } from '../../middleware/auth.js'
 
 const updateSchema = z.object({
+  tenantId: z.string().uuid().optional(),
   tenantName: z.string().min(1).optional(),
   ixcConnectionId: z.string().uuid().optional(),
   connectionName: z.string().min(1).optional(),
@@ -17,6 +18,7 @@ const updateSchema = z.object({
 })
 
 const connectionCreateSchema = z.object({
+  tenantId: z.string().uuid().optional(),
   name: z.string().min(1),
   ixcBaseUrl: z.string().url(),
   ixcUser: z.string().min(1),
@@ -34,7 +36,7 @@ const connectionUpdateSchema = z.object({
 
 export async function settingsRoutes(app: FastifyInstance) {
   app.addHook('onRequest', authenticate)
-  app.addHook('preHandler', requireAdmin)
+  app.addHook('preHandler', requireFullAdmin)
 
   app.get('/', {
     schema: {
@@ -43,10 +45,12 @@ export async function settingsRoutes(app: FastifyInstance) {
       security: [{ bearerAuth: [] }],
     },
   }, async (request, reply) => {
+    const query = request.query as { tenantId?: string }
+    const tenantId = query.tenantId ?? request.tenantId
     const { data, error } = await supabaseAdmin
       .from('tenants')
       .select('name')
-      .eq('id', request.tenantId)
+      .eq('id', tenantId)
       .maybeSingle()
 
     if (error) {
@@ -56,7 +60,7 @@ export async function settingsRoutes(app: FastifyInstance) {
       return reply.status(404).send({ error: 'Tenant not found' })
     }
 
-    const connections = await listTenantIxcConnections(request.tenantId)
+    const connections = await listTenantIxcConnections(tenantId)
     const activeConnection = connections.find((connection) => connection.active) ?? connections[0] ?? null
 
     return reply.send({
@@ -90,10 +94,11 @@ export async function settingsRoutes(app: FastifyInstance) {
     },
   }, async (request, reply) => {
     const body = updateSchema.parse(request.body)
+    const tenantId = body.tenantId ?? request.tenantId
 
     await assertSafeUrl(body.ixcBaseUrl)
 
-    const existingConnections = await listTenantIxcConnections(request.tenantId)
+    const existingConnections = await listTenantIxcConnections(tenantId)
     const targetConnection =
       body.ixcConnectionId
         ? existingConnections.find((connection) => connection.id === body.ixcConnectionId)
@@ -104,7 +109,7 @@ export async function settingsRoutes(app: FastifyInstance) {
       const { error: tenantError } = await supabaseAdmin
         .from('tenants')
         .update({ name: body.tenantName })
-        .eq('id', request.tenantId)
+        .eq('id', tenantId)
 
       if (tenantError) {
         throw new AppError(500, tenantError.message)
@@ -124,7 +129,7 @@ export async function settingsRoutes(app: FastifyInstance) {
             ixc_token_iv: toByteaHex(iv),
             updated_at: new Date().toISOString(),
           })
-          .eq('tenant_id', request.tenantId)
+          .eq('tenant_id', tenantId)
           .eq('id', targetConnection.id)
 
         if (connectionError) {
@@ -139,7 +144,7 @@ export async function settingsRoutes(app: FastifyInstance) {
             ixc_user: body.ixcUser,
             updated_at: new Date().toISOString(),
           })
-          .eq('tenant_id', request.tenantId)
+          .eq('tenant_id', tenantId)
           .eq('id', targetConnection.id)
 
         if (connectionError) {
@@ -155,7 +160,7 @@ export async function settingsRoutes(app: FastifyInstance) {
       const { error: insertError } = await supabaseAdmin
         .from('ixc_connections')
         .insert({
-          tenant_id: request.tenantId,
+          tenant_id: tenantId,
           name: connectionName,
           ixc_base_url: body.ixcBaseUrl,
           ixc_user: body.ixcUser,
@@ -179,7 +184,9 @@ export async function settingsRoutes(app: FastifyInstance) {
       security: [{ bearerAuth: [] }],
     },
   }, async (request, reply) => {
-    const connections = await listTenantIxcConnections(request.tenantId)
+    const query = request.query as { tenantId?: string }
+    const tenantId = query.tenantId ?? request.tenantId
+    const connections = await listTenantIxcConnections(tenantId)
     return reply.send({
       data: connections.map((connection) => ({
         id: connection.id,
@@ -201,6 +208,7 @@ export async function settingsRoutes(app: FastifyInstance) {
     },
   }, async (request, reply) => {
     const body = connectionCreateSchema.parse(request.body)
+    const tenantId = body.tenantId ?? request.tenantId
     await assertSafeUrl(body.ixcBaseUrl)
 
     const { enc, iv } = encrypt(body.ixcToken)
@@ -208,7 +216,7 @@ export async function settingsRoutes(app: FastifyInstance) {
       const { error: clearError } = await supabaseAdmin
         .from('ixc_connections')
         .update({ active: false, updated_at: new Date().toISOString() })
-        .eq('tenant_id', request.tenantId)
+        .eq('tenant_id', tenantId)
         .eq('active', true)
 
       if (clearError) {
@@ -219,7 +227,7 @@ export async function settingsRoutes(app: FastifyInstance) {
     const { data, error: insertError } = await supabaseAdmin
       .from('ixc_connections')
       .insert({
-        tenant_id: request.tenantId,
+        tenant_id: tenantId,
         name: body.name,
         ixc_base_url: body.ixcBaseUrl,
         ixc_user: body.ixcUser,
@@ -245,9 +253,11 @@ export async function settingsRoutes(app: FastifyInstance) {
     },
   }, async (request, reply) => {
     const { id } = request.params as { id: string }
+    const query = request.query as { tenantId?: string }
+    const tenantId = query.tenantId ?? request.tenantId
     const body = connectionUpdateSchema.parse(request.body)
 
-    const current = await loadTenantIxcConnection(request.tenantId, id)
+    const current = await loadTenantIxcConnection(tenantId, id)
 
     const nextName = body.name ?? current.name
     const nextBaseUrl = body.ixcBaseUrl ?? current.ixc_base_url
@@ -258,7 +268,7 @@ export async function settingsRoutes(app: FastifyInstance) {
       const { error: clearError } = await supabaseAdmin
         .from('ixc_connections')
         .update({ active: false, updated_at: new Date().toISOString() })
-        .eq('tenant_id', request.tenantId)
+        .eq('tenant_id', tenantId)
         .eq('active', true)
 
       if (clearError) {
@@ -279,7 +289,7 @@ export async function settingsRoutes(app: FastifyInstance) {
           ...(body.active !== undefined ? { active: body.active } : {}),
           updated_at: new Date().toISOString(),
         })
-        .eq('tenant_id', request.tenantId)
+        .eq('tenant_id', tenantId)
         .eq('id', id)
 
       if (updateError) {
@@ -295,7 +305,7 @@ export async function settingsRoutes(app: FastifyInstance) {
           ...(body.active !== undefined ? { active: body.active } : {}),
           updated_at: new Date().toISOString(),
         })
-        .eq('tenant_id', request.tenantId)
+        .eq('tenant_id', tenantId)
         .eq('id', id)
 
       if (updateError) {
@@ -314,7 +324,9 @@ export async function settingsRoutes(app: FastifyInstance) {
     },
   }, async (request, reply) => {
     const { id } = request.params as { id: string }
-    await activateTenantIxcConnection(request.tenantId, id)
+    const query = request.query as { tenantId?: string }
+    const tenantId = query.tenantId ?? request.tenantId
+    await activateTenantIxcConnection(tenantId, id)
     return reply.status(204).send()
   })
 }
