@@ -35,7 +35,7 @@
   "rewrites": [
     {
       "source": "/users/me",
-      "destination": "/api/users/me"
+      "destination": "/api/users?__me=1"
     },
     {
       "source": "/users",
@@ -43,7 +43,7 @@
     },
     {
       "source": "/users/(.*)/disconnect",
-      "destination": "/api/users/[id]/disconnect?id=$1"
+      "destination": "/api/users/[id]?id=$1"
     },
     {
       "source": "/users/(.*)",
@@ -51,7 +51,7 @@
     },
     {
       "source": "/tenants",
-      "destination": "/api/tenants"
+      "destination": "/api/settings?__tenants=1"
     },
     {
       "source": "/settings",
@@ -59,7 +59,7 @@
     },
     {
       "source": "/settings/ixc/connections/(.*)/activate",
-      "destination": "/api/settings/ixc-connections/[id]/activate?id=$1"
+      "destination": "/api/settings/ixc-connections/[id]?id=$1"
     },
     {
       "source": "/settings/ixc/connections/(.*)",

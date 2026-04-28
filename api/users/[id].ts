@@ -15,7 +15,7 @@ import {
 
 export default async function handler(request: any, response: any) {
   try {
-    if (!['PATCH', 'DELETE'].includes(request.method)) {
+    if (!['PATCH', 'DELETE', 'POST'].includes(request.method)) {
       return methodNotAllowed(response)
     }
 
@@ -31,6 +31,21 @@ export default async function handler(request: any, response: any) {
     const targetTenantId = requireTargetTenantId(targetUser)
     if (!auth.isFullAdmin && targetUser.is_full_admin) {
       throw new HttpError(403, 'Forbidden')
+    }
+
+    // POST → disconnect (revoke session)
+    if (request.method === 'POST') {
+      const { error } = await supabaseAdmin
+        .from('users')
+        .update({ session_revoked_at: new Date().toISOString() })
+        .eq('tenant_id', targetTenantId)
+        .eq('id', id)
+
+      if (error) {
+        return sendInternalError(response)
+      }
+
+      return sendNoContent(response)
     }
 
     if (request.method === 'DELETE') {

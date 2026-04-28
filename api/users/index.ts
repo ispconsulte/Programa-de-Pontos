@@ -55,6 +55,52 @@ export default async function handler(request: any, response: any) {
     }
 
     const auth = await authenticateRequest(request)
+
+    // GET ?__me=1 → /users/me profile endpoint
+    if (request.method === 'GET' && request.query.__me === '1') {
+      const authUser = await supabaseAdmin.auth.admin.getUserById(auth.userId)
+
+      const dbUserQuery = auth.isFullAdmin
+        ? supabaseAdmin
+            .from('users')
+            .select('id, tenant_id, email, role, is_active, is_full_admin, created_at, updated_at')
+            .eq('id', auth.userId)
+            .maybeSingle()
+        : supabaseAdmin
+            .from('users')
+            .select('id, tenant_id, email, role, is_active, is_full_admin, created_at, updated_at')
+            .eq('tenant_id', auth.tenantId)
+            .eq('id', auth.userId)
+            .maybeSingle()
+
+      const dbUser = await dbUserQuery
+
+      if (authUser.error || !authUser.data.user) {
+        return sendJson(response, 401, { error: 'Unauthorized' })
+      }
+
+      if (dbUser.error) {
+        return sendJson(response, 503, { error: 'Perfil indisponível no momento' })
+      }
+
+      if (!dbUser.data) {
+        return sendJson(response, 401, { error: 'Unauthorized' })
+      }
+
+      return sendJson(response, 200, {
+        id: dbUser.data.id,
+        tenant_id: dbUser.data.tenant_id ?? auth.tenantId,
+        email: dbUser.data.email,
+        role: dbUser.data.role,
+        is_active: dbUser.data.is_active,
+        is_full_admin: dbUser.data.is_full_admin === true,
+        name: normalizeDisplayName(authUser.data.user),
+        last_sign_in_at: authUser.data.user.last_sign_in_at ?? null,
+        created_at: dbUser.data.created_at,
+        updated_at: dbUser.data.updated_at,
+      })
+    }
+
     assertAdmin(auth.userRole, auth.isFullAdmin)
 
     if (request.method === 'POST') {

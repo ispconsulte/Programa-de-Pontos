@@ -10,6 +10,20 @@ export default async function handler(request: any, response: any) {
 
     const auth = await authenticateRequest(request)
     assertFullAdmin(auth.isFullAdmin)
+
+    // GET ?__tenants=1 → /tenants list endpoint
+    if (request.query.__tenants === '1') {
+      const tenants = await supabaseAdmin
+        .from('tenants')
+        .select('id, name')
+        .order('name', { ascending: true })
+
+      if (tenants.error) {
+        return sendInternalError(response)
+      }
+
+      return sendJson(response, 200, { data: tenants.data ?? [] })
+    }
     const tenantId = String(request.query.tenantId ?? auth.tenantId ?? '')
     if (!tenantId) {
       return sendJson(response, 403, { error: 'Forbidden' })
