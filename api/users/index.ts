@@ -1,7 +1,13 @@
+import { z } from 'zod'
 import { authenticateRequest, assertAdmin } from '../_lib/auth'
 import { methodNotAllowed, sendException, sendJson, sendInternalError } from '../_lib/http'
 import { normalizeDisplayName, supabaseAdmin } from '../_lib/supabase'
 import { createUserSchema, HttpError, isDuplicateUserError, toFullAdminFlag, toStoredRole } from './_shared'
+
+const createRegiaoSchema = z.object({
+  nome: z.string().trim().min(1).max(120),
+  tenantId: z.string().uuid().optional(),
+})
 
 async function listAllAuthUsers() {
   const users: Array<any> = []
@@ -30,7 +36,10 @@ async function listAllAuthUsers() {
 
 async function loadTenantNames(tenantIds: string[]) {
   if (tenantIds.length === 0) {
-    return new Map<string, string | null>()
+    return {
+      data: new Map<string, string | null>(),
+      error: null,
+    }
   }
 
   const tenants = await supabaseAdmin
@@ -39,7 +48,10 @@ async function loadTenantNames(tenantIds: string[]) {
     .in('id', tenantIds)
 
   if (tenants.error) {
-    return tenants
+    return {
+      data: null,
+      error: tenants.error,
+    }
   }
 
   return {
@@ -99,6 +111,54 @@ export default async function handler(request: any, response: any) {
         created_at: dbUser.data.created_at,
         updated_at: dbUser.data.updated_at,
       })
+    }
+
+    if (request.query.__regioes === '1') {
+      if (request.method === 'GET') {
+        const tenantId = auth.isFullAdmin && typeof request.query.tenantId === 'string'
+          ? request.query.tenantId
+          : auth.tenantId
+
+        const result = await supabaseAdmin
+          .from('regioes')
+          .select('id, nome, created_at')
+          .eq('tenant_id', tenantId)
+          .order('nome', { ascending: true })
+
+        if (result.error) {
+          return sendInternalError(response)
+        }
+
+        return sendJson(response, 200, { data: result.data ?? [] })
+      }
+
+      assertAdmin(auth.userRole, auth.isFullAdmin)
+
+      const body = createRegiaoSchema.parse(
+        typeof request.body === 'string' && request.body.trim()
+          ? JSON.parse(request.body)
+          : request.body ?? {},
+      )
+
+      const effectiveTenantId = auth.isFullAdmin && body.tenantId ? body.tenantId : auth.tenantId
+      if (!effectiveTenantId) {
+        return sendJson(response, 400, { error: 'Tenant não identificado.' })
+      }
+
+      const result = await supabaseAdmin
+        .from('regioes')
+        .insert({ tenant_id: effectiveTenantId, nome: body.nome })
+        .select('id, nome, created_at')
+        .single()
+
+      if (result.error) {
+        if (result.error.code === '23505') {
+          return sendJson(response, 409, { error: 'Já existe uma região com esse nome nesta empresa.' })
+        }
+        return sendInternalError(response)
+      }
+
+      return sendJson(response, 201, result.data)
     }
 
     assertAdmin(auth.userRole, auth.isFullAdmin)
@@ -184,13 +244,13 @@ export default async function handler(request: any, response: any) {
     const tenantUsersQuery = auth.isFullAdmin
       ? supabaseAdmin
           .from('users')
-          .select('id, email, role, created_at, is_active, session_revoked_at, updated_at, is_full_admin, tenant_id')
+          .select('id, email, role, created_at, is_active, session_revoked_at, updated_at, is_full_admin, tenant_id, regiao_id')
           .order('tenant_id', { ascending: true })
           .order('created_at', { ascending: true })
           .limit(500)
       : supabaseAdmin
           .from('users')
-          .select('id, email, role, created_at, is_active, session_revoked_at, updated_at, is_full_admin, tenant_id')
+          .select('id, email, role, created_at, is_active, session_revoked_at, updated_at, is_full_admin, tenant_id, regiao_id')
           .eq('tenant_id', auth.tenantId)
           .order('created_at', { ascending: true })
 
@@ -204,9 +264,7 @@ export default async function handler(request: any, response: any) {
       return sendInternalError(response)
     }
 
-    const tenantNamesMap: Map<string, string | null> = tenantNamesResult.data instanceof Map
-      ? tenantNamesResult.data
-      : new Map()
+    const tenantNamesMap = tenantNamesResult.data ?? new Map<string, string | null>()
 
     const authUsersById = new Map((authUsers.data.users ?? []).map((user) => [user.id, user]))
 
@@ -220,6 +278,7 @@ export default async function handler(request: any, response: any) {
           is_active: user.is_active,
           is_full_admin: (user as any).is_full_admin === true,
           tenant_id: (user as any).tenant_id ?? null,
+          regiao_id: (user as any).regiao_id ?? null,
           tenant_name: user.tenant_id ? tenantNamesMap.get(user.tenant_id) ?? null : null,
           name: normalizeDisplayName(authUser ?? user),
           created_at: user.created_at,

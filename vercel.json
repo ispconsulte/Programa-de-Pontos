@@ -41,6 +41,10 @@
       "destination": "/api/users"
     },
     {
+      "source": "/regioes",
+      "destination": "/api/users?__regioes=1"
+    },
+    {
       "source": "/users/(.*)/disconnect",
       "destination": "/api/users/[id]?id=$1"
     },
