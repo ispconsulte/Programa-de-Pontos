@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase-client'
+import { getSupabaseSession } from '@/lib/supabase-client'
 import { friendlyError } from '@/lib/friendly-errors'
 import { watchdogFetch } from '@/utils/requestWatchdog'
 
@@ -23,8 +23,8 @@ function buildUrl(path: string): string {
 }
 
 export async function backendRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const { data } = await supabase.auth.getSession()
-  const accessToken = data.session?.access_token
+  const session = await getSupabaseSession()
+  const accessToken = session?.access_token
 
   if (!accessToken) {
     throw new Error('Sessão inválida. Faça login novamente.')

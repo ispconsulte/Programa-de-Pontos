@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { isSupabaseConfigured, supabase } from '@/lib/supabase-client'
+import { getSupabaseSession, isSupabaseConfigured } from '@/lib/supabase-client'
 import Spinner from '@/components/Spinner'
 
 export default function RootPage() {
@@ -13,7 +13,7 @@ export default function RootPage() {
     }
 
     const routeBySession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
+      const session = await getSupabaseSession()
       if (session) {
         navigate('/operacao', { replace: true })
       } else {

@@ -2,7 +2,7 @@
  * Supabase query helpers — substitui o api-client (localhost:3000).
  * Todos os dados são buscados diretamente do Supabase.
  */
-import { supabase } from './supabase-client'
+import { getSupabaseSession, supabase } from './supabase-client'
 import { getCachedCurrentUserProfile, type CurrentUserProfile } from './user-management'
 import { backendRequest } from './backend-client'
 
@@ -21,8 +21,8 @@ export type TenantResolution =
 /** Resolves the current user's tenant_id and full-admin flag.
  * Returns an error discriminant instead of throwing so callers can show precise messages. */
 export async function resolveCurrentTenant(): Promise<TenantResolution> {
-  const { data: sessionData } = await supabase.auth.getSession()
-  const userId = sessionData.session?.user?.id
+  const session = await getSupabaseSession()
+  const userId = session?.user?.id
   if (!userId) return { tenantId: null, isFullAdmin: false, error: 'no_session' }
 
   const cachedProfile = getCachedCurrentUserProfile()

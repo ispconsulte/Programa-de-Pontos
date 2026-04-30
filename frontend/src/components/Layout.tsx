@@ -20,7 +20,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react'
 import AnimatedGiftBox from '@/components/AnimatedGiftBox'
 import { cn } from '@/lib/utils'
-import { supabase } from '@/lib/supabase-client'
+import { getSupabaseSession, supabase } from '@/lib/supabase-client'
 import {
   clearCurrentUserProfileCache,
   fetchCurrentUserProfile,
@@ -297,9 +297,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           // Keep the authenticated profile even if company settings are temporarily unavailable.
         }
       } catch {
-        const { data } = await supabase.auth.getSession()
+        const session = await getSupabaseSession()
         if (!mounted) return
-        const user = data.session?.user
+        const user = session?.user
         setProfile(buildFallbackProfile(user))
       } finally {
         if (mounted) setProfileLoading(false)

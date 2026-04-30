@@ -1,4 +1,4 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { createClient, type Session, type SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/integrations/supabase/types'
 
 declare const __PUBLIC_SUPABASE_URL__: string
@@ -82,3 +82,37 @@ const globalScope = globalThis as SupabaseGlobal
 export const supabase: SupabaseLike = isSupabaseConfigured
   ? (globalScope.__bonificaSupabaseClient ??= createSupabaseClient())
   : createUnavailableClient()
+
+let sessionPromise: Promise<Session | null> | null = null
+
+function isInvalidRefreshToken(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error ?? '')
+  return message.toLowerCase().includes('invalid refresh token')
+}
+
+export async function getSupabaseSession(): Promise<Session | null> {
+  if (!sessionPromise) {
+    sessionPromise = supabase.auth.getSession()
+      .then(async ({ data, error }) => {
+        if (error) {
+          if (isInvalidRefreshToken(error)) {
+            await supabase.auth.signOut({ scope: 'local' }).catch(() => {})
+          }
+          return null
+        }
+
+        return data.session
+      })
+      .catch(async (error) => {
+        if (isInvalidRefreshToken(error)) {
+          await supabase.auth.signOut({ scope: 'local' }).catch(() => {})
+        }
+        return null
+      })
+      .finally(() => {
+        sessionPromise = null
+      })
+  }
+
+  return sessionPromise
+}

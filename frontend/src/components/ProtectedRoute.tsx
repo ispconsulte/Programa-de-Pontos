@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '@/lib/supabase-client'
+import { getSupabaseSession, supabase } from '@/lib/supabase-client'
 import {
   clearCurrentUserProfileCache,
   fetchCurrentUserProfile,
@@ -30,10 +30,10 @@ export default function ProtectedRoute({
     let mounted = true
 
     const validateSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession()
+      const session = await getSupabaseSession()
       if (!mounted) return
 
-      if (error || !session) {
+      if (!session) {
         clearCurrentUserProfileCache()
         clearCurrentTenantIdCache()
         navigate('/login', { replace: true })
