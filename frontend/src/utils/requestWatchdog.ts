@@ -1,6 +1,6 @@
 import { showFloodWarning } from './antiFlood'
 
-const SIMULTANEOUS_LIMIT = 3
+const SIMULTANEOUS_LIMIT = 6
 const LOOP_LIMIT = 10
 const LOOP_WINDOW_MS = 5_000
 

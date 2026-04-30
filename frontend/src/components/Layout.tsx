@@ -118,12 +118,13 @@ function resolveFallbackRole(user: any): string {
 
 function buildFallbackProfile(user: any) {
   const m = user?.user_metadata ?? {}
+  const app = user?.app_metadata ?? {}
 
   return {
     name: String(m.full_name || m.name || m.display_name || user?.email?.split('@')[0] || 'Usuário'),
     email: user?.email || 'Sem e-mail',
     role: resolveFallbackRole(user),
-    isFullAdmin: false,
+    isFullAdmin: app.is_full_admin === true,
   }
 }
 
@@ -273,12 +274,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       if (cached) {
         setProfile(toLayoutProfile(cached))
         setProfileLoading(false)
-        fetchCurrentUserProfile({ force: true, preserveCache: true })
-          .then((currentUser) => {
-            if (!mounted) return
-            setProfile(toLayoutProfile(currentUser))
-          })
-          .catch(() => {})
         return
       }
       setProfileLoading(true)
