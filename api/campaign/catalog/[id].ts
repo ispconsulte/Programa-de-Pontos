@@ -4,6 +4,12 @@ import { authenticateRequest, assertAdmin } from '../../_lib/auth'
 import { methodNotAllowed, sendException, sendJson, sendNoContent, sendInternalError } from '../../_lib/http'
 import { supabaseAdmin } from '../../_lib/supabase'
 
+const expectedUpdatedAtField = z.string().optional().nullable().transform((v) => {
+  if (!v || !v.trim()) return null
+  const d = new Date(v)
+  return isNaN(d.getTime()) ? null : v
+})
+
 const catalogRewardSchema = z.object({
   name: z.string().trim().min(1).max(160),
   description: z.string().trim().max(400).optional().nullable(),
@@ -12,13 +18,13 @@ const catalogRewardSchema = z.object({
   imageUrl: z.string().trim().optional().nullable(),
   active: z.boolean().optional(),
   reason: z.string().trim().max(240).optional().nullable(),
-  expectedUpdatedAt: z.string().datetime({ offset: true }).optional().nullable(),
+  expectedUpdatedAt: expectedUpdatedAtField,
   idempotencyKey: z.string().trim().min(1).max(128).optional(),
 })
 
 const deleteSchema = z.object({
   reason: z.string().trim().max(240).optional().nullable(),
-  expectedUpdatedAt: z.string().datetime({ offset: true }).optional().nullable(),
+  expectedUpdatedAt: expectedUpdatedAtField,
   idempotencyKey: z.string().trim().min(1).max(128).optional(),
 })
 

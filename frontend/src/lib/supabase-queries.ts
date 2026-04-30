@@ -589,6 +589,26 @@ export async function fetchAllTenants(): Promise<TenantListItem[]> {
   return data.map((t) => ({ id: t.id, name: t.name || t.id }))
 }
 
+// ── Regiões ──────────────────────────────────────────────────────────────────
+
+export interface RegiaoItem {
+  id: string
+  nome: string
+}
+
+export async function fetchRegioes(tenantId?: string): Promise<RegiaoItem[]> {
+  const params = tenantId ? `?tenantId=${encodeURIComponent(tenantId)}` : ''
+  const response = await backendRequest<{ data?: RegiaoItem[] } | null>(`/regioes${params}`)
+  return response?.data ?? []
+}
+
+export async function createRegiao(nome: string, tenantId?: string): Promise<RegiaoItem> {
+  return backendRequest<RegiaoItem>('/regioes', {
+    method: 'POST',
+    body: JSON.stringify({ nome, ...(tenantId ? { tenantId } : {}) }),
+  })
+}
+
 // ── Campanhas (regras de pontuação) ─────────────────────────────────────────
 
 export interface CampaignRuleSettings {

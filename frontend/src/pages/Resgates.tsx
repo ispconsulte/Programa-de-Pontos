@@ -14,11 +14,13 @@ import { createButtonGuard } from '@/utils/antiFlood'
 import { friendlyError } from '@/lib/friendly-errors'
 
 type RedemptionStatus = 'pendente' | 'entregue' | 'cancelado'
+type TabValue = RedemptionStatus | 'all' | 'nao_cliente'
 
-const STATUS_TABS: { value: RedemptionStatus | 'all'; label: string }[] = [
+const STATUS_TABS: { value: TabValue; label: string }[] = [
   { value: 'all', label: 'Todos' },
   { value: 'entregue', label: 'Entregue' },
   { value: 'pendente', label: 'Pendente' },
+  { value: 'nao_cliente', label: 'Não cliente' },
 ]
 
 interface RedemptionRow {
@@ -55,7 +57,7 @@ export default function ResgatesPage() {
   const navigate = useNavigate()
   const openRedemptionGuardRef = useRef(createButtonGuard('redemptions-open-detail'))
   const [reloadKey, setReloadKey] = useState(0)
-  const [tab, setTab] = useState<RedemptionStatus | 'all'>('all')
+  const [tab, setTab] = useState<TabValue>('all')
   const freshRedemptionsCache = redemptionsCache && redemptionsCache.expiresAt > Date.now() ? redemptionsCache : null
   const [rows, setRows] = useState<RedemptionRow[]>(freshRedemptionsCache?.rows ?? [])
   const [loading, setLoading] = useState(!freshRedemptionsCache)
@@ -63,7 +65,8 @@ export default function ResgatesPage() {
 
   useEffect(() => {
     let mounted = true
-    const load = async (force = false) => {
+    const load = async () => {
+      const force = reloadKey > 0
       const cached = redemptionsCache && redemptionsCache.expiresAt > Date.now() ? redemptionsCache : null
       if (!force && cached) {
         setRows(cached.rows)
@@ -71,9 +74,7 @@ export default function ResgatesPage() {
         return
       }
 
-      if (!rows.length) {
-        setLoading(true)
-      }
+      setLoading(true)
       try {
         setError('')
         const tenantId = await getCurrentTenantId()
@@ -92,23 +93,28 @@ export default function ResgatesPage() {
           cliente_nome: r.cliente_nome || r.destinatario_nome || (r.ixc_cliente_id ? `Cliente #${r.ixc_cliente_id}` : 'Contato'),
         }))
 
-        setRows(nextRows)
-        redemptionsCache = {
-          expiresAt: Date.now() + REDEMPTIONS_CACHE_TTL_MS,
-          rows: nextRows,
+        if (mounted) {
+          setRows(nextRows)
+          redemptionsCache = { expiresAt: Date.now() + REDEMPTIONS_CACHE_TTL_MS, rows: nextRows }
         }
       } catch (loadError) {
-        setRows([])
-        setError(friendlyError(loadError, { action: 'load' }))
+        if (mounted) {
+          setRows([])
+          setError(friendlyError(loadError, { action: 'load' }))
+        }
       } finally {
         if (mounted) setLoading(false)
       }
     }
-    void load(reloadKey > 0)
+    void load()
     return () => { mounted = false }
-  }, [reloadKey, rows.length])
+  }, [reloadKey])
 
-  const filtered = tab === 'all' ? rows : rows.filter((r) => r.status_resgate === tab)
+  const filtered = tab === 'all'
+    ? rows
+    : tab === 'nao_cliente'
+      ? rows.filter((r) => r.tipo_destinatario === 'contato' || (!r.ixc_cliente_id && r.tipo_destinatario !== 'cliente'))
+      : rows.filter((r) => r.status_resgate === tab)
   const openRedemption = (row: RedemptionRow) => {
     if (!row.ixc_cliente_id) return
     if (!openRedemptionGuardRef.current.canExecute()) return
@@ -164,7 +170,9 @@ export default function ResgatesPage() {
                 {t.label}
                 {t.value !== 'all' && (
                   <span className="ml-1.5 text-[11px] opacity-80">
-                    {rows.filter((r) => r.status_resgate === t.value).length}
+                    {t.value === 'nao_cliente'
+                      ? rows.filter((r) => r.tipo_destinatario === 'contato' || (!r.ixc_cliente_id && r.tipo_destinatario !== 'cliente')).length
+                      : rows.filter((r) => r.status_resgate === t.value).length}
                   </span>
                 )}
               </button>
@@ -203,7 +211,12 @@ export default function ResgatesPage() {
                   >
                     <div className="flex items-start justify-between">
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-foreground">{row.cliente_nome}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="truncate text-sm font-medium text-foreground">{row.cliente_nome}</p>
+                          {(row.tipo_destinatario === 'contato' || (!row.ixc_cliente_id && row.tipo_destinatario !== 'cliente')) && (
+                            <span className="shrink-0 rounded border border-violet-500/20 bg-violet-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-violet-400">Não cliente</span>
+                          )}
+                        </div>
                         <p className="mt-0.5 text-xs text-muted-foreground">
                           resgatou <span className="font-medium text-foreground">{row.brinde_nome}</span>
                         </p>
@@ -243,7 +256,14 @@ export default function ResgatesPage() {
                         className={cn('transition-colors', row.ixc_cliente_id ? 'cursor-pointer hover:bg-muted' : '')}
                         onClick={() => openRedemption(row)}
                       >
-                        <td className="px-5 py-3 font-medium text-foreground">{row.cliente_nome}</td>
+                        <td className="px-5 py-3 font-medium text-foreground">
+                          <div className="flex items-center gap-1.5">
+                            <span>{row.cliente_nome}</span>
+                            {(row.tipo_destinatario === 'contato' || (!row.ixc_cliente_id && row.tipo_destinatario !== 'cliente')) && (
+                              <span className="shrink-0 rounded border border-violet-500/20 bg-violet-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-violet-400">Não cliente</span>
+                            )}
+                          </div>
+                        </td>
                         <td className="px-3 py-3 text-foreground">{row.brinde_nome}</td>
                         <td className="px-3 py-3 text-center font-semibold text-muted-foreground">{row.pontos_utilizados}</td>
                         <td className="px-3 py-3 text-center">

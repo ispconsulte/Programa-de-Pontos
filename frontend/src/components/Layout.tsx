@@ -16,7 +16,6 @@ import {
   Briefcase,
   Megaphone,
   UserCog,
-  HelpCircle,
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import AnimatedGiftBox from '@/components/AnimatedGiftBox'
@@ -488,12 +487,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div className={cn('flex-shrink-0 border-t border-sidebar-border py-3', collapsed ? 'px-2' : 'px-3')}>
-          <SidebarItem
-            item={{ href: '/suporte', label: 'Suporte', icon: HelpCircle }}
-            pathname={pathname}
-            onNav={() => setMobileOpen(false)}
-            collapsed={collapsed}
-          />
           <button
             onClick={() => void handleSignOut()}
             disabled={signingOut}

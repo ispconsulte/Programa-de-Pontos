@@ -201,13 +201,11 @@ export async function registerRewardRedemption(input: RewardRedemptionInput): Pr
     method: 'POST',
     body: JSON.stringify({
       isActiveCustomer: input.isActiveCustomer,
-      clientId: input.isActiveCustomer ? input.client?.id ?? null : null,
-      leadName: input.isActiveCustomer ? null : input.leadName?.trim() || null,
-      leadPhone: input.isActiveCustomer ? null : input.leadPhone?.trim() || null,
+      ...(input.isActiveCustomer ? { clientId: input.client?.id } : { leadName: input.leadName?.trim() || undefined, leadPhone: input.leadPhone?.trim() || undefined }),
       rewardId: input.reward.id,
       quantity: Math.max(1, Math.trunc(input.quantity)),
       responsible: input.responsible.trim(),
-      notes: input.notes?.trim() || null,
+      notes: input.notes?.trim() || undefined,
       idempotencyKey: buildIdempotencyKey(`rescue-create:${input.reward.id}`),
     }),
   })

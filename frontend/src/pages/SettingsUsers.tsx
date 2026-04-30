@@ -37,7 +37,7 @@ import {
   type CurrentUserProfile,
   type ManagedUser,
 } from '@/lib/user-management'
-import { fetchAllTenants, type TenantListItem } from '@/lib/supabase-queries'
+import { fetchAllTenants, fetchRegioes, type TenantListItem, type RegiaoItem } from '@/lib/supabase-queries'
 import { Edit3, KeyRound, LogOut, Shield, Trash2, UserCog, UserPlus, Users } from 'lucide-react'
 import { friendlyError } from '@/lib/friendly-errors'
 import { createButtonGuard } from '@/utils/antiFlood'
@@ -60,6 +60,7 @@ interface UserFormState {
   role: ManagedUserRole
   isActive: boolean
   tenantId: string
+  regiaoId: string
 }
 
 const initialFormState: UserFormState = {
@@ -69,6 +70,7 @@ const initialFormState: UserFormState = {
   role: 'operator',
   isActive: true,
   tenantId: '',
+  regiaoId: '',
 }
 
 const PASSWORD_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%*-_'
@@ -183,6 +185,7 @@ export default function SettingsUsersPage() {
   const [form, setForm] = useState<UserFormState>(initialFormState)
   const [tenants, setTenants] = useState<TenantListItem[]>(freshSettingsUsersCache?.tenants ?? [])
   const [tenantsLoadError, setTenantsLoadError] = useState('')
+  const [regioes, setRegioes] = useState<RegiaoItem[]>([])
   const [showPassword, setShowPassword] = useState(false)
   const [copyFeedback, setCopyFeedback] = useState('')
   const submitGuardRef = useRef(createButtonGuard('settings-users-submit'))
@@ -270,13 +273,22 @@ export default function SettingsUsersPage() {
 
   useEffect(() => { void loadData() }, [])
 
+  async function loadRegioes(tenantId: string) {
+    if (!tenantId) { setRegioes([]); return }
+    try {
+      const list = await fetchRegioes(isFullAdmin ? tenantId : undefined)
+      setRegioes(list)
+    } catch {
+      setRegioes([])
+    }
+  }
+
   function openCreateDialog() {
     setDialogMode('create')
     setEditingUser(null)
-    setForm({
-      ...initialFormState,
-      tenantId: isFullAdmin ? (tenantOptions.length === 1 ? tenantOptions[0].id : '') : currentUser?.tenant_id ?? '',
-    })
+    const defaultTenantId = isFullAdmin ? (tenantOptions.length === 1 ? tenantOptions[0].id : '') : currentUser?.tenant_id ?? ''
+    setForm({ ...initialFormState, tenantId: defaultTenantId })
+    void loadRegioes(defaultTenantId)
     setShowPassword(false)
     setCopyFeedback('')
     setDialogOpen(true)
@@ -285,14 +297,17 @@ export default function SettingsUsersPage() {
   function openEditDialog(user: ManagedUser) {
     setDialogMode('edit')
     setEditingUser(user)
+    const editTenantId = user.tenant_id ?? ''
     setForm({
       name: user.name,
       email: user.email,
       password: '',
       role: user.is_full_admin ? 'full_admin' : isAdminUiRole(user.role) ? 'admin' : 'operator',
       isActive: user.is_active,
-      tenantId: user.tenant_id ?? '',
+      tenantId: editTenantId,
+      regiaoId: user.regiao_id ?? '',
     })
+    void loadRegioes(editTenantId)
     setShowPassword(false)
     setCopyFeedback('')
     setDialogOpen(true)
@@ -346,6 +361,7 @@ export default function SettingsUsersPage() {
           name: form.name.trim() || undefined,
           role: form.role,
           tenantId: form.tenantId || undefined,
+          regiaoId: form.regiaoId || undefined,
         }
         await createManagedUser(payload)
         setSuccess('Usuário criado com sucesso.')
@@ -356,6 +372,7 @@ export default function SettingsUsersPage() {
           role: form.role,
           isActive: form.isActive,
           tenantId: form.tenantId || undefined,
+          regiaoId: form.regiaoId || null,
         })
         setSuccess('Usuário atualizado com sucesso.')
       }
@@ -675,7 +692,10 @@ export default function SettingsUsersPage() {
                 <Label htmlFor="user-tenant">Empresa</Label>
                 <Select
                   value={form.tenantId}
-                  onValueChange={(v) => setForm((prev) => ({ ...prev, tenantId: v }))}
+                  onValueChange={(v) => {
+                    setForm((prev) => ({ ...prev, tenantId: v, regiaoId: '' }))
+                    void loadRegioes(v)
+                  }}
                   disabled={!isFullAdmin}
                 >
                   <SelectTrigger id="user-tenant">
@@ -689,6 +709,25 @@ export default function SettingsUsersPage() {
                 </Select>
                 {tenantsLoadError && <p className="text-xs text-amber-500">{tenantsLoadError}</p>}
                 {tenantOptions.length === 0 && <p className="text-xs text-destructive">Nenhuma empresa disponível para seleção.</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="user-regiao">Região</Label>
+                <Select
+                  value={form.regiaoId}
+                  onValueChange={(v) => setForm((prev) => ({ ...prev, regiaoId: v === '__none__' ? '' : v }))}
+                  disabled={regioes.length === 0}
+                >
+                  <SelectTrigger id="user-regiao">
+                    <SelectValue placeholder="Sem região" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Sem região</SelectItem>
+                    {regioes.map((r) => (
+                      <SelectItem key={r.id} value={r.id}>{r.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">

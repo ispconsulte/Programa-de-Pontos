@@ -17,7 +17,6 @@ import ClienteEmDiaDetailPage from './pages/ClienteEmDiaDetail'
 import ResgatesPage from './pages/Resgates'
 import PortalAccessPage from './pages/PortalAccess'
 import PortalPointsPage from './pages/PortalPoints'
-import SuportePage from './pages/Suporte'
 import NotFound from './pages/NotFound'
 import AppErrorBoundary from './components/AppErrorBoundary'
 import NavigationEventBridge from './components/NavigationEventBridge'
@@ -62,7 +61,6 @@ function App() {
             <Route path="/settings/campaigns" element={<Navigate to="/admin/campanhas" replace />} />
             <Route path="/settings/users" element={<Navigate to="/admin/usuarios" replace />} />
             <Route path="/admin" element={<Navigate to="/admin/campanhas" replace />} />
-            <Route path="/suporte" element={<SuportePage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Router>

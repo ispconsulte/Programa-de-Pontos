@@ -65,48 +65,49 @@ export default function SettingsCampaignsPage() {
   const submitGuardRef = useRef(createButtonGuard('settings-campaigns-submit'))
   const deleteGuardRef = useRef(createButtonGuard('settings-campaigns-delete'))
   const selectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const loadInFlightRef = useRef(false)
 
   useEffect(() => () => {
     if (selectTimerRef.current) clearTimeout(selectTimerRef.current)
   }, [])
 
   useEffect(() => {
-    const load = async (force = false) => {
-      if (tenantId && !force) {
-        const cached = settingsCampaignsCache.get(tenantId)
-        if (cached && cached.expiresAt > Date.now()) {
-          setCampaigns(cached.campaigns)
-          setSettings(cached.campaigns.find((campaign) => campaign.active) ?? cached.campaigns[0] ?? createDefaultCampaignRuleSettings())
-          setError('')
-          setLoading(false)
-          return
-        }
-      }
-
-      if (!campaigns.length) {
-        setLoading(true)
-      }
+    const load = async () => {
+      if (loadInFlightRef.current) return
+      loadInFlightRef.current = true
+      setLoading(true)
       setError('')
       try {
         const currentTenantId = await getCurrentTenantId()
-        if (!currentTenantId) { setError('Usuário sem tenant associado.'); return }
+        if (!currentTenantId) { setError('Usuário sem tenant associado.'); setLoading(false); loadInFlightRef.current = false; return }
 
-        setTenantId(currentTenantId)
+        const cached = settingsCampaignsCache.get(currentTenantId)
+        if (cached && cached.expiresAt > Date.now()) {
+          setTenantId(currentTenantId)
+          setCampaigns(cached.campaigns)
+          setSettings(cached.campaigns.find((campaign) => campaign.active) ?? cached.campaigns[0] ?? createDefaultCampaignRuleSettings())
+          setLoading(false)
+          loadInFlightRef.current = false
+          return
+        }
+
         const loadedCampaigns = await fetchCampaignRuleSettingsList(currentTenantId)
         settingsCampaignsCache.set(currentTenantId, {
           expiresAt: Date.now() + SETTINGS_CAMPAIGNS_CACHE_TTL_MS,
           campaigns: loadedCampaigns,
         })
+        setTenantId(currentTenantId)
         setCampaigns(loadedCampaigns)
         setSettings(loadedCampaigns.find((campaign) => campaign.active) ?? loadedCampaigns[0] ?? createDefaultCampaignRuleSettings())
       } catch (err) {
         setError(friendlyError(err))
       } finally {
         setLoading(false)
+        loadInFlightRef.current = false
       }
     }
     void load()
-  }, [campaigns.length, tenantId])
+  }, [])
 
   const updateField = <K extends keyof CampaignRuleSettings>(key: K, value: CampaignRuleSettings[K]) => {
     setSettings((prev) => (prev ? { ...prev, [key]: value } : prev))
@@ -230,31 +231,30 @@ export default function SettingsCampaignsPage() {
               {error && <AlertBanner variant="error" message={error} />}
               {success && <AlertBanner variant="success" message={success} />}
 
-              {/* Hero info */}
-              <Card className="overflow-hidden border-primary/10 bg-[linear-gradient(135deg,hsl(var(--primary)/0.06),transparent_50%),hsl(var(--surface-1))]">
-                <CardContent className="p-5 lg:p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                      <Zap className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="space-y-3">
-                      <h2 className="text-base font-bold text-foreground">Como os pontos são calculados</h2>
-                      <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                        A cada fatura paga, o sistema compara automaticamente a <strong className="text-foreground">data de pagamento</strong> com a <strong className="text-foreground">data de vencimento</strong> e atribui pontos conforme as faixas configuradas abaixo. Quanto mais cedo o cliente pagar, mais pontos receberá.
-                      </p>
-                      <div className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                        <p className="font-medium text-foreground">Para que serve esta tela?</p>
-                        <ul className="mt-1.5 list-disc space-y-1 pl-5 text-[13px]">
-                          <li>Definir quantos pontos cada comportamento de pagamento gera.</li>
-                          <li>Ajustar o limiar de dias para considerar um pagamento "antecipado".</li>
-                          <li>Criar promoções temporárias — ex.: <strong className="text-foreground">dobrar a pontuação</strong> em um mês específico basta duplicar os valores e salvar.</li>
-                          <li>Ao salvar, as novas regras passam a valer na próxima sincronização automática.</li>
-                        </ul>
-                      </div>
-                    </div>
+              {/* Help hints */}
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="flex items-start gap-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3">
+                  <Zap className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <div>
+                    <p className="text-[12px] font-semibold text-foreground">Pontuação automática</p>
+                    <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">A cada fatura paga, o sistema compara data de pagamento com vencimento e atribui pontos pela faixa configurada.</p>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="flex items-start gap-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3">
+                  <Zap className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+                  <div>
+                    <p className="text-[12px] font-semibold text-foreground">Dias de antecedência</p>
+                    <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">Define quantos dias antes do vencimento um pagamento é considerado antecipado e recebe a maior pontuação.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3">
+                  <Zap className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+                  <div>
+                    <p className="text-[12px] font-semibold text-foreground">Promoções temporárias</p>
+                    <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">Para dobrar a pontuação num mês, basta duplicar os valores e salvar. As novas regras valem na próxima sincronização.</p>
+                  </div>
+                </div>
+              </div>
 
               {/* Form card */}
               <Card>

@@ -10,6 +10,7 @@ export const createUserSchema = z.object({
   role: managedRoleSchema.default('operator'),
   tenantId: z.string().uuid().optional(),
   tenant_id: z.string().uuid().optional(),
+  regiaoId: z.string().uuid().optional(),
 })
 
 export const updateUserSchema = z.object({
@@ -19,6 +20,7 @@ export const updateUserSchema = z.object({
   isActive: z.boolean().optional(),
   tenantId: z.string().uuid().optional(),
   tenant_id: z.string().uuid().optional(),
+  regiaoId: z.string().uuid().nullable().optional(),
 })
 
 export interface TenantUserRow {

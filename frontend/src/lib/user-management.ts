@@ -22,6 +22,7 @@ export interface ManagedUser {
   is_full_admin: boolean
   tenant_id: string | null
   tenant_name?: string | null
+  regiao_id?: string | null
   name: string
   created_at: string
   updated_at: string
@@ -36,6 +37,7 @@ export interface CreateManagedUserInput {
   name?: string
   role: 'admin' | 'operator' | 'full_admin'
   tenantId?: string
+  regiaoId?: string
 }
 
 export interface UpdateManagedUserInput {
@@ -44,6 +46,7 @@ export interface UpdateManagedUserInput {
   role?: 'admin' | 'operator' | 'full_admin'
   isActive?: boolean
   tenantId?: string
+  regiaoId?: string | null
 }
 
 export function isAdminUiRole(role: string | null | undefined): boolean {
@@ -98,15 +101,15 @@ export async function fetchCurrentUserProfile(options?: { force?: boolean; prese
         return profile
       })
       .catch((backendErr) => {
+        currentUserProfilePromise = null
         throw backendErr
+      })
+      .finally(() => {
+        currentUserProfilePromise = null
       })
   }
 
-  try {
-    return await currentUserProfilePromise
-  } finally {
-    currentUserProfilePromise = null
-  }
+  return currentUserProfilePromise
 }
 
 export async function fetchManagedUsers(): Promise<ManagedUser[]> {

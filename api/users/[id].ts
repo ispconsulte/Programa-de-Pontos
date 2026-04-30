@@ -148,6 +148,7 @@ export default async function handler(request: any, response: any) {
         updatePayload.session_revoked_at = new Date().toISOString()
       }
     }
+    if ('regiaoId' in body) updatePayload.regiao_id = body.regiaoId ?? null
 
     if (Object.keys(updatePayload).length > 0) {
       const updateResult = await supabaseAdmin

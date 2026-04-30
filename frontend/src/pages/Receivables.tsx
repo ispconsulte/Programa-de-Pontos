@@ -5,7 +5,6 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, Users, RefreshCw, Search, ShieldAlert, TrendingUp, Award, Clock } from 'lucide-react'
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
-import PageHeader from '@/components/PageHeader'
 import Spinner from '@/components/Spinner'
 import { statusBadge } from '@/components/Badge'
 import Pagination from '@/components/Pagination'
@@ -351,66 +350,13 @@ export default function ReceivablesPage() {
   return (
     <ProtectedRoute>
       <Layout>
-        <PageHeader
-          icon={TrendingUp}
-          title="Gestão de Pontuação"
-          subtitle="Acompanhe pagamentos e pontos dos clientes"
-        />
 
-        {/* Summary cards */}
-        <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-                <Users className="h-4.5 w-4.5 text-primary" />
-              </div>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Registros processados</p>
-                <p className="text-xl font-bold text-foreground">{loading ? '...' : summary.totalRecords.toLocaleString('pt-BR')}</p>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">{summary.uniqueClients.toLocaleString('pt-BR')} clientes únicos</p>
-              </div>
-            </div>
-          </div>
-          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04] p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10">
-                <TrendingUp className="h-4.5 w-4.5 text-emerald-400" />
-              </div>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Antecipados</p>
-                <p className="text-xl font-bold text-emerald-400">{loading ? '...' : summary.fivePoints.toLocaleString('pt-BR')}</p>
-              </div>
-            </div>
-          </div>
-          <div className="rounded-xl border border-sky-500/20 bg-sky-500/[0.04] p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-500/10">
-                <Award className="h-4.5 w-4.5 text-sky-400" />
-              </div>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">No vencimento</p>
-                <p className="text-xl font-bold text-sky-400">{loading ? '...' : summary.fourPoints.toLocaleString('pt-BR')}</p>
-              </div>
-            </div>
-          </div>
-          <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.04] p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/10">
-                <Clock className="h-4.5 w-4.5 text-amber-400" />
-              </div>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Após vencimento</p>
-                <p className="text-xl font-bold text-amber-400">{loading ? '...' : summary.twoPoints.toLocaleString('pt-BR')}</p>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">{summary.totalPoints.toLocaleString('pt-BR')} pontos lançados</p>
-              </div>
-            </div>
-          </div>
-        </div>
 
         <div className="space-y-5">
+          {/* Filters */}
           <Card>
             <CardContent className="p-4 sm:p-5">
-              <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Situação</label>
                   <Select value={category} onValueChange={setCategory}>
@@ -436,8 +382,8 @@ export default function ReceivablesPage() {
                 </div>
               </div>
 
-              <div className="mt-3 grid gap-3 sm:mt-4 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_auto_auto] xl:items-end xl:gap-4">
-                <div className="min-w-0 space-y-1.5">
+              <div className="mt-3 grid grid-cols-1 gap-3 sm:mt-4 sm:grid-cols-2 lg:grid-cols-[1fr_auto_auto_auto] lg:items-end lg:gap-4">
+                <div className="min-w-0 space-y-1.5 sm:col-span-2 lg:col-span-1">
                   <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Ordenar</label>
                   <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
@@ -448,10 +394,10 @@ export default function ReceivablesPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="w-full sm:w-24 space-y-1.5">
+                <div className="space-y-1.5">
                   <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Exibir</label>
                   <Select value={String(limit)} onValueChange={(value) => { setLimit(Number(value)); setPage(1) }}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="w-full lg:w-24"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {PAGE_SIZES.map((size) => (
                         <SelectItem key={size} value={String(size)}>{size}</SelectItem>
@@ -459,22 +405,70 @@ export default function ReceivablesPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="responsive-action-group xl:ml-auto xl:justify-end">
-                  <div>
-                    <Button onClick={handleFilterApply} disabled={filterBusy || loading} className="min-h-[2.75rem]">
-                      <Search className="h-3.5 w-3.5" />
-                      {filterBusy ? 'Aguarde...' : 'Aplicar'}
-                    </Button>
-                  </div>
-                  <div>
-                    <Button variant="outline" size="icon" className="min-h-[2.75rem] min-w-[2.75rem]" disabled={refreshBusy} onClick={() => void throttledFetch(true)}>
-                      <RefreshCw className={`h-3.5 w-3.5 transition-transform ${refreshBusy ? 'animate-spin' : ''}`} />
-                    </Button>
-                  </div>
+                <div className="flex items-end">
+                  <Button onClick={handleFilterApply} disabled={filterBusy || loading} className="h-10 w-full lg:w-auto">
+                    <Search className="h-3.5 w-3.5" />
+                    {filterBusy ? 'Aguarde...' : 'Aplicar'}
+                  </Button>
+                </div>
+                <div className="flex items-end">
+                  <Button variant="outline" size="icon" className="h-10 w-full lg:w-10" disabled={refreshBusy} onClick={() => void throttledFetch(true)}>
+                    <RefreshCw className={`h-3.5 w-3.5 transition-transform ${refreshBusy ? 'animate-spin' : ''}`} />
+                  </Button>
                 </div>
               </div>
             </CardContent>
           </Card>
+
+          {/* Summary cards */}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                  <Users className="h-4.5 w-4.5 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Registros processados</p>
+                  <p className="text-xl font-bold text-foreground">{loading ? '...' : summary.totalRecords.toLocaleString('pt-BR')}</p>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">{summary.uniqueClients.toLocaleString('pt-BR')} clientes únicos</p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04] p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
+                  <TrendingUp className="h-4.5 w-4.5 text-emerald-400" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Antecipados</p>
+                  <p className="text-xl font-bold text-emerald-400">{loading ? '...' : summary.fivePoints.toLocaleString('pt-BR')}</p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-xl border border-sky-500/20 bg-sky-500/[0.04] p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-500/10">
+                  <Award className="h-4.5 w-4.5 text-sky-400" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">No vencimento</p>
+                  <p className="text-xl font-bold text-sky-400">{loading ? '...' : summary.fourPoints.toLocaleString('pt-BR')}</p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.04] p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
+                  <Clock className="h-4.5 w-4.5 text-amber-400" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Após vencimento</p>
+                  <p className="text-xl font-bold text-amber-400">{loading ? '...' : summary.twoPoints.toLocaleString('pt-BR')}</p>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">{summary.totalPoints.toLocaleString('pt-BR')} pontos lançados</p>
+                </div>
+              </div>
+            </div>
+          </div>
 
           <Card>
             <CardContent className="p-0">

@@ -167,6 +167,7 @@ export default async function handler(request: any, response: any) {
           role: storedRole,
           is_full_admin: isFullAdmin,
           is_active: true,
+          ...(body.regiaoId ? { regiao_id: body.regiaoId } : {}),
         })
 
       if (insertResult.error) {

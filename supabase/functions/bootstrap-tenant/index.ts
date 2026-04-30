@@ -45,12 +45,22 @@ serve(async (req) => {
       })
     }
 
-    const tenantName = user.email ? `Empresa de ${user.email.split('@')[0]}` : 'Nova Empresa'
+    let bodyCompanyName: string | undefined
+    try {
+      const body = await req.json()
+      if (body && typeof body.companyName === 'string' && body.companyName.trim()) {
+        bodyCompanyName = body.companyName.trim()
+      }
+    } catch {
+      // no body is fine
+    }
+
+    const emailDomain = user.email ? user.email.split('@')[1]?.split('.')[0] : undefined
+    const tenantName = bodyCompanyName ?? (emailDomain ? emailDomain.charAt(0).toUpperCase() + emailDomain.slice(1) : 'Nova Empresa')
+
     const { data: newTenant, error: insertTenantError } = await supabaseAdmin
       .from('tenants')
-      .insert({
-        name: tenantName,
-      })
+      .insert({ name: tenantName })
       .select('id')
       .single()
 
@@ -62,7 +72,7 @@ serve(async (req) => {
         id: user.id,
         tenant_id: newTenant.id,
         email: user.email,
-        role: 'admin'
+        role: 'admin',
       })
 
     if (insertUserError) throw insertUserError

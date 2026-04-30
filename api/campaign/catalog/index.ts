@@ -58,7 +58,23 @@ export default async function handler(request: any, response: any) {
     const auth = await authenticateRequest(request)
 
     if (request.method === 'GET') {
-      const query = supabaseAdmin
+      const isAdmin = Boolean(auth.userRole && ['admin', 'owner', 'manager'].includes(auth.userRole.toLowerCase()))
+
+      let userRegiaoId: string | null = null
+      if (!isAdmin && !auth.isFullAdmin) {
+        const userRow = await supabaseAdmin
+          .from('users')
+          .select('regiao_id')
+          .eq('id', auth.userId)
+          .maybeSingle()
+        userRegiaoId = (userRow.data as any)?.regiao_id ?? null
+      }
+
+      const requestedRegiaoId = (isAdmin || auth.isFullAdmin)
+        ? (typeof request.query.regiaoId === 'string' && request.query.regiaoId ? request.query.regiaoId : null)
+        : userRegiaoId
+
+      let baseQuery = supabaseAdmin
         .from('pontuacao_catalogo_brindes')
         .select('id, nome, descricao, pontos_necessarios, estoque, imagem_url, ativo, created_at, updated_at')
         .eq('tenant_id', auth.tenantId)
@@ -67,7 +83,13 @@ export default async function handler(request: any, response: any) {
         .order('pontos_necessarios', { ascending: true })
         .order('nome', { ascending: true })
 
-      const listResult = await (auth.userRole && ['admin', 'owner', 'manager'].includes(auth.userRole.toLowerCase())
+      if (requestedRegiaoId) {
+        baseQuery = (baseQuery as any).or(`regiao_id.eq.${requestedRegiaoId},regiao_id.is.null`)
+      }
+
+      const query = baseQuery
+
+      const listResult = await (isAdmin || auth.isFullAdmin
         ? query
         : query.eq('ativo', true))
 

@@ -15,9 +15,12 @@ import {
   updateIxcConnection,
   activateIxcConnection,
   deactivateIxcConnection,
+  fetchRegioes,
+  createRegiao,
   type TenantSettings,
   type IxcConnectionDetail,
   type TenantListItem,
+  type RegiaoItem,
 } from '@/lib/supabase-queries'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -33,7 +36,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog'
-import { Briefcase, Building2, Megaphone, Plus, Pencil, Save, UserCog, Wifi, WifiOff, X } from 'lucide-react'
+import { Briefcase, Building2, MapPin, Megaphone, Plus, Pencil, Save, UserCog, Wifi, WifiOff, X } from 'lucide-react'
 import Spinner from '@/components/Spinner'
 import { createButtonGuard } from '@/utils/antiFlood'
 
@@ -92,6 +95,27 @@ export default function SettingsPage() {
   // Action state
   const [actionId, setActionId] = useState<string | null>(null)
 
+  // Regions
+  const [regioes, setRegioes] = useState<RegiaoItem[]>([])
+  const [regiaoNome, setRegiaoNome] = useState('')
+  const [regiaoNomeError, setRegiaoNomeError] = useState('')
+  const [regiaoSaving, setRegiaoSaving] = useState(false)
+  const [regiaoError, setRegiaoError] = useState('')
+  const [regiaoLoading, setRegiaoLoading] = useState(false)
+
+  const loadRegioes = async (tenantId: string) => {
+    setRegiaoLoading(true)
+    setRegiaoError('')
+    try {
+      const items = await fetchRegioes(tenantId)
+      setRegioes(items)
+    } catch (err) {
+      setRegiaoError(friendlyError(err))
+    } finally {
+      setRegiaoLoading(false)
+    }
+  }
+
   const loadData = async (force = false, overrideTenantId?: string) => {
     const effectiveTenantId = overrideTenantId || selectedTenantId
     const cached = effectiveTenantId ? settingsCache.get(effectiveTenantId) : null
@@ -109,7 +133,7 @@ export default function SettingsPage() {
       if (resolved.error === 'no_session') { setPageError('Sessão expirada. Saia e entre novamente.'); return }
       if (resolved.error === 'no_user_record') { setPageError('Sessão inválida ou usuário sem cadastro. Saia e entre novamente.'); return }
       if (resolved.error === 'no_tenant' && !resolved.isFullAdmin) { setPageError('Usuário não associado a um tenant.'); return }
-      const tenantList = await fetchAllTenants()
+      const tenantList = resolved.isFullAdmin ? await fetchAllTenants() : (resolved.tenantId ? [{ id: resolved.tenantId, name: '' }] : [])
       setTenants(tenantList)
       const tenantId = overrideTenantId || selectedTenantId || resolved.tenantId || tenantList[0]?.id
       if (!tenantId) { setPageError('Empresa não encontrada.'); return }
@@ -126,6 +150,7 @@ export default function SettingsPage() {
       setTenantName(data.name ?? '')
       setConnections(conns)
       settingsCache.set(tenantId, { expiresAt: Date.now() + SETTINGS_CACHE_TTL_MS, settings: data })
+      void loadRegioes(tenantId)
     } catch (err) {
       setPageError(friendlyError(err))
     } finally {
@@ -237,6 +262,27 @@ export default function SettingsPage() {
     }
   }
 
+  const handleCreateRegiao = async (e: FormEvent) => {
+    e.preventDefault()
+    setRegiaoNomeError('')
+    setRegiaoError('')
+    const trimmed = regiaoNome.trim()
+    if (!trimmed) {
+      setRegiaoNomeError('Nome da região é obrigatório.')
+      return
+    }
+    setRegiaoSaving(true)
+    try {
+      await createRegiao(trimmed, selectedTenantId || undefined)
+      setRegiaoNome('')
+      await loadRegioes(selectedTenantId)
+    } catch (err) {
+      setRegiaoError(friendlyError(err))
+    } finally {
+      setRegiaoSaving(false)
+    }
+  }
+
   const handleDeactivate = async (conn: IxcConnectionDetail) => {
     if (!conn.active) return
     setActionId(conn.id)
@@ -296,6 +342,10 @@ export default function SettingsPage() {
                       onValueChange={(nextTenantId) => {
                         setSelectedTenantId(nextTenantId)
                         settingsCache.delete(nextTenantId)
+                        setRegioes([])
+                        setRegiaoNome('')
+                        setRegiaoNomeError('')
+                        setRegiaoError('')
                         void loadData(true, nextTenantId)
                       }}
                     >
@@ -343,6 +393,58 @@ export default function SettingsPage() {
                       {saving ? 'Salvando...' : 'Salvar nome'}
                     </Button>
                   </form>
+                </CardContent>
+              </Card>
+
+              {/* Regions */}
+              <Card>
+                <CardHeader className="border-b border-[hsl(var(--border))]">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                      <MapPin className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <CardTitle>Regiões</CardTitle>
+                      <CardDescription>Regiões disponíveis para usuários e catálogo desta empresa.</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-6 space-y-4">
+                  {regiaoError && <AlertBanner variant="error" message={regiaoError} />}
+                  <form onSubmit={handleCreateRegiao} className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                    <div className="flex-1 space-y-1">
+                      <Label htmlFor="regiao-nome">Nova região</Label>
+                      <Input
+                        id="regiao-nome"
+                        value={regiaoNome}
+                        onChange={(e) => { setRegiaoNome(e.target.value); setRegiaoNomeError('') }}
+                        placeholder="Norte, Sul, Centro, etc."
+                        className={regiaoNomeError ? 'border-destructive/50' : ''}
+                      />
+                      {regiaoNomeError && <p className="text-xs text-destructive">{regiaoNomeError}</p>}
+                    </div>
+                    <Button type="submit" disabled={regiaoSaving} size="sm" className="gap-1.5 sm:mb-0">
+                      {regiaoSaving ? <Spinner size="sm" /> : <Plus className="h-3.5 w-3.5" />}
+                      {regiaoSaving ? 'Criando...' : 'Criar região'}
+                    </Button>
+                  </form>
+                  {regiaoLoading ? (
+                    <div className="flex justify-center py-6"><Spinner /></div>
+                  ) : regioes.length === 0 ? (
+                    <div className="flex flex-col items-center gap-2 py-8 text-center">
+                      <MapPin className="h-7 w-7 text-muted-foreground/30" />
+                      <p className="text-sm text-muted-foreground">Nenhuma região cadastrada.</p>
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border border-[hsl(var(--border))] divide-y divide-[hsl(var(--border))]">
+                      {regioes.map((r) => (
+                        <div key={r.id} className="flex items-center gap-2 px-4 py-2.5">
+                          <MapPin className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
+                          <span className="text-sm text-foreground">{r.nome}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
